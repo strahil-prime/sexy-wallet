@@ -1,26 +1,140 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-ink-950: #03080c;
+  --color-ink-900: #060f15;
+  --color-ink-850: #08141b;
+  --color-ink-800: #0b1a22;
+  --color-ink-700: #11232d;
+  --color-ink-600: #1a303b;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-glass: rgb(9 20 27 / 0.62);
+  --color-glass-strong: rgb(9 20 27 / 0.82);
+  --color-hairline: rgb(255 255 255 / 0.08);
+  --color-hairline-strong: rgb(255 255 255 / 0.14);
+
+  --color-electric: #1f7bff;
+  --color-electric-soft: #4c97ff;
+  --color-cyan: #2ad1e6;
+  --color-aqua: #5ef0ff;
+  --color-violet: #7c5cff;
+  --color-positive: #3ee39a;
+  --color-negative: #ff6b7a;
+  --color-mist: #8ea3ad;
+  --color-fog: #c6d3d9;
+
+  --radius-panel: 22px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-beam: beam 6s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2.4s var(--ease-out-expo) infinite;
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes beam {
+    to { offset-distance: 100%; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.6); opacity: 0; }
   }
 }
 
+:root {
+  color-scheme: dark;
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ink-950);
+  color: #eef4f6;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: rgb(31 123 255 / 0.45);
+}
+
+/* Glass panel used across the app */
+@utility glass {
+  background: linear-gradient(180deg, rgb(14 28 36 / 0.72), rgb(7 17 23 / 0.72));
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--color-hairline);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.05),
+    0 20px 60px -30px rgb(0 0 0 / 0.8);
+}
+
+@utility glass-strong {
+  background: linear-gradient(180deg, rgb(14 28 36 / 0.9), rgb(7 17 23 / 0.92));
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid var(--color-hairline);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.06),
+    0 30px 80px -30px rgb(0 0 0 / 0.9);
+}
+
+@utility text-shimmer {
+  background: linear-gradient(110deg, #8ea3ad 35%, #ffffff 50%, #8ea3ad 65%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-shimmer);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-ink-900),
+    0 0 0 4px rgb(42 209 230 / 0.7);
+}
+
+/* NumberFlow digit mask softness */
+number-flow-react {
+  --number-flow-mask-height: 0.18em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

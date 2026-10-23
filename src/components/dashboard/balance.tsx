@@ -40,7 +40,7 @@ export function Balance({ className }: { className?: string }) {
         transition={{ delay: 0.3, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="flex items-center gap-4"
       >
-        <span className="text-lg text-fog/90 lg:text-[21px]">Total balance</span>
+        <span className="text-lg whitespace-nowrap text-fog/90 lg:text-[21px]">Total balance</span>
         <CurrencyPicker code={code} onChange={setCode} />
         <motion.button
           type="button"
@@ -73,7 +73,7 @@ export function Balance({ className }: { className?: string }) {
             value={whole}
             locales="en-IE"
             format={{ style: "currency", currency: code, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
-            className="text-[64px] leading-none drop-shadow-[0_4px_30px_rgb(0_0_0/0.5)] sm:text-[84px] xl:text-[104px]"
+            className="text-[clamp(56px,12.5cqw,104px)] leading-none drop-shadow-[0_4px_30px_rgb(0_0_0/0.5)]"
             transformTiming={{ duration: 1100, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
             spinTiming={{ duration: 1400, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
           />
@@ -81,7 +81,7 @@ export function Balance({ className }: { className?: string }) {
             value={cents}
             prefix="."
             format={{ minimumIntegerDigits: 2 }}
-            className="text-[34px] leading-none text-white/45 sm:text-[44px] xl:text-[56px]"
+            className="text-[clamp(30px,6.7cqw,56px)] leading-none text-white/45"
             spinTiming={{ duration: 1400, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
           />
         </NumberFlowGroup>

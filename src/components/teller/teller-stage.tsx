@@ -6,6 +6,20 @@ import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from
 import { cn } from "@/lib/utils";
 import { clipFor, clips, type TellerState } from "./machine";
 
+const PORTRAIT = "/teller/bella.jpg";
+/** Width / height of the portrait. Export the video clips at this same ratio (826×970, or 1652×1940). */
+const PORTRAIT_RATIO = "826 / 970";
+
+/** Feathers the portrait's sides and bottom into the backdrop. */
+const featherMask: React.CSSProperties = {
+  maskImage:
+    "linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, #000 72%, transparent 100%)",
+  WebkitMaskImage:
+    "linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, #000 72%, transparent 100%)",
+  maskComposite: "intersect",
+  WebkitMaskComposite: "source-in",
+};
+
 /**
  * The teller portrait. Static image today; video-ready via `clips`.
  */
@@ -43,46 +57,59 @@ export function TellerStage({
 
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
-      <motion.div
-        className="absolute inset-[-3%]"
-        style={{ x, y }}
-        initial={{ opacity: 0, scale: 1.08, filter: "blur(12px)" }}
-        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-        transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
+      {/* Backdrop that extends past the portrait. It matches the portrait's edge colour, so wide
+          windows grow the background instead of cropping Bella. */}
+      <div className="absolute inset-0 bg-[radial-gradient(55%_75%_at_60%_35%,#072232_0%,#04151f_55%,var(--color-ink-900)_100%)]" />
+      <Image src={PORTRAIT} alt="" aria-hidden fill sizes="40vw" className="scale-125 object-cover opacity-35 blur-[70px]" />
+
+      {/* Fixed-proportion portrait frame: always full stage height, never stretched.
+          The still and the video clips share this frame, its object-fit and its edge mask. */}
+      <div
+        className="absolute top-0 left-1/2 h-full -translate-x-[62%] lg:left-[60%]"
+        style={{ aspectRatio: PORTRAIT_RATIO }}
       >
         <motion.div
           className="absolute inset-0"
-          animate={{ scale: [1, 1.018, 1] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          style={{ x, y, ...featherMask }}
+          initial={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <Image
-            src="/teller/bella.jpg"
-            alt="Bella, your teller"
-            fill
-            priority
-            sizes="(min-width: 1024px) 60vw, 100vw"
-            className="object-cover object-[78%_12%] lg:object-[45%_0%]"
-          />
-          <AnimatePresence>
-            {clip.src && (
-              <motion.video
-                key={clipId}
-                src={clip.src}
-                autoPlay
-                muted={false}
-                playsInline
-                loop={clip.loop}
-                onEnded={onClipEnded}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35 }}
-                className="absolute inset-0 size-full object-cover object-[45%_0%]"
-              />
-            )}
-          </AnimatePresence>
+          <motion.div
+            className="absolute inset-0"
+            animate={{ scale: [1, 1.018, 1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Image
+              src={PORTRAIT}
+              alt="Bella, your teller"
+              fill
+              priority
+              sizes="(min-width: 1024px) 60vw, 100vw"
+              className="object-cover object-top"
+            />
+            <AnimatePresence>
+              {clip.src && (
+                <motion.video
+                  key={clipId}
+                  src={clip.src}
+                  poster={PORTRAIT}
+                  autoPlay
+                  muted={false}
+                  playsInline
+                  loop={clip.loop}
+                  onEnded={onClipEnded}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="absolute inset-0 size-full object-cover object-top"
+                />
+              )}
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
 
       {/* Light that breathes harder while she speaks */}
       <motion.div

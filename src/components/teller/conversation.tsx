@@ -117,7 +117,7 @@ export function AskBar({ className }: { className?: string }) {
                 exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
                 className="block"
               >
-                <span className="block text-[17px] font-medium text-white sm:text-[19px]">Ask me anything</span>
+                <span className="block truncate text-[17px] font-medium text-white sm:text-[19px]">Ask me anything</span>
                 <span className="mt-1 block truncate text-[14px] text-mist">Payments, insights, rewards...</span>
               </motion.span>
             )}

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:preview": "vite build --config preview/vite.config.ts && python3 preview/to-fragment.py preview/dist/index.html preview/dist/artifact.html"
   },
   "dependencies": {
     "@number-flow/react": "^0.6.2",
@@ -30,12 +31,16 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.28",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^6.4.5",
+    "vite-plugin-singlefile": "^2.3.4"
   }
 }

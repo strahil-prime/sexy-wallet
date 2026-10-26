@@ -18,7 +18,8 @@ export function Dashboard() {
       <section className="@container relative isolate flex min-h-[92svh] min-w-0 flex-1 flex-col px-5 pt-[50svh] pb-6 sm:px-8 lg:min-h-0 lg:px-10 lg:pt-[max(33vh,200px)] lg:pb-7 xl:px-12">
         <TellerStage state={teller.state} onClipEnded={teller.onClipEnded} className="-z-10 bottom-auto h-[78svh] lg:bottom-0 lg:h-auto" />
 
-        <Balance className="mt-auto lg:mt-0" />
+        {/* 150px lower on desktop, eased off on short windows so the chips and ask bar stay on screen */}
+        <Balance className="mt-auto lg:mt-[clamp(0px,calc(100vh-840px),150px)]" />
 
         <div className="relative mt-8 flex flex-col gap-3 lg:mt-auto lg:ml-[10%] xl:ml-[16%]">
           <TellerBubble

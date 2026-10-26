@@ -1,27 +1,28 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
-import { ArrowRight, ChevronRight, MessageCircleMore, PiggyBank, PieChart, Send, X } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, MessageCircleMore, PieChart, Repeat, Sparkles, Split, X } from "lucide-react";
+import { BrandLogo, BrandMark } from "@/components/brand/brand-mark";
 import { ContactAvatar } from "@/components/ui/avatar";
-import { contacts, teller } from "@/lib/data";
+import { contacts, initialActivity, lastDinnerId, subscriptions, teller, type Contact, type Subscription } from "@/lib/data";
 import { useWallet } from "@/lib/wallet-store";
-import { cn, formatEUR } from "@/lib/utils";
+import { cn, formatEUR, formatWhen } from "@/lib/utils";
 import type { Intent, TellerState } from "./machine";
 
 const questions: { intent: Intent; label: string; short: string; icon: typeof PieChart }[] = [
-  { intent: "spent-this-month", label: "How much did I spend this month?", short: "Spent this month?", icon: PieChart },
-  { intent: "savings-rate", label: "What's my savings rate?", short: "Savings rate?", icon: PiggyBank },
-  { intent: "send-janet", label: "Send €10 to Janet", short: "Send €10 to Janet", icon: Send },
+  { intent: "money-went", label: "Where did my money go this month?", short: "Where did my money go?", icon: PieChart },
+  { intent: "subscriptions", label: "Any subscriptions I forgot about?", short: "Forgotten subscriptions?", icon: Repeat },
+  { intent: "split-dinner", label: "Split last night’s dinner with Janet", short: "Split dinner with Janet", icon: Split },
 ];
 
 export function QuestionChips({ state, onAsk, className }: { state: TellerState; onAsk: (i: Intent) => void; className?: string }) {
   const busy = state.status === "thinking";
   const activeIntent = state.status === "thinking" || state.status === "talking" ? state.intent : null;
   return (
-    <div className={cn("no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 py-1 [mask-image:linear-gradient(90deg,#000_92%,transparent)]", className)}>
+    <div className={cn("no-scrollbar -mx-1.5 flex gap-2 overflow-x-auto px-1.5 py-1.5 [mask-image:linear-gradient(90deg,#000_92%,transparent)] lg:flex-wrap lg:overflow-visible lg:[mask-image:none]", className)}>
       {questions.map((q, i) => {
         const active = activeIntent === q.intent;
         return (
@@ -37,15 +38,14 @@ export function QuestionChips({ state, onAsk, className }: { state: TellerState;
             whileTap={{ scale: 0.96 }}
             className={cn(
               "group focus-ring relative flex h-10 shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-full border px-4 text-[13.5px] backdrop-blur-xl transition-colors disabled:cursor-wait",
-              active
-                ? "border-cyan/40 bg-cyan/15 text-white"
-                : "border-hairline-strong bg-ink-900/55 text-fog hover:border-cyan/30 hover:text-white",
+              "border-white bg-white font-medium text-ink-950 shadow-[0_8px_24px_-12px_rgb(255_255_255/0.55)] hover:bg-[#eef6f8]",
+              active && "ring-2 ring-cyan ring-offset-2 ring-offset-ink-900",
             )}
           >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <q.icon className={cn("size-4", active ? "text-cyan" : "text-cyan/80")} strokeWidth={1.8} />
-            <span className="hidden sm:inline">{q.label}</span>
-            <span className="sm:hidden">{q.short}</span>
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <q.icon className="relative size-4 text-electric" strokeWidth={2} />
+            <span className="relative hidden sm:inline">{q.label}</span>
+            <span className="relative sm:hidden">{q.short}</span>
           </motion.button>
         );
       })}
@@ -178,26 +178,30 @@ function Header({ onClose, speaking }: { onClose?: () => void; speaking: boolean
 }
 
 const spendingCategories = [
-  { name: "Groceries", value: 412.18, color: "#2ad1e6" },
-  { name: "Travel", value: 312, color: "#1f7bff" },
-  { name: "Shopping", value: 289.95, color: "#7c5cff" },
-  { name: "Dining & coffee", value: 186.4, color: "#5ef0ff" },
-  { name: "Subscriptions", value: 75.98, color: "#8ea3ad" },
+  { name: "Groceries", value: 412.18, color: "#2ad1e6", note: "Lidl, 9 visits" },
+  { name: "Travel", value: 312, color: "#1f7bff", note: "Airbnb in Lisbon" },
+  { name: "Shopping", value: 289.95, color: "#7c5cff", note: "Zara and two online orders" },
+  { name: "Dining & coffee", value: 272.8, color: "#5ef0ff", note: "Includes last night's dinner" },
+  { name: "Subscriptions", value: 85.93, color: "#8ea3ad", note: "4 active" },
 ];
 
-function SpendAnswer() {
+function MoneyAnswer() {
   const { activity } = useWallet();
-  const sentToday = useMemo(
+  const sent = useMemo(
     () => activity.filter((a) => a.id.startsWith("tx_")).reduce((s, a) => s - a.amount, 0),
     [activity],
   );
-  const cats = sentToday ? [...spendingCategories, { name: "Transfers", value: sentToday, color: "#ff8a5b" }] : spendingCategories;
+  const cats = sent ? [...spendingCategories, { name: "Transfers", value: sent, color: "#ff8a5b", note: "Sent from the app" }] : spendingCategories;
   const total = cats.reduce((s, c) => s + c.value, 0);
+  const top = [...cats].sort((a, b) => b.value - a.value);
+  const pct = (v: number) => Math.round((v / total) * 100);
   const month = new Date().toLocaleDateString("en-GB", { month: "long" });
   return (
     <>
       <p className="text-[15.5px] leading-relaxed text-fog">
-        <Spoken text={`You've spent ${formatEUR(total)} so far in ${month}. That's 12% less than last month, and groceries are your biggest category.`} />
+        <Spoken
+          text={`You've spent ${formatEUR(total)} in ${month}. Most of it went on ${top[0].name.toLowerCase()} (${pct(top[0].value)}%), then ${top[1].name.toLowerCase()}, which was mostly your Airbnb.`}
+        />
       </p>
       <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-white/5">
         {cats.map((c, i) => (
@@ -211,18 +215,20 @@ function SpendAnswer() {
           />
         ))}
       </div>
-      <ul className="mt-3 grid grid-cols-2 gap-x-5 gap-y-1.5 text-[12.5px]">
-        {cats.slice(0, 4).map((c, i) => (
+      <ul className="mt-3.5 space-y-2 text-[13px]">
+        {top.map((c, i) => (
           <motion.li
             key={c.name}
             initial={{ opacity: 0, x: -6 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1 + i * 0.06 }}
-            className="flex items-center gap-2 text-mist"
+            className="flex items-center gap-2.5"
           >
-            <span className="size-2 rounded-full" style={{ background: c.color }} />
-            <span className="flex-1 truncate">{c.name}</span>
-            <span className="text-white tabular">{formatEUR(c.value)}</span>
+            <span className="size-2 shrink-0 rounded-full" style={{ background: c.color }} />
+            <span className="w-[112px] shrink-0 truncate text-white">{c.name}</span>
+            <span className="min-w-0 flex-1 truncate text-mist">{c.note}</span>
+            <span className="w-9 shrink-0 text-right text-mist tabular">{pct(c.value)}%</span>
+            <span className="w-[72px] shrink-0 text-right text-white tabular">{formatEUR(c.value)}</span>
           </motion.li>
         ))}
       </ul>
@@ -230,85 +236,213 @@ function SpendAnswer() {
   );
 }
 
-function SavingsAnswer() {
-  const [rate, setRate] = useState(0);
-  const target = 31;
-  const r = 30;
-  const c = 2 * Math.PI * r;
-  return (
-    <div className="flex items-center gap-5">
-      <div className="relative grid size-[84px] shrink-0 place-items-center">
-        <svg viewBox="0 0 72 72" className="absolute inset-0 -rotate-90">
-          <circle cx="36" cy="36" r={r} fill="none" stroke="rgb(255 255 255 / 0.08)" strokeWidth="6" />
-          <motion.circle
-            cx="36"
-            cy="36"
-            r={r}
-            fill="none"
-            stroke="url(#sav)"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            initial={{ strokeDashoffset: c }}
-            animate={{ strokeDashoffset: c * (1 - target / 100) }}
-            transition={{ delay: 0.4, duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-            onAnimationStart={() => setRate(target)}
-          />
-          <defs>
-            <linearGradient id="sav" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#5ef0ff" />
-              <stop offset="1" stopColor="#1f7bff" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <NumberFlow value={rate} suffix="%" className="text-xl font-semibold text-white" />
-      </div>
-      <p className="text-[15.5px] leading-relaxed text-fog">
-        <Spoken text="Your savings rate this month is 31%. You've put away €1,780 of €5,740 income, four points above your three-month average." />
-      </p>
-    </div>
-  );
-}
+function SubscriptionsAnswer() {
+  const { cancelled, cancelSubscription, restoreSubscription } = useWallet();
+  const monthly = subscriptions.reduce((s, x) => s + x.monthly, 0);
+  const saving = subscriptions.filter((x) => cancelled.includes(x.id)).reduce((s, x) => s + x.monthly * 12, 0);
+  const forgotten = subscriptions.find((x) => x.forgotten)!;
 
-function SendAnswer({ onClose }: { onClose: () => void }) {
-  const janet = contacts.find((c) => c.id === "janet")!;
+  const cancel = (sub: Subscription) => {
+    cancelSubscription(sub.id);
+    toast(`${sub.name} cancelled`, {
+      description: `No more charges. That's ${formatEUR(sub.monthly * 12)} a year back in your pocket.`,
+      action: { label: "Undo", onClick: () => restoreSubscription(sub.id) },
+    });
+  };
+
   return (
     <>
       <p className="text-[15.5px] leading-relaxed text-fog">
-        <Spoken text="Done, I've prepared it. Have a quick look and confirm when you're ready." />
+        <Spoken
+          text={`You pay ${formatEUR(monthly)} a month for ${subscriptions.length} subscriptions. One looks forgotten: ${forgotten.name.split(" ")[0]} still charges you, but you haven't listened since July.`}
+        />
+      </p>
+      <ul className="mt-4 space-y-1.5">
+        {subscriptions.map((sub, i) => {
+          const off = cancelled.includes(sub.id);
+          return (
+            <motion.li
+              key={sub.id}
+              layout
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 + i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className={cn(
+                "flex items-center gap-3 rounded-2xl p-2.5 pr-3 ring-1 transition-colors",
+                sub.forgotten && !off ? "bg-[#ffb547]/[0.08] ring-[#ffb547]/30" : "bg-white/[0.03] ring-white/[0.05]",
+              )}
+            >
+              <BrandLogo brand={sub.brand} className={cn("size-9 transition-opacity [&_svg]:size-[18px]", off && "opacity-40")} />
+              <div className="min-w-0 flex-1">
+                <div className={cn("flex items-center gap-2 text-[14px] text-white", off && "text-mist line-through")}>
+                  <span className="truncate">{sub.name}</span>
+                  {sub.forgotten && !off && (
+                    <span className="hidden shrink-0 rounded-full bg-[#ffb547]/15 px-1.5 2xl:inline py-px text-[10px] font-semibold tracking-wider text-[#ffb547] uppercase">
+                      Unused
+                    </span>
+                  )}
+                </div>
+                <div className={cn("truncate text-[12px]", sub.forgotten && !off ? "text-[#ffcf85]" : "text-mist")}>
+                  <span className="sm:hidden">{formatEUR(sub.monthly)}/mo · </span>
+                  {off ? "Cancelled, no more charges" : sub.usage}
+                </div>
+              </div>
+              <span className={cn("hidden text-[13.5px] text-white tabular sm:inline", off && "text-mist line-through")}>{formatEUR(sub.monthly)}</span>
+              <AnimatePresence mode="popLayout" initial={false}>
+                {off ? (
+                  <motion.span
+                    key="done"
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6 }}
+                    className="grid h-8 w-[72px] place-items-center"
+                  >
+                    <span className="grid size-6 place-items-center rounded-full bg-positive/15 text-positive">
+                      <Check className="size-3.5" strokeWidth={2.5} />
+                    </span>
+                  </motion.span>
+                ) : (
+                  <motion.button
+                    key="cancel"
+                    type="button"
+                    onClick={() => cancel(sub)}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileTap={{ scale: 0.94 }}
+                    className={cn(
+                      "focus-ring h-8 w-[72px] cursor-pointer rounded-full text-[12.5px] font-medium transition-colors",
+                      sub.forgotten
+                        ? "bg-white text-ink-950 hover:bg-white/85"
+                        : "text-mist ring-1 ring-white/10 hover:bg-white/5 hover:text-white",
+                    )}
+                  >
+                    Cancel
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.li>
+          );
+        })}
+      </ul>
+      <AnimatePresence initial={false}>
+        {saving > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 flex items-center gap-2 text-[13px] text-positive">
+              <Sparkles className="size-4" strokeWidth={1.8} />
+              You&apos;re saving
+              <NumberFlow value={saving} format={{ style: "currency", currency: "EUR" }} locales="en-IE" className="font-semibold tabular" />
+              a year
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+const me: Contact = { id: "me", name: "Strahil", handle: "@strahil", iban: "", hue: ["#2ad1e6", "#1f7bff"] };
+
+function SplitAnswer({ onClose }: { onClose: () => void }) {
+  const { activity, request } = useWallet();
+  const janet = contacts.find((c) => c.id === "janet")!;
+  const dinner = activity.find((a) => a.id === lastDinnerId) ?? initialActivity.find((a) => a.id === lastDinnerId)!;
+  const total = -dinner.amount;
+  const half = Math.round((total / 2) * 100) / 100;
+  const note = `Dinner at ${dinner.title}`;
+  const requested = activity.some((a) => a.pending && a.category === note);
+
+  const send = () => {
+    request(janet, half, note);
+    toast(`Request sent to ${janet.name.split(" ")[0]}`, { description: `${formatEUR(half)} for your dinner at ${dinner.title}. We'll let you know when Janet pays.` });
+  };
+
+  return (
+    <>
+      <p className="text-[15.5px] leading-relaxed text-fog">
+        <Spoken text={`Last night's dinner at ${dinner.title} came to ${formatEUR(total)}. Split evenly, Janet owes you ${formatEUR(half)}.`} />
       </p>
       <motion.div
         initial={{ opacity: 0, y: 10, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-4 flex items-center gap-3.5 rounded-2xl bg-white/[0.04] p-3.5 ring-1 ring-white/[0.06]"
+        className="mt-4 rounded-2xl bg-white/[0.04] p-3.5 ring-1 ring-white/[0.06]"
       >
-        <ContactAvatar contact={janet} className="size-11" />
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] text-white">{janet.name}</div>
-          <div className="text-[12.5px] text-mist">Instant · No fee</div>
+        <div className="flex items-center gap-3">
+          <BrandMark activity={dinner} className="size-10" />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[14.5px] text-white">{dinner.title}</div>
+            <div className="text-[12px] text-mist" suppressHydrationWarning>
+              {formatWhen(new Date(dinner.at))}
+              <span className="hidden sm:inline"> · Aurora card</span>
+            </div>
+          </div>
+          <div className="text-[15px] font-medium text-white tabular">{formatEUR(total)}</div>
         </div>
-        <div className="text-xl font-semibold text-white tabular">€10.00</div>
+        <div className="mt-3.5 grid grid-cols-2 gap-2">
+          {[me, janet].map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, x: i ? 10 : -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1 + i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-2.5 rounded-xl bg-white/[0.04] px-2.5 py-2"
+            >
+              <ContactAvatar contact={p} className="size-8 text-[11px]" />
+              <div className="min-w-0">
+                <div className="truncate text-[12px] text-mist">{i ? "Janet" : "You"}</div>
+                <div className="text-[14px] font-medium text-white tabular">{formatEUR(half)}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9, duration: 0.5 }}
+        transition={{ delay: 1.2, duration: 0.5 }}
         className="mt-3 flex gap-2"
       >
-        <Link
-          href="/send?to=janet&amount=10"
-          className="group focus-ring flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-electric text-[14.5px] font-medium text-white shadow-[0_8px_24px_-8px_rgb(31_123_255/0.9)] transition-colors hover:bg-electric-soft"
-        >
-          Review and send
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+        <AnimatePresence mode="wait" initial={false}>
+          {requested ? (
+            <motion.div
+              key="sent"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-positive/12 text-[14.5px] font-medium text-positive ring-1 ring-positive/25"
+            >
+              <motion.span initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
+                <Check className="size-4" strokeWidth={2.5} />
+              </motion.span>
+              Requested {formatEUR(half)}
+              <span className="-ml-1 hidden sm:inline">from Janet</span>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="ask"
+              type="button"
+              onClick={send}
+              exit={{ opacity: 0, scale: 0.96 }}
+              whileTap={{ scale: 0.97 }}
+              className="group focus-ring flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-electric text-[14.5px] font-medium text-white shadow-[0_8px_24px_-8px_rgb(31_123_255/0.9)] transition-colors hover:bg-electric-soft"
+            >
+              Request {formatEUR(half)}
+              <span className="-ml-1 hidden sm:inline">from Janet</span>
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </motion.button>
+          )}
+        </AnimatePresence>
         <button
           type="button"
           onClick={onClose}
           className="focus-ring h-11 cursor-pointer rounded-full px-5 text-[14.5px] text-fog transition-colors hover:bg-white/5 hover:text-white"
         >
-          Not now
+          {requested ? "Done" : "Not now"}
         </button>
       </motion.div>
     </>
@@ -352,9 +486,9 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
         {state.status === "talking" && (
           <Bubble key={key}>
             <Header speaking onClose={onClose} />
-            {state.intent === "spent-this-month" && <SpendAnswer />}
-            {state.intent === "savings-rate" && <SavingsAnswer />}
-            {state.intent === "send-janet" && <SendAnswer onClose={onClose} />}
+            {state.intent === "money-went" && <MoneyAnswer />}
+            {state.intent === "subscriptions" && <SubscriptionsAnswer />}
+            {state.intent === "split-dinner" && <SplitAnswer onClose={onClose} />}
           </Bubble>
         )}
       </AnimatePresence>

@@ -7,7 +7,9 @@ export type BrandKey =
   | "airbnb"
   | "zara"
   | "ikea"
-  | "lidl";
+  | "lidl"
+  | "audible"
+  | "dining";
 
 export type Activity = {
   id: string;
@@ -20,6 +22,8 @@ export type Activity = {
   /** peer transfers show an arrow glyph instead of a brand mark */
   peer?: { name: string; direction: "in" | "out" };
   card?: boolean;
+  /** money requests stay pending until the other person pays */
+  pending?: boolean;
 };
 
 export type Contact = {
@@ -47,8 +51,10 @@ const daysAgo = (n: number, h: number, m: number) => {
 export const initialActivity: Activity[] = [
   { id: "a1", title: "Apple", at: today(8, 30), amount: -49, category: "Subscriptions", brand: "apple", card: true },
   { id: "a2", title: "Starbucks", at: today(7, 24), amount: -6.7, category: "Coffee", brand: "starbucks", card: true },
+  { id: "a10", title: "Trattoria Da Enzo", at: daysAgo(1, 21, 47), amount: -86.4, category: "Dining", brand: "dining", card: true },
   { id: "a3", title: "Transfer from Alex", at: daysAgo(1, 16, 18), amount: 250, category: "Transfer", peer: { name: "Alex", direction: "in" } },
   { id: "a4", title: "Netflix", at: daysAgo(4, 9, 0), amount: -15.99, category: "Entertainment", brand: "netflix", card: true },
+  { id: "a11", title: "Audible", at: daysAgo(4, 6, 2), amount: -9.95, category: "Subscriptions", brand: "audible", card: true },
   { id: "a5", title: "Spotify", at: daysAgo(5, 10, 12), amount: -10.99, category: "Entertainment", brand: "spotify", card: true },
   { id: "a6", title: "Uber", at: daysAgo(6, 22, 41), amount: -18.4, category: "Transport", brand: "uber", card: true },
   { id: "a7", title: "Zara", at: daysAgo(8, 14, 3), amount: -89.95, category: "Shopping", brand: "zara", card: true },
@@ -88,3 +94,24 @@ export const teller = {
   name: "Bella",
   user: "Strahil",
 };
+
+/** Last night's dinner, used by the "split with Janet" quick question. */
+export const lastDinnerId = "a10";
+
+export type Subscription = {
+  id: string;
+  brand: BrandKey;
+  name: string;
+  monthly: number;
+  /** how it was used in the last 30 days */
+  usage: string;
+  /** true when Bella thinks it's been forgotten */
+  forgotten?: boolean;
+};
+
+export const subscriptions: Subscription[] = [
+  { id: "audible", brand: "audible", name: "Audible Premium Plus", monthly: 9.95, usage: "No listening since July", forgotten: true },
+  { id: "netflix", brand: "netflix", name: "Netflix Standard", monthly: 15.99, usage: "Watched 11 times this month" },
+  { id: "spotify", brand: "spotify", name: "Spotify Premium", monthly: 10.99, usage: "Used almost every day" },
+  { id: "apple", brand: "apple", name: "Apple One", monthly: 49, usage: "iCloud, Music and TV+" },
+];

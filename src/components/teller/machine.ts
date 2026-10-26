@@ -22,11 +22,19 @@ export type TellerState =
 
 export type ClipId = "intro" | "idle" | "thinking" | `answer:${Intent}`;
 
-export type Clip = { src?: string; loop: boolean; /** fallback length when there is no video */ durationMs: number };
+export type Clip = {
+  /** MP4 (H.264), the format every browser plays */
+  src?: string;
+  /** optional smaller WebM (VP9), tried first */
+  webm?: string;
+  loop: boolean;
+  /** fallback length when there is no video */
+  durationMs: number;
+};
 
 export const clips: Record<ClipId, Clip> = {
   intro: { src: undefined, loop: false, durationMs: 3200 },
-  idle: { src: undefined, loop: true, durationMs: 0 },
+  idle: { src: "/teller/clips/idle.mp4", webm: "/teller/clips/idle.webm", loop: true, durationMs: 0 },
   thinking: { src: undefined, loop: true, durationMs: 900 },
   "answer:money-went": { src: undefined, loop: false, durationMs: 9000 },
   "answer:subscriptions": { src: undefined, loop: false, durationMs: 10000 },

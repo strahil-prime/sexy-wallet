@@ -27,10 +27,14 @@ entry in `clips`:
 | Clip id                    | Loops | Plays when |
 | -------------------------- | ----- | ---------- |
 | `intro`                    | no    | Page load, "Hello Strahil" |
-| `idle`                     | yes   | Waiting |
+| `idle`                     | yes   | Waiting. Live: `public/teller/clips/idle.{mp4,webm}`, always playing under the other clips |
 | `thinking`                 | yes   | Right after a question button is tapped |
 | `answer:money-went`        | no    | "Where did my money go this month?" |
 | `answer:subscriptions`     | no    | "Any subscriptions I forgot about?" |
 | `answer:split-dinner`      | no    | "Split last night's dinner with Janet" |
 
 All clips should start and end on the same home pose so crossfades are seamless.
+
+The idle loop was made seamless by cross-fading its last 0.5 s into its first 0.5 s (the
+Kling export's last frame didn't quite match its first). `idle-poster.jpg` is its first frame
+and doubles as the still shown before the video loads.

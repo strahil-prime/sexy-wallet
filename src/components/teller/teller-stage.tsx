@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { cn } from "@/lib/utils";
-import { clipFor, clips, type TellerState } from "./machine";
+import { clipFor, clips, type Clip, type TellerState } from "./machine";
 
-const PORTRAIT = "/teller/bella-v3.jpg";
+/** First frame of the idle loop, so the still and the video line up exactly. */
+const PORTRAIT = "/teller/clips/idle-poster.jpg";
 /** Width / height of the portrait. Export the video clips at this same ratio (square, 2048×2048 or 1080×1080). */
 const PORTRAIT_RATIO = "1 / 1";
 
@@ -88,23 +89,20 @@ export function TellerStage({
               sizes="(min-width: 1024px) 60vw, 100vw"
               className="object-cover object-top"
             />
+            {/* The idle loop always plays underneath; other clips fade in on top of it and back out. */}
+            {clips.idle.src && <ClipVideo clip={clips.idle} />}
             <AnimatePresence>
-              {clip.src && (
-                <motion.video
+              {clipId !== "idle" && clip.src && (
+                <motion.div
                   key={clipId}
-                  src={clip.src}
-                  poster={PORTRAIT}
-                  autoPlay
-                  muted={false}
-                  playsInline
-                  loop={clip.loop}
-                  onEnded={onClipEnded}
+                  className="absolute inset-0"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="absolute inset-0 size-full object-cover object-top"
-                />
+                >
+                  <ClipVideo clip={clip} onEnded={onClipEnded} />
+                </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
@@ -127,6 +125,34 @@ export function TellerStage({
       <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-ink-900 via-ink-900/60 to-transparent" />
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ink-900/60 to-transparent" />
     </div>
+  );
+}
+
+function ClipVideo({ clip, onEnded }: { clip: Clip; onEnded?: () => void }) {
+  // React sets `muted` as a property after hydration, which some browsers see too late for
+  // autoplay, so start playback explicitly once mounted.
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(() => {});
+  }, []);
+  return (
+    <video
+      ref={ref}
+      autoPlay
+      muted
+      playsInline
+      loop={clip.loop}
+      preload="auto"
+      poster={PORTRAIT}
+      onEnded={onEnded}
+      className="absolute inset-0 size-full object-cover object-top"
+    >
+      {clip.webm && <source src={clip.webm} type="video/webm" />}
+      <source src={clip.src} type="video/mp4" />
+    </video>
   );
 }
 

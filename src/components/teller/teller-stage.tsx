@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { cn } from "@/lib/utils";
-import { clipFor, clips, type Clip, type TellerState } from "./machine";
+import { clipFor, clips, type Clip, type ClipId, type TellerState } from "./machine";
+import type { TellerSound } from "./sound";
 
 /** First frame of the idle loop, so the still and the video line up exactly. */
 const PORTRAIT = "/teller/clips/idle-poster.jpg";
@@ -22,14 +23,17 @@ const featherMask: React.CSSProperties = {
 };
 
 /**
- * The teller portrait. Static image today; video-ready via `clips`.
+ * The teller: a still, the idle loop on top of it, and the one-off clips (greeting,
+ * answers) on top of that.
  */
 export function TellerStage({
   state,
+  sound,
   onClipEnded,
   className,
 }: {
   state: TellerState;
+  sound: TellerSound;
   onClipEnded: () => void;
   className?: string;
 }) {
@@ -54,7 +58,7 @@ export function TellerStage({
     return () => window.removeEventListener("pointermove", onMove);
   }, [px, py]);
 
-  const speaking = state.status === "talking" || state.status === "intro";
+  const speaking = (state.status === "talking" && !state.clipDone) || state.status === "intro";
 
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
@@ -90,21 +94,8 @@ export function TellerStage({
               className="object-cover object-top"
             />
             {/* The idle loop always plays underneath; other clips fade in on top of it and back out. */}
-            {clips.idle.src && <ClipVideo clip={clips.idle} />}
-            <AnimatePresence>
-              {clipId !== "idle" && clip.src && (
-                <motion.div
-                  key={clipId}
-                  className="absolute inset-0"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35 }}
-                >
-                  <ClipVideo clip={clip} onEnded={onClipEnded} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {clips.idle.src && <LoopVideo clip={clips.idle} />}
+            <OverlayClip clipId={clipId} clip={clip} sound={sound} onEnded={onClipEnded} />
           </motion.div>
         </motion.div>
       </div>
@@ -128,7 +119,12 @@ export function TellerStage({
   );
 }
 
-function ClipVideo({ clip, onEnded }: { clip: Clip; onEnded?: () => void }) {
+/** WebM when the browser can play it (smaller), MP4 otherwise. */
+function sourceFor(video: HTMLVideoElement, clip: Clip) {
+  return clip.webm && video.canPlayType('video/webm; codecs="vp9, opus"') ? clip.webm : clip.src;
+}
+
+function LoopVideo({ clip }: { clip: Clip }) {
   // React sets `muted` as a property after hydration, which some browsers see too late for
   // autoplay, so start playback explicitly once mounted.
   const ref = useRef<HTMLVideoElement>(null);
@@ -136,23 +132,95 @@ function ClipVideo({ clip, onEnded }: { clip: Clip; onEnded?: () => void }) {
     const v = ref.current;
     if (!v) return;
     v.muted = true;
+    v.src = sourceFor(v, clip) ?? "";
     v.play().catch(() => {});
-  }, []);
+  }, [clip]);
   return (
     <video
       ref={ref}
-      autoPlay
       muted
+      loop
       playsInline
-      loop={clip.loop}
       preload="auto"
       poster={PORTRAIT}
-      onEnded={onEnded}
       className="absolute inset-0 size-full object-cover object-top"
-    >
-      {clip.webm && <source src={clip.webm} type="video/webm" />}
-      <source src={clip.src} type="video/mp4" />
-    </video>
+    />
+  );
+}
+
+/**
+ * One video element for every one-off clip, so a browser that has allowed it sound once keeps
+ * allowing it. It plays with sound when the viewer wants it; if the browser refuses, it plays
+ * muted and asks for a tap (see SoundToggle). The first tap anywhere also unlocks sound.
+ */
+function OverlayClip({
+  clipId,
+  clip,
+  sound,
+  onEnded,
+}: {
+  clipId: ClipId;
+  clip: Clip;
+  sound: TellerSound;
+  onEnded: () => void;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const active = clipId !== "idle" && !!clip.src;
+  const wantSound = useRef(sound.on);
+  wantSound.current = sound.on;
+  const { setBlocked } = sound;
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    if (!active) {
+      v.pause();
+      return;
+    }
+    v.src = sourceFor(v, clip) ?? "";
+    v.currentTime = 0;
+    v.muted = !wantSound.current;
+    v.play()
+      .then(() => setBlocked(false))
+      .catch((err: DOMException) => {
+        if (err.name !== "NotAllowedError") return;
+        // No sound allowed yet: play muted and let the viewer opt in.
+        v.muted = true;
+        setBlocked(wantSound.current);
+        v.play().catch(onEnded);
+      });
+  }, [active, clipId, clip, onEnded, setBlocked]);
+
+  // Follow the sound toggle mid-clip. Toggling is a tap, so the browser allows it.
+  useEffect(() => {
+    const v = ref.current;
+    if (v) v.muted = !sound.on || sound.blocked;
+  }, [sound.on, sound.blocked]);
+
+  // The first interaction anywhere lets the browser play sound, so take it.
+  useEffect(() => {
+    if (!sound.blocked) return;
+    const unlock = () => {
+      const v = ref.current;
+      if (v && !v.paused) v.muted = !wantSound.current;
+      setBlocked(false);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true, capture: true });
+    return () => window.removeEventListener("pointerdown", unlock, { capture: true });
+  }, [sound.blocked, setBlocked]);
+
+  return (
+    <motion.video
+      ref={ref}
+      playsInline
+      preload="auto"
+      onEnded={() => active && onEnded()}
+      onError={() => active && onEnded()}
+      initial={false}
+      animate={{ opacity: active ? 1 : 0 }}
+      transition={{ duration: 0.35 }}
+      className="absolute inset-0 size-full object-cover object-top"
+    />
   );
 }
 

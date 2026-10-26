@@ -2,6 +2,7 @@
 
 import { SearchField, TellerMenu } from "@/components/shell/top-actions";
 import { useTeller } from "@/components/teller/machine";
+import { SoundToggle, useTellerSound } from "@/components/teller/sound";
 import { TellerStage } from "@/components/teller/teller-stage";
 import { AskBar, QuestionChips, TellerBubble } from "@/components/teller/conversation";
 import { ActivityList } from "./activity-list";
@@ -11,12 +12,14 @@ import { QuickActions } from "./quick-actions";
 
 export function Dashboard() {
   const teller = useTeller();
+  const sound = useTellerSound();
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:flex-row">
       {/* Stage */}
       <section className="@container relative isolate flex min-h-[92svh] min-w-0 flex-1 flex-col px-5 pt-[50svh] pb-6 sm:px-8 lg:min-h-0 lg:px-10 lg:pt-[max(33vh,200px)] lg:pb-7 xl:px-12">
-        <TellerStage state={teller.state} onClipEnded={teller.onClipEnded} className="-z-10 bottom-auto h-[78svh] lg:bottom-0 lg:h-auto" />
+        <TellerStage state={teller.state} sound={sound} onClipEnded={teller.onClipEnded} className="-z-10 bottom-auto h-[78svh] lg:bottom-0 lg:h-auto" />
+        <SoundToggle sound={sound} className="absolute top-4 left-5 z-10 sm:left-8 lg:top-7 lg:left-10 xl:left-12" />
 
         {/* 150px lower on desktop, eased off on short windows so the chips and ask bar stay on screen */}
         <Balance className="mt-auto lg:mt-[clamp(0px,calc(100vh-840px),150px)]" />

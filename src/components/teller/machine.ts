@@ -1,14 +1,15 @@
 /**
  * Teller state machine.
  *
- * v1 renders a static portrait for every state. When the video clips arrive,
- * drop the files in /public/teller/clips and fill in `src` below: the stage
- * will crossfade between clips on state changes with no other code changes.
+ * Clips live in /public/teller/clips. The idle loop always plays underneath; any other
+ * clip with a `src` fades in on top, plays once (with sound when allowed) and fades out.
+ * A clip without a `src` falls back to `durationMs` timing over the idle loop.
  *
- *   intro    → plays once on load ("Hello Strahil"), then idle
+ *   intro    → greeting, plays once on load, then idle
  *   idle     → seamless loop
- *   thinking → short loop while an intent is resolved
- *   talking  → the answer clip for the active intent, then back to idle
+ *   thinking → short beat while an intent is resolved
+ *   talking  → the answer clip for the active intent; when it ends the video returns to
+ *              the idle loop while the answer stays on screen
  */
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
@@ -18,7 +19,7 @@ export type TellerState =
   | { status: "intro" }
   | { status: "idle" }
   | { status: "thinking"; intent: Intent }
-  | { status: "talking"; intent: Intent };
+  | { status: "talking"; intent: Intent; clipDone?: boolean };
 
 export type ClipId = "intro" | "idle" | "thinking" | `answer:${Intent}`;
 
@@ -33,12 +34,13 @@ export type Clip = {
 };
 
 export const clips: Record<ClipId, Clip> = {
-  intro: { src: undefined, loop: false, durationMs: 3200 },
+  intro: { src: "/teller/clips/intro.mp4", webm: "/teller/clips/intro.webm", loop: false, durationMs: 3200 },
   idle: { src: "/teller/clips/idle.mp4", webm: "/teller/clips/idle.webm", loop: true, durationMs: 0 },
   thinking: { src: undefined, loop: true, durationMs: 900 },
-  "answer:money-went": { src: undefined, loop: false, durationMs: 9000 },
-  "answer:subscriptions": { src: undefined, loop: false, durationMs: 10000 },
-  "answer:split-dinner": { src: undefined, loop: false, durationMs: 9000 },
+  // One placeholder answer clip for all three questions until the real ones are recorded.
+  "answer:money-went": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000 },
+  "answer:subscriptions": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 10000 },
+  "answer:split-dinner": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000 },
 };
 
 export function clipFor(state: TellerState): ClipId {
@@ -50,7 +52,7 @@ export function clipFor(state: TellerState): ClipId {
     case "thinking":
       return "thinking";
     case "talking":
-      return `answer:${state.intent}`;
+      return state.clipDone ? "idle" : `answer:${state.intent}`;
   }
 }
 
@@ -63,8 +65,11 @@ function reducer(state: TellerState, event: Event): TellerState {
     case "RESOLVED":
       return state.status === "thinking" ? { status: "talking", intent: state.intent } : state;
     case "CLIP_ENDED":
-      // Answers stay on screen until dismissed or a new question; only the intro auto-advances.
-      return state.status === "intro" ? { status: "idle" } : state;
+      // The intro hands over to idle. An answer stays on screen until dismissed or a new
+      // question, but its video hands back to the idle loop.
+      if (state.status === "intro") return { status: "idle" };
+      if (state.status === "talking") return { ...state, clipDone: true };
+      return state;
     case "DISMISS":
       return { status: "idle" };
   }

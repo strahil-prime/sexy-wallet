@@ -19,19 +19,23 @@ pnpm dev
 
 ## Bella's video clips
 
-Bella is a still image today. The stage is driven by a small state machine in
+The stage is driven by a small state machine in
 `src/components/teller/machine.ts` (`intro → idle ⇄ thinking → talking`).
-To switch to video, put clips in `public/teller/clips/` and set `src` on each
-entry in `clips`:
+Clips live in `public/teller/clips/` and are wired up by setting `src` (and an
+optional `webm`) on each entry in `clips`. A clip without `src` is timed over the idle loop.
 
 | Clip id                    | Loops | Plays when |
 | -------------------------- | ----- | ---------- |
-| `intro`                    | no    | Page load, "Hello Strahil" |
+| `intro`                    | no    | Page load, once, with sound. Live: `intro.{mp4,webm}` |
 | `idle`                     | yes   | Waiting. Live: `public/teller/clips/idle.{mp4,webm}`, always playing under the other clips |
 | `thinking`                 | yes   | Right after a question button is tapped |
-| `answer:money-went`        | no    | "Where did my money go this month?" |
+| `answer:money-went`        | no    | "Where did my money go this month?". Live: `answer.{mp4,webm}` (placeholder for all three) |
 | `answer:subscriptions`     | no    | "Any subscriptions I forgot about?" |
 | `answer:split-dinner`      | no    | "Split last night's dinner with Janet" |
+
+One-off clips play on a single overlay video above the idle loop, with sound when the
+browser allows it. Browsers usually block sound before the first tap, so the clip then plays
+muted and the sound toggle (top left) shows "Tap for sound"; any tap turns sound on.
 
 All clips should start and end on the same home pose so crossfades are seamless.
 

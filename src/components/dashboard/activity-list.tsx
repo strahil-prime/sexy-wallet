@@ -26,10 +26,11 @@ export function ActivityRow({ a, index = 0 }: { a: Activity; index?: number }) {
       <div className="relative min-w-0 flex-1">
         <div className="truncate text-[16px] text-white">{a.title}</div>
         <div className="mt-0.5 text-[13px] text-mist" suppressHydrationWarning>
+          {a.pending ? "Pending · " : ""}
           {formatWhen(new Date(a.at))}
         </div>
       </div>
-      <div className={cn("relative text-[16px] font-medium tabular", a.amount > 0 ? "text-positive" : "text-white")}>
+      <div className={cn("relative text-[16px] font-medium tabular", a.pending ? "text-mist" : a.amount > 0 ? "text-positive" : "text-white")}>
         {formatEUR(a.amount, { sign: true })}
       </div>
     </motion.li>

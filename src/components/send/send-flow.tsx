@@ -215,11 +215,17 @@ function RecipientStep({ selected, onPick }: { selected: Contact | null; onPick:
 
       <AnimatePresence initial={false}>
         {!q && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="mt-7 mb-3 flex items-center gap-2 text-[13px] text-mist">
+          <motion.div
+            // Clip only while collapsing or expanding, so the hover glow isn't cut off once open.
+            initial={{ opacity: 0, height: 0, overflow: "hidden" }}
+            animate={{ opacity: 1, height: "auto", transitionEnd: { overflow: "visible" } }}
+            exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+          >
+            <div className="mt-7 flex items-center gap-2 text-[13px] text-mist">
               <Star className="size-3.5 text-cyan" /> Favourites
             </div>
-            <div className="no-scrollbar -mx-2 flex gap-2 overflow-x-auto px-2 pb-1">
+            {/* A scroll row clips on both axes, so it gets room for the glow: padding, pulled back with negative margins. */}
+            <div className="no-scrollbar -mx-6 -mt-2 flex gap-2 overflow-x-auto px-6 pt-5 pb-4">
               {favourites.map((c, i) => (
                 <motion.button
                   key={c.id}

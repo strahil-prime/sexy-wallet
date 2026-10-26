@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
-export type Intent = "spent-this-month" | "savings-rate" | "send-janet";
+export type Intent = "money-went" | "subscriptions" | "split-dinner";
 
 export type TellerState =
   | { status: "intro" }
@@ -28,9 +28,9 @@ export const clips: Record<ClipId, Clip> = {
   intro: { src: undefined, loop: false, durationMs: 3200 },
   idle: { src: undefined, loop: true, durationMs: 0 },
   thinking: { src: undefined, loop: true, durationMs: 900 },
-  "answer:spent-this-month": { src: undefined, loop: false, durationMs: 9000 },
-  "answer:savings-rate": { src: undefined, loop: false, durationMs: 9000 },
-  "answer:send-janet": { src: undefined, loop: false, durationMs: 12000 },
+  "answer:money-went": { src: undefined, loop: false, durationMs: 9000 },
+  "answer:subscriptions": { src: undefined, loop: false, durationMs: 10000 },
+  "answer:split-dinner": { src: undefined, loop: false, durationMs: 9000 },
 };
 
 export function clipFor(state: TellerState): ClipId {

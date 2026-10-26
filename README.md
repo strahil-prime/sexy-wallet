@@ -29,8 +29,8 @@ entry in `clips`:
 | `intro`                    | no    | Page load, "Hello Strahil" |
 | `idle`                     | yes   | Waiting |
 | `thinking`                 | yes   | Right after a question button is tapped |
-| `answer:spent-this-month`  | no    | "How much did I spend this month?" |
-| `answer:savings-rate`      | no    | "What's my savings rate?" |
-| `answer:send-janet`        | no    | "Send €10 to Janet" |
+| `answer:money-went`        | no    | "Where did my money go this month?" |
+| `answer:subscriptions`     | no    | "Any subscriptions I forgot about?" |
+| `answer:split-dinner`      | no    | "Split last night's dinner with Janet" |
 
 All clips should start and end on the same home pose so crossfades are seamless.

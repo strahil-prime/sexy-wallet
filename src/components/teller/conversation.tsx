@@ -500,9 +500,11 @@ function Bubble({ children, compact }: { children: React.ReactNode; compact?: bo
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16, scale: 0.96, filter: "blur(8px)" }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -8, scale: 0.98, filter: "blur(6px)" }}
+      // No `filter` here: a filter on the same element as backdrop-filter makes browsers
+      // paint the blurred backdrop as a square box behind the rounded corners.
+      initial={{ opacity: 0, y: 16, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         "glass-strong relative origin-bottom-right overflow-hidden rounded-[22px] rounded-br-md",

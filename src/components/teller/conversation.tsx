@@ -496,22 +496,32 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
   );
 }
 
+/** Matches rounded-[22px] rounded-br-md: top-left, top-right, bottom-right, bottom-left. */
+const bubbleClip = "inset(0 round 22px 22px 6px 22px)";
+
+/**
+ * The frosted glass, its glow and its drop shadow sit on separate layers, and the glass is cut
+ * with clip-path. Clipping a backdrop-filter with only border-radius + overflow-hidden is
+ * unreliable once the element is animated on the GPU: the blur and glow then show as a square
+ * box behind the rounded corners.
+ */
 function Bubble({ children, compact }: { children: React.ReactNode; compact?: boolean }) {
   return (
     <motion.div
-      layout
-      // No `filter` here: a filter on the same element as backdrop-filter makes browsers
-      // paint the blurred backdrop as a square box behind the rounded corners.
       initial={{ opacity: 0, y: 16, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        "glass-strong relative origin-bottom-right overflow-hidden rounded-[22px] rounded-br-md",
-        compact ? "inline-flex px-5 py-3.5" : "w-full p-5",
-      )}
+      className={cn("relative origin-bottom-right", compact ? "inline-flex px-5 py-3.5" : "w-full p-5")}
     >
-      <span aria-hidden className="absolute -top-16 -left-10 size-40 rounded-full bg-cyan/15 blur-3xl" />
+      <span aria-hidden className="absolute inset-0 rounded-[22px] rounded-br-md shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9)]" />
+      <span
+        aria-hidden
+        className="glass-strong absolute inset-0 overflow-hidden rounded-[22px] rounded-br-md shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)]"
+        style={{ clipPath: bubbleClip, WebkitClipPath: bubbleClip }}
+      >
+        <span className="absolute -top-16 -left-10 size-40 rounded-full bg-cyan/15 blur-3xl" />
+      </span>
       <div className="relative">{children}</div>
     </motion.div>
   );

@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from
 import { cn } from "@/lib/utils";
 import { clipFor, clips, type TellerState } from "./machine";
 
-const PORTRAIT = "/teller/bella-v2.jpg";
+const PORTRAIT = "/teller/bella-v3.jpg";
 /** Width / height of the portrait. Export the video clips at this same ratio (square, 2048×2048 or 1080×1080). */
 const PORTRAIT_RATIO = "1 / 1";
 
@@ -65,7 +65,7 @@ export function TellerStage({
       {/* Fixed-proportion portrait frame: always full stage height, never stretched.
           The still and the video clips share this frame, its object-fit and its edge mask. */}
       <div
-        className="absolute top-0 left-1/2 h-full -translate-x-[62%] lg:-top-[7%] lg:left-[63%]"
+        className="absolute top-0 left-1/2 h-full -translate-x-[62%] lg:-top-[7%] lg:left-[58%]"
         style={{ aspectRatio: PORTRAIT_RATIO }}
       >
         <motion.div

@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Logo className="size-7" glow />
           </Link>
           <span className="text-sm font-medium tracking-wide text-fog">Sexy Wallet</span>
-          <Image src="/teller/bella-avatar.jpg" alt="Bella" width={36} height={36} className="size-9 rounded-full object-cover ring-2 ring-cyan/40" />
+          <Image src="/teller/bella-v2-avatar.jpg" alt="Bella" width={36} height={36} className="size-9 rounded-full object-cover ring-2 ring-cyan/40" />
         </header>
 
         {/* Desktop frame */}

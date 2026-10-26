@@ -40,7 +40,7 @@ export function TellerMenu() {
         <span className="relative">
           <span className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-cyan via-electric to-violet opacity-80 blur-[1px] transition-opacity group-hover:opacity-100" />
           <Image
-            src="/teller/bella-avatar.jpg"
+            src="/teller/bella-v2-avatar.jpg"
             alt="Bella"
             width={52}
             height={52}
@@ -77,7 +77,7 @@ export function TellerMenu() {
                     )}
                   >
                     {t.available ? (
-                      <Image src="/teller/bella-avatar.jpg" alt="" width={36} height={36} className="size-9 rounded-full object-cover" />
+                      <Image src="/teller/bella-v2-avatar.jpg" alt="" width={36} height={36} className="size-9 rounded-full object-cover" />
                     ) : (
                       <span className="grid size-9 place-items-center rounded-full bg-white/[0.06]">
                         <Lock className="size-4 text-mist" />

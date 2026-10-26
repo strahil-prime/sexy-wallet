@@ -11,13 +11,15 @@ export function ContactAvatar({ contact, className }: { contact: Contact; classN
   return (
     <div
       className={cn(
-        "relative grid size-12 shrink-0 place-items-center rounded-full text-sm font-semibold text-white ring-1 ring-white/15",
+        "relative grid size-12 shrink-0 place-items-center rounded-full text-sm font-semibold text-white",
+        // Photos get no ring or gradient behind them, which would show as a thin outline at the edge.
+        contact.photo ? "overflow-hidden" : "ring-1 ring-white/15",
         className,
       )}
-      style={{ background: `linear-gradient(135deg, ${contact.hue[0]}, ${contact.hue[1]})` }}
+      style={contact.photo ? undefined : { background: `linear-gradient(135deg, ${contact.hue[0]}, ${contact.hue[1]})` }}
     >
       {contact.photo ? (
-        <Image src={contact.photo} alt="" fill sizes="96px" className="rounded-full object-cover" />
+        <Image src={contact.photo} alt="" fill sizes="96px" className="object-cover" />
       ) : (
         <span className="drop-shadow-[0_1px_2px_rgb(0_0_0/0.35)]">{initials}</span>
       )}

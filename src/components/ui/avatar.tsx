@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Contact } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,11 @@ export function ContactAvatar({ contact, className }: { contact: Contact; classN
       )}
       style={{ background: `linear-gradient(135deg, ${contact.hue[0]}, ${contact.hue[1]})` }}
     >
-      <span className="drop-shadow-[0_1px_2px_rgb(0_0_0/0.35)]">{initials}</span>
+      {contact.photo ? (
+        <Image src={contact.photo} alt="" fill sizes="96px" className="rounded-full object-cover" />
+      ) : (
+        <span className="drop-shadow-[0_1px_2px_rgb(0_0_0/0.35)]">{initials}</span>
+      )}
     </div>
   );
 }

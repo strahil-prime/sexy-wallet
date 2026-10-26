@@ -34,6 +34,8 @@ export type Contact = {
   /** two-stop gradient used for the avatar */
   hue: [string, string];
   favourite?: boolean;
+  /** portrait in /public/contacts; falls back to initials when missing */
+  photo?: string;
 };
 
 const today = (h: number, m: number) => {

@@ -65,10 +65,10 @@ export const initialActivity: Activity[] = [
 ];
 
 export const contacts: Contact[] = [
-  { id: "janet", name: "Janet Moreau", handle: "@janet", iban: "FR76 3000 6000 0112 3456 7890 189", hue: ["#ff8a5b", "#ff4f8b"], favourite: true },
-  { id: "alex", name: "Alex Novak", handle: "@alexn", iban: "DE89 3704 0044 0532 0130 00", hue: ["#2ad1e6", "#1f7bff"], favourite: true },
+  { id: "janet", name: "Janet Moreau", handle: "@janet", iban: "FR76 3000 6000 0112 3456 7890 189", hue: ["#ff8a5b", "#ff4f8b"], favourite: true, photo: "/contacts/janet.jpg" },
+  { id: "alex", name: "Alex Novak", handle: "@alexn", iban: "DE89 3704 0044 0532 0130 00", hue: ["#2ad1e6", "#1f7bff"], favourite: true, photo: "/contacts/alex.jpg" },
   { id: "maria", name: "Maria Rossi", handle: "@mariar", iban: "IT60 X054 2811 1010 0000 0123 456", hue: ["#7c5cff", "#c56bff"], favourite: true },
-  { id: "luka", name: "Luka Petrov", handle: "@luka", iban: "BG80 BNBG 9661 1020 3456 78", hue: ["#3ee39a", "#13a8a0"], favourite: true },
+  { id: "luka", name: "Luka Petrov", handle: "@luka", iban: "BG80 BNBG 9661 1020 3456 78", hue: ["#3ee39a", "#13a8a0"], favourite: true, photo: "/contacts/luka.jpg" },
   { id: "sofia", name: "Sofia Lindqvist", handle: "@sofial", iban: "SE45 5000 0000 0583 9825 7466", hue: ["#ffd25e", "#ff8a5b"] },
   { id: "noah", name: "Noah van Dijk", handle: "@noahvd", iban: "NL91 ABNA 0417 1643 00", hue: ["#5ef0ff", "#7c5cff"] },
   { id: "elena", name: "Elena García", handle: "@elenag", iban: "ES91 2100 0418 4502 0005 1332", hue: ["#ff6b7a", "#7c5cff"] },

@@ -15,8 +15,9 @@ export function MobileNav() {
   const items = tabs.map((t) => navItems.find((n) => n.href === t)!);
 
   return (
-    <nav className="fixed inset-x-3 bottom-3 z-40 lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-      <div className="glass-strong flex h-[68px] items-center justify-around rounded-[24px] px-2">
+    // Sits 15px lower than it used to: flush with the bottom edge and 3px shorter.
+    <nav className="fixed inset-x-3 bottom-0 z-40 lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className="glass-strong flex h-[65px] items-center justify-around rounded-[24px] px-2">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
           if (item.href === "/send") {

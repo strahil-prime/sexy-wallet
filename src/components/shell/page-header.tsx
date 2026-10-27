@@ -25,7 +25,7 @@ export function PageHeader({
   compactOnMobile?: boolean;
 }) {
   return (
-    <header className={cn("flex items-center gap-4 px-5 pt-2 pb-6 sm:px-8 lg:px-10 lg:pt-8", compactOnMobile && "pt-1 pb-3 lg:pb-6")}>
+    <header className={cn("flex items-center gap-4 px-5 pt-[max(16px,env(safe-area-inset-top))] pb-6 sm:px-8 lg:px-10 lg:pt-8", compactOnMobile && "pb-3 lg:pb-6")}>
       {onMobileBack && (
         <button type="button" onClick={onMobileBack} aria-label="Back" className={cn(backClass, "lg:hidden")}>
           {backIcon}

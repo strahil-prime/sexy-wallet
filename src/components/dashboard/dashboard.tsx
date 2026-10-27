@@ -5,6 +5,7 @@ import { useTeller } from "@/components/teller/machine";
 import { SoundToggle, useTellerSound } from "@/components/teller/sound";
 import { TellerStage } from "@/components/teller/teller-stage";
 import { AskBar, QuestionChips, TellerBubble } from "@/components/teller/conversation";
+import { cn } from "@/lib/utils";
 import { ActivityList } from "./activity-list";
 import { Balance } from "./balance";
 import { CardPreview } from "./card-preview";
@@ -13,6 +14,7 @@ import { QuickActions } from "./quick-actions";
 export function Dashboard() {
   const teller = useTeller();
   const sound = useTellerSound();
+  const answering = teller.state.status === "talking";
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:flex-row">
@@ -25,13 +27,25 @@ export function Dashboard() {
         <Balance className="mt-auto lg:mt-[clamp(0px,calc(100vh-840px),150px)]" />
 
         <div className="relative mt-8 flex flex-col gap-3 lg:mt-auto lg:ml-[10%] xl:ml-[16%]">
+          {/* On desktop an answer sits over the chips and ask bar (it has its own close button),
+              so it only overlaps Bella a little. The greeting and "thinking" stay above them. */}
           <TellerBubble
             state={teller.state}
             onClose={teller.dismiss}
-            className="w-full max-w-[460px] lg:absolute lg:right-0 lg:bottom-full lg:mb-3 lg:flex lg:justify-end"
+            className={cn(
+              "w-full max-w-[460px] lg:absolute lg:flex",
+              answering ? "lg:inset-x-0 lg:bottom-0 lg:z-20 lg:max-w-none lg:[&>*]:w-full" : "lg:right-0 lg:bottom-full lg:mb-3 lg:justify-end",
+            )}
           />
-          <QuestionChips state={teller.state} onAsk={teller.ask} />
-          <AskBar />
+          <div
+            className={cn(
+              "flex flex-col gap-3 transition-opacity duration-300",
+              answering && "lg:pointer-events-none lg:opacity-0",
+            )}
+          >
+            <QuestionChips state={teller.state} onAsk={teller.ask} />
+            <AskBar />
+          </div>
         </div>
       </section>
 

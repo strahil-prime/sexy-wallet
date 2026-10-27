@@ -2,15 +2,20 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { Toaster } from "sonner";
 import { Logo } from "@/components/brand/logo";
+import { cn } from "@/lib/utils";
 import { WalletProvider } from "@/lib/wallet-store";
 import { MobileNav } from "./mobile-nav";
 import { Preloader } from "./preloader";
 import { Sidebar } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  // Inner pages (Send, Card, ...) start with their own back arrow and title on mobile, so the
+  // top bar is home-only to save height.
+  const home = usePathname() === "/";
   return (
     <WalletProvider>
       <MotionConfig reducedMotion="user">
@@ -21,8 +26,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_0%,transparent,rgb(3_8_12/0.85))]" />
         </div>
 
-        {/* Mobile top bar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-gradient-to-b from-ink-950/90 to-transparent px-5 lg:hidden">
+        {/* Mobile top bar, home only */}
+        <header className={cn("sticky top-0 z-30 h-16 items-center justify-between bg-gradient-to-b from-ink-950/90 to-transparent px-5 lg:hidden", home ? "flex" : "hidden")}>
           <Link href="/" aria-label="Home" className="text-white">
             <Logo className="size-7" glow />
           </Link>

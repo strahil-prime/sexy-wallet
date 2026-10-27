@@ -67,7 +67,7 @@ export function CardView() {
   const cardTx = activity.filter((a) => a.card).slice(0, 5);
 
   return (
-    <div className="relative isolate min-h-full pb-10">
+    <div className="relative isolate min-h-full pb-10 max-lg:-mb-28 max-lg:min-h-lvh max-lg:pb-28">
       <Ambient />
       <PageHeader title="Your cards" subtitle="Manage, freeze and secure your cards" />
 

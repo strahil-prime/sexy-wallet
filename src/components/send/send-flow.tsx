@@ -91,7 +91,7 @@ export function SendFlow() {
   const canGoBack = step === "amount" || step === "review";
 
   return (
-    <div className="relative isolate min-h-full pb-10">
+    <div className="relative isolate min-h-full pb-10 max-lg:-mb-28 max-lg:min-h-lvh max-lg:pb-28">
       <Ambient />
       <PageHeader
         title="Send money"
@@ -441,7 +441,8 @@ function AmountStep({
         ))}
       </div>
 
-      <div className="mt-2 grid w-full max-w-[340px] grid-cols-3 gap-1 short:mt-3 lg:mt-6 lg:gap-2">
+      {/* Phones: key height grows with the screen, so the keypad uses the room the hidden nav freed up. */}
+      <div className="mt-3 grid w-full max-w-[340px] grid-cols-3 gap-2 short:mt-3 short:gap-1 lg:mt-6">
         {keys.map((k) => (
           <motion.button
             key={k}
@@ -449,7 +450,7 @@ function AmountStep({
             onClick={() => press(k)}
             whileTap={{ scale: 0.9, backgroundColor: "rgba(42,209,230,0.16)" }}
             aria-label={k === "del" ? "Delete" : k}
-            className="focus-ring grid h-12 cursor-pointer place-items-center rounded-2xl text-[24px] short:h-10 short:text-[22px] lg:h-14 font-medium text-white transition-colors hover:bg-white/[0.05]"
+            className="focus-ring grid h-[clamp(48px,calc((100svh-500px)/4),68px)] cursor-pointer place-items-center rounded-2xl text-[26px] short:h-10 short:text-[22px] lg:h-14 lg:text-[24px] font-medium text-white transition-colors hover:bg-white/[0.05]"
           >
             {k === "del" ? <Delete className="size-6 text-fog" strokeWidth={1.6} /> : k}
           </motion.button>

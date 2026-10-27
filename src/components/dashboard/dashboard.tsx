@@ -34,6 +34,8 @@ export function Dashboard() {
             onClose={teller.dismiss}
             className={cn(
               "w-full max-w-[460px] lg:absolute lg:flex",
+              // Mobile skips the greeting card; Bella's card only appears once a question is asked.
+              teller.state.status === "intro" && "max-lg:hidden",
               answering ? "lg:inset-x-0 lg:bottom-0 lg:z-20 lg:max-w-none lg:[&>*]:w-full" : "lg:right-0 lg:bottom-full lg:mb-3 lg:justify-end",
             )}
           />

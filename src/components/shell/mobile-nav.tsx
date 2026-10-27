@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,10 +14,20 @@ const tabs = ["/", "/card", "/send", "/activity", "/profile"];
 export function MobileNav() {
   const pathname = usePathname();
   const items = tabs.map((t) => navItems.find((n) => n.href === t)!);
+  const shown = useShowOnScroll(pathname);
 
   return (
     // Sits 15px lower than it used to: flush with the bottom edge and 3px shorter.
-    <nav className="fixed inset-x-3 bottom-0 z-40 lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+    // Hidden until the viewer scrolls down, so it never covers the bottom of a page on arrival.
+    <motion.nav
+      initial={false}
+      animate={{ y: shown ? 0 : "130%", opacity: shown ? 1 : 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 34 }}
+      aria-hidden={!shown}
+      inert={!shown}
+      className="fixed inset-x-3 bottom-0 z-40 lg:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="glass-strong flex h-[65px] items-center justify-around rounded-[24px] px-2">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
@@ -53,6 +64,34 @@ export function MobileNav() {
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
+}
+
+/**
+ * Shown once the page is scrolled down, hidden again back at the top. A swipe up also shows it,
+ * so pages that fit on screen without scrolling can still reach it. Each new page starts hidden.
+ */
+function useShowOnScroll(pathname: string) {
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    setShown(window.scrollY > 24);
+    let startY = 0;
+    const onScroll = () => setShown(window.scrollY > 24);
+    const onStart = (e: TouchEvent) => (startY = e.touches[0].clientY);
+    const onMove = (e: TouchEvent) => {
+      if (startY - e.touches[0].clientY > 30) setShown(true);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchmove", onMove);
+    };
+  }, [pathname]);
+
+  return shown;
 }

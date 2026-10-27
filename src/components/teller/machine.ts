@@ -31,16 +31,21 @@ export type Clip = {
   loop: boolean;
   /** fallback length when there is no video */
   durationMs: number;
+  /** seconds where Bella is speaking, from ffmpeg silencedetect (-35dB, 0.25s) */
+  voice?: [number, number][];
 };
 
+const INTRO_VOICE: [number, number][] = [[0, 0.94], [1.3, 2.38]];
+const ANSWER_VOICE: [number, number][] = [[0, 2.89], [3.37, 9.33], [9.92, 12.27]];
+
 export const clips: Record<ClipId, Clip> = {
-  intro: { src: "/teller/clips/intro.mp4", webm: "/teller/clips/intro.webm", loop: false, durationMs: 3200 },
+  intro: { src: "/teller/clips/intro.mp4", webm: "/teller/clips/intro.webm", loop: false, durationMs: 3200, voice: INTRO_VOICE },
   idle: { src: "/teller/clips/idle.mp4", webm: "/teller/clips/idle.webm", loop: true, durationMs: 0 },
   thinking: { src: undefined, loop: true, durationMs: 900 },
   // One placeholder answer clip for all three questions until the real ones are recorded.
-  "answer:money-went": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000 },
-  "answer:subscriptions": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 10000 },
-  "answer:split-dinner": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000 },
+  "answer:money-went": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000, voice: ANSWER_VOICE },
+  "answer:subscriptions": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 10000, voice: ANSWER_VOICE },
+  "answer:split-dinner": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000, voice: ANSWER_VOICE },
 };
 
 export function clipFor(state: TellerState): ClipId {

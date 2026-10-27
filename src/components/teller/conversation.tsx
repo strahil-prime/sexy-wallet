@@ -9,6 +9,7 @@ import { BrandLogo, BrandMark } from "@/components/brand/brand-mark";
 import { ContactAvatar } from "@/components/ui/avatar";
 import { contacts, initialActivity, lastDinnerId, subscriptions, teller, type Contact, type Subscription } from "@/lib/data";
 import { useWallet } from "@/lib/wallet-store";
+import { useVoiced } from "./voice";
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
 import type { Intent, TellerState } from "./machine";
 
@@ -149,7 +150,9 @@ function Spoken({ text, delay = 0 }: { text: string; delay?: number }) {
   );
 }
 
-function Header({ onClose, speaking }: { onClose?: () => void; speaking: boolean }) {
+function Header({ onClose }: { onClose?: () => void }) {
+  // Bars move only while her voice is actually audible; otherwise they rest at the bottom.
+  const speaking = useVoiced();
   return (
     <div className="mb-3 flex items-center gap-2.5">
       <span className="text-[13px] font-semibold tracking-wide text-white">{teller.name}</span>
@@ -458,7 +461,7 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
           // Desktop only: on mobile the greeting card would push the quick buttons down. It is
           // hidden on the card itself, so it stays hidden while it animates out too.
           <Bubble key="intro" className="max-lg:hidden">
-            <Header speaking />
+            <Header />
             <p className="text-[19px] leading-snug font-medium text-white">
               <Spoken text="Hello Strahil." delay={0.2} />
             </p>
@@ -487,7 +490,7 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
         )}
         {state.status === "talking" && (
           <Bubble key={key}>
-            <Header speaking onClose={onClose} />
+            <Header onClose={onClose} />
             {state.intent === "money-went" && <MoneyAnswer />}
             {state.intent === "subscriptions" && <SubscriptionsAnswer />}
             {state.intent === "split-dinner" && <SplitAnswer onClose={onClose} />}

@@ -7,6 +7,7 @@ import { registerPrimer, usePreloaded } from "@/components/shell/preloader";
 import { cn } from "@/lib/utils";
 import { clipFor, clips, type Clip, type ClipId, type TellerState } from "./machine";
 import type { TellerSound } from "./sound";
+import { setVoiced } from "./voice";
 
 /** First frame of the idle loop, so the still and the video line up exactly. */
 const PORTRAIT = "/teller/clips/idle-poster.jpg";
@@ -246,6 +247,26 @@ function OverlayClip({
         v.play().catch(onEnded);
       });
   }, [ready, active, single, load, onEnded, setBlocked]);
+
+  // Tell the cards' equaliser when her voice is audible: playing, unmuted, in a spoken stretch.
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    let raf = 0;
+    const tick = () => {
+      const t = v.currentTime;
+      setVoiced(
+        active && !v.paused && !v.ended && !v.muted && v.dataset.clip === clipId &&
+          !!clip.voice?.some(([a, b]) => t >= a && t < b),
+      );
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      cancelAnimationFrame(raf);
+      setVoiced(false);
+    };
+  }, [active, clipId, clip]);
 
   // Follow the sound toggle mid-clip. Toggling is a tap, so the browser allows it.
   useEffect(() => {

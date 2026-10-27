@@ -455,7 +455,9 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
     <div className={cn("relative", className)} aria-live="polite">
       <AnimatePresence mode="wait">
         {state.status === "intro" && (
-          <Bubble key="intro">
+          // Desktop only: on mobile the greeting card would push the quick buttons down. It is
+          // hidden on the card itself, so it stays hidden while it animates out too.
+          <Bubble key="intro" className="max-lg:hidden">
             <Header speaking />
             <p className="text-[19px] leading-snug font-medium text-white">
               <Spoken text="Hello Strahil." delay={0.2} />
@@ -505,14 +507,14 @@ const bubbleClip = "inset(0 round 22px 22px 6px 22px)";
  * unreliable once the element is animated on the GPU: the blur and glow then show as a square
  * box behind the rounded corners.
  */
-function Bubble({ children, compact }: { children: React.ReactNode; compact?: boolean }) {
+function Bubble({ children, compact, className }: { children: React.ReactNode; compact?: boolean; className?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={cn("relative origin-bottom-right", compact ? "inline-flex px-5 py-3.5" : "w-full p-5")}
+      className={cn("relative origin-bottom-right", compact ? "inline-flex px-5 py-3.5" : "w-full p-5", className)}
     >
       <span aria-hidden className="absolute inset-0 rounded-[22px] rounded-br-md shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9)]" />
       <span

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { registerPrimer, usePreloaded } from "@/components/shell/preloader";
 import { cn } from "@/lib/utils";
@@ -60,6 +60,7 @@ export function TellerStage({
   }, [px, py]);
 
   const speaking = (state.status === "talking" && !state.clipDone) || state.status === "intro";
+  const phone = usePhoneLayout();
 
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
@@ -76,7 +77,9 @@ export function TellerStage({
       >
         <motion.div
           className="absolute inset-0"
-          style={{ x, y, ...featherMask }}
+          // On phones the frame is plain: iPhone Safari mis-draws video inside a masked, moving
+          // layer (a clip showed as a cut-off strip). The stage's gradients still blend the edges.
+          style={phone ? undefined : { x, y, ...featherMask }}
           initial={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
           // Drop the filter once the entrance ends: iOS Safari mis-draws videos inside an element
           // that has both a mask and a filter (the clip showed as a cut-off strip).
@@ -85,8 +88,8 @@ export function TellerStage({
         >
           <motion.div
             className="absolute inset-0"
-            animate={{ scale: [1, 1.018, 1] }}
-            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+            animate={phone ? { scale: 1 } : { scale: [1, 1.018, 1] }}
+            transition={phone ? { duration: 0 } : { duration: 9, repeat: Infinity, ease: "easeInOut" }}
           >
             <Image
               src={PORTRAIT}
@@ -96,9 +99,11 @@ export function TellerStage({
               sizes="(min-width: 1024px) 60vw, 100vw"
               className="object-cover object-top"
             />
-            {/* The idle loop always plays underneath; other clips fade in on top of it and back out. */}
-            {clips.idle.src && <LoopVideo clip={clips.idle} />}
-            <OverlayClip clipId={clipId} clip={clip} sound={sound} onEnded={onClipEnded} />
+            {/* Desktop: the idle loop always plays underneath and other clips fade in on top of it.
+                Phones: one video element plays everything, swapping clips, so there is only ever one
+                video layer to draw. */}
+            {clips.idle.src && !phone && <LoopVideo clip={clips.idle} />}
+            <OverlayClip clipId={clipId} clip={clip} sound={sound} onEnded={onClipEnded} single={phone} />
           </motion.div>
         </motion.div>
       </div>
@@ -161,11 +166,14 @@ function OverlayClip({
   clip,
   sound,
   onEnded,
+  single,
 }: {
   clipId: ClipId;
   clip: Clip;
   sound: TellerSound;
   onEnded: () => void;
+  /** Also plays the idle loop between clips, instead of a separate loop element underneath. */
+  single: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const ready = usePreloaded();
@@ -176,10 +184,11 @@ function OverlayClip({
 
   /** Load the clip unless it's already the one on the element (the preloader may have started it). */
   const load = useCallback(
-    (v: HTMLVideoElement) => {
-      if (v.dataset.clip === clipId) return;
-      v.dataset.clip = clipId;
-      v.src = sourceFor(v, clip) ?? "";
+    (v: HTMLVideoElement, id: ClipId = clipId, c: Clip = clip) => {
+      if (v.dataset.clip === id) return;
+      v.dataset.clip = id;
+      v.loop = c.loop;
+      v.src = sourceFor(v, c) ?? "";
       v.currentTime = 0;
     },
     [clipId, clip],
@@ -201,12 +210,19 @@ function OverlayClip({
 
   useEffect(() => {
     const v = ref.current;
-    if (!v || !ready) return;
+    if (!v) return;
     if (!active) {
-      v.pause();
-      delete v.dataset.clip;
+      if (single && clips.idle.src) {
+        load(v, "idle", clips.idle);
+        v.muted = true;
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+        delete v.dataset.clip;
+      }
       return;
     }
+    if (!ready) return;
     load(v);
     v.muted = !wantSound.current;
     v.play()
@@ -218,12 +234,12 @@ function OverlayClip({
         setBlocked(wantSound.current);
         v.play().catch(onEnded);
       });
-  }, [ready, active, load, onEnded, setBlocked]);
+  }, [ready, active, single, load, onEnded, setBlocked]);
 
   // Follow the sound toggle mid-clip. Toggling is a tap, so the browser allows it.
   useEffect(() => {
     const v = ref.current;
-    if (v) v.muted = !sound.on || sound.blocked;
+    if (v && v.dataset.clip !== "idle") v.muted = !sound.on || sound.blocked;
   }, [sound.on, sound.blocked]);
 
   // The first interaction anywhere lets the browser play sound, so take it.
@@ -231,7 +247,7 @@ function OverlayClip({
     if (!sound.blocked) return;
     const unlock = () => {
       const v = ref.current;
-      if (v && !v.paused) v.muted = !wantSound.current;
+      if (v && !v.paused && v.dataset.clip !== "idle") v.muted = !wantSound.current;
       setBlocked(false);
     };
     window.addEventListener("pointerdown", unlock, { once: true, capture: true });
@@ -243,13 +259,15 @@ function OverlayClip({
     // own opacity is animated inside a masked, transformed parent.
     <motion.div
       initial={false}
-      animate={{ opacity: active ? 1 : 0 }}
+      animate={{ opacity: active || single ? 1 : 0 }}
       transition={{ duration: 0.35 }}
       className="absolute inset-0"
     >
       <video
         ref={ref}
+        muted
         playsInline
+        poster={single ? PORTRAIT : undefined}
         preload="auto"
         onEnded={() => active && onEnded()}
         onError={() => active && onEnded()}
@@ -257,6 +275,19 @@ function OverlayClip({
       />
     </motion.div>
   );
+}
+
+/** Below the desktop breakpoint, where the stage switches to its simpler phone setup. */
+function usePhoneLayout() {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const update = () => setPhone(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return phone;
 }
 
 /** Floating motes of light, Magic UI "particles" style but DOM-light. */

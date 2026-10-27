@@ -33,7 +33,7 @@ export function QuestionChips({ state, onAsk, className }: { state: TellerState;
             onClick={() => onAsk(q.intent)}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.4 + i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ delay: 0.15 + i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.96 }}
             className={cn(
@@ -71,7 +71,7 @@ export function AskBar({ className }: { className?: string }) {
       ref={scope}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 1.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ delay: 0.25, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={cn("relative", className)}
     >
       <label

@@ -94,7 +94,7 @@ export function Balance({ className }: { className?: string }) {
       <motion.div
         initial={{ opacity: 0, y: 10, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 1.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ delay: 0.35, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="mt-2.5 inline-flex h-[31px] items-center gap-1.5 rounded-full border border-positive/15 bg-positive/[0.08] px-3 text-positive backdrop-blur-md"
       >
         <ArrowUpRight className="size-[13px]" strokeWidth={2.2} />

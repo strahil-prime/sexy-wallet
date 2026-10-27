@@ -3,17 +3,36 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { SearchField } from "./top-actions";
 
-export function PageHeader({ title, subtitle, back = "/" }: { title: string; subtitle?: string; back?: string }) {
+const backClass = "group focus-ring glass grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition-colors hover:border-hairline-strong";
+const backIcon = <ArrowLeft className="size-5 text-fog transition-transform group-hover:-translate-x-0.5 group-hover:text-white" />;
+
+export function PageHeader({
+  title,
+  subtitle,
+  back = "/",
+  onMobileBack,
+  compactOnMobile = false,
+}: {
+  title: string;
+  subtitle?: string;
+  back?: string;
+  /** On mobile, the back arrow runs this instead of leaving the page (e.g. a previous step). */
+  onMobileBack?: () => void;
+  /** Tighter header without the subtitle below lg, for pages that need the vertical room. */
+  compactOnMobile?: boolean;
+}) {
   return (
-    <header className="flex items-center gap-4 px-5 pt-2 pb-6 sm:px-8 lg:px-10 lg:pt-8">
-      <Link
-        href={back}
-        aria-label="Back"
-        className="group focus-ring glass grid size-11 shrink-0 place-items-center rounded-full transition-colors hover:border-hairline-strong"
-      >
-        <ArrowLeft className="size-5 text-fog transition-transform group-hover:-translate-x-0.5 group-hover:text-white" />
+    <header className={cn("flex items-center gap-4 px-5 pt-2 pb-6 sm:px-8 lg:px-10 lg:pt-8", compactOnMobile && "pt-1 pb-3 lg:pb-6")}>
+      {onMobileBack && (
+        <button type="button" onClick={onMobileBack} aria-label="Back" className={cn(backClass, "lg:hidden")}>
+          {backIcon}
+        </button>
+      )}
+      <Link href={back} aria-label="Back" className={cn(backClass, onMobileBack && "hidden lg:grid")}>
+        {backIcon}
       </Link>
       <div className="min-w-0 flex-1">
         <motion.h1
@@ -29,7 +48,7 @@ export function PageHeader({ title, subtitle, back = "/" }: { title: string; sub
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[14px] text-mist"
+            className={cn("text-[14px] text-mist", compactOnMobile && "hidden lg:block")}
           >
             {subtitle}
           </motion.p>

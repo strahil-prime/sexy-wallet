@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Short phones (iPhone SE and the like), where every step of a flow must still fit above the tab bar. */
+@custom-variant short (@media (max-width: 1023px) and (max-height: 740px));
+
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;

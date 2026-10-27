@@ -7,12 +7,14 @@ import { Toaster } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { WalletProvider } from "@/lib/wallet-store";
 import { MobileNav } from "./mobile-nav";
+import { Preloader } from "./preloader";
 import { Sidebar } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <WalletProvider>
       <MotionConfig reducedMotion="user">
+        <Preloader>
         {/* Ambient backdrop outside the app frame */}
         <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">
           <Image src="/backdrop.jpg" alt="" fill priority className="scale-110 object-cover opacity-70" />
@@ -44,6 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             },
           }}
         />
+        </Preloader>
       </MotionConfig>
     </WalletProvider>
   );

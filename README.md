@@ -34,8 +34,11 @@ optional `webm`) on each entry in `clips`. A clip without `src` is timed over th
 | `answer:split-dinner`      | no    | "Split last night's dinner with Janet" |
 
 One-off clips play on a single overlay video above the idle loop, with sound when the
-browser allows it. Browsers usually block sound before the first tap, so the clip then plays
-muted and the sound toggle (top left) shows "Tap for sound"; any tap turns sound on.
+browser allows it. Browsers usually block sound before the first tap, so the logo preloader
+(`src/components/shell/preloader.tsx`) asks the browser first: if sound may autoplay it goes
+straight to the page, otherwise it ends on "Tap to enter", and that tap unlocks sound (on iOS it
+starts the greeting inside the gesture). If sound is still refused, the clip plays muted and the
+sound toggle (top left) shows "Tap for sound".
 
 All clips should start and end on the same home pose so crossfades are seamless.
 

@@ -83,14 +83,26 @@ export function SendFlow() {
     if (i > 0 && step !== "processing" && step !== "success") go(order[i - 1]);
   };
 
+  // Mobile scrolls the whole page, so start each step from the top.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 1023px)").matches) window.scrollTo({ top: 0 });
+  }, [step]);
+
+  const canGoBack = step === "amount" || step === "review";
+
   return (
     <div className="relative isolate min-h-full pb-10">
       <Ambient />
-      <PageHeader title="Send money" subtitle="Instant transfers across Europe, no fees" />
+      <PageHeader
+        title="Send money"
+        subtitle="Instant transfers across Europe, no fees"
+        compactOnMobile
+        onMobileBack={canGoBack ? back : undefined}
+      />
 
       <LayoutGroup>
         <div className="grid gap-5 px-4 sm:px-8 lg:px-10 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <Panel spotlight={false} className="min-h-[640px] overflow-hidden">
+          <Panel spotlight={false} className="overflow-hidden lg:min-h-[640px]">
             {step !== "success" && step !== "processing" && (
               <Stepper step={step} onBack={step !== "recipient" ? back : undefined} />
             )}
@@ -149,7 +161,8 @@ export function SendFlow() {
 function Stepper({ step, onBack }: { step: Step; onBack?: () => void }) {
   const current = steps.findIndex((s) => s.id === step);
   return (
-    <div className="flex items-center gap-4 border-b border-hairline px-5 py-4 sm:px-8">
+    // Desktop only: on mobile it costs too much height, and the page header's back arrow steps back instead.
+    <div className="hidden items-center gap-4 border-b border-hairline px-5 py-4 sm:px-8 lg:flex">
       <motion.button
         type="button"
         onClick={onBack}
@@ -192,7 +205,7 @@ function RecipientStep({ selected, onPick }: { selected: Contact | null; onPick:
   const favourites = contacts.filter((c) => c.favourite);
 
   return (
-    <div className="px-5 py-6 sm:px-8">
+    <div className="px-5 py-5 sm:px-8 lg:py-6">
       <h2 className="text-[22px] font-semibold tracking-tight text-white">Who are you sending to?</h2>
 
       <label className="group mt-5 flex h-14 items-center gap-3 rounded-2xl bg-white/[0.04] px-4 ring-1 ring-white/[0.07] transition focus-within:bg-white/[0.06] focus-within:ring-cyan/40">
@@ -373,7 +386,7 @@ function AmountStep({
   const decimals = raw.includes(".") ? raw.split(".")[1].length : 0;
 
   return (
-    <div className="flex flex-col items-center px-5 py-6 sm:px-8">
+    <div className="flex flex-col items-center px-5 py-4 short:py-3 sm:px-8 lg:py-6">
       <div className="flex items-center gap-3 rounded-full bg-white/[0.04] py-1.5 pr-4 pl-1.5 ring-1 ring-white/[0.06]">
         <motion.span layoutId={`avatar-${to.id}`}>
           <ContactAvatar contact={to} className="size-9 text-xs" />
@@ -383,17 +396,17 @@ function AmountStep({
         </span>
       </div>
 
-      <motion.div ref={scope} className={cn("mt-8 flex h-[96px] items-center font-semibold tracking-[-0.04em] tabular transition-colors", over ? "text-negative" : amount ? "text-white" : "text-white/30")}>
+      <motion.div ref={scope} className={cn("mt-3 flex h-[72px] items-center font-semibold short:mt-1 short:h-[52px] lg:mt-8 lg:h-[96px] tracking-[-0.04em] tabular transition-colors", over ? "text-negative" : amount ? "text-white" : "text-white/30")}>
         <NumberFlow
           value={amount}
           locales="en-IE"
           format={{ style: "currency", currency: "EUR", minimumFractionDigits: decimals, maximumFractionDigits: 2 }}
           suffix={raw.endsWith(".") ? "." : undefined}
-          className="text-[64px] leading-none sm:text-[80px]"
+          className="text-[54px] leading-none short:text-[42px] sm:text-[64px] lg:text-[80px]"
         />
         <motion.span
           aria-hidden
-          className="ml-1 h-[60px] w-[3px] rounded-full bg-cyan"
+          className="ml-1 h-[46px] w-[3px] rounded-full bg-cyan short:h-[36px] lg:h-[60px]"
           animate={{ opacity: [1, 0, 1] }}
           transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
         />
@@ -405,13 +418,13 @@ function AmountStep({
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
-          className={cn("mt-2 text-[14px]", over ? "text-negative" : "text-mist")}
+          className={cn("mt-1 text-[14px] lg:mt-2", over ? "text-negative" : "text-mist")}
         >
           {over ? `That's more than your ${formatEUR(balance)} balance` : `Available ${formatEUR(balance)}`}
         </motion.p>
       </AnimatePresence>
 
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
+      <div className="mt-3 flex flex-wrap justify-center gap-2 short:hidden lg:mt-5">
         {[10, 25, 50, 100].map((v) => (
           <motion.button
             key={v}
@@ -428,7 +441,7 @@ function AmountStep({
         ))}
       </div>
 
-      <div className="mt-6 grid w-full max-w-[340px] grid-cols-3 gap-2">
+      <div className="mt-2 grid w-full max-w-[340px] grid-cols-3 gap-1 short:mt-3 lg:mt-6 lg:gap-2">
         {keys.map((k) => (
           <motion.button
             key={k}
@@ -436,21 +449,22 @@ function AmountStep({
             onClick={() => press(k)}
             whileTap={{ scale: 0.9, backgroundColor: "rgba(42,209,230,0.16)" }}
             aria-label={k === "del" ? "Delete" : k}
-            className="focus-ring grid h-14 cursor-pointer place-items-center rounded-2xl text-[24px] font-medium text-white transition-colors hover:bg-white/[0.05]"
+            className="focus-ring grid h-12 cursor-pointer place-items-center rounded-2xl text-[24px] short:h-10 short:text-[22px] lg:h-14 font-medium text-white transition-colors hover:bg-white/[0.05]"
           >
             {k === "del" ? <Delete className="size-6 text-fog" strokeWidth={1.6} /> : k}
           </motion.button>
         ))}
       </div>
 
-      <div className="mt-5 w-full max-w-[440px]">
+      <div className="mt-3 w-full max-w-[440px] short:mt-2 lg:mt-5">
         <input
           value={note}
           onChange={(e) => setNote(e.target.value.slice(0, 40))}
           placeholder="What's it for? (optional)"
-          className="h-12 w-full rounded-2xl bg-white/[0.04] px-4 text-[15px] text-white ring-1 ring-white/[0.07] outline-none transition placeholder:text-mist focus:ring-cyan/40"
+          className="h-11 w-full rounded-2xl bg-white/[0.04] px-4 text-[16px] short:h-10 lg:h-12 lg:text-[15px] text-white ring-1 ring-white/[0.07] outline-none transition placeholder:text-mist focus:ring-cyan/40"
         />
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        {/* Note suggestions are desktop only; mobile keeps the field and saves the row. */}
+        <div className="mt-2 hidden flex-wrap gap-1.5 lg:flex">
           {notes.map((n) => (
             <button
               key={n}
@@ -467,7 +481,7 @@ function AmountStep({
         </div>
       </div>
 
-      <PrimaryButton className="mt-7 w-full max-w-[440px]" disabled={!valid} onClick={onNext}>
+      <PrimaryButton className="mt-4 w-full max-w-[440px] short:mt-3 short:h-12 lg:mt-7" disabled={!valid} onClick={onNext}>
         Continue <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
       </PrimaryButton>
     </div>
@@ -518,13 +532,13 @@ function ReviewStep({
   if (note) rows.splice(2, 0, ["Note", note]);
 
   return (
-    <div className="flex flex-col items-center px-5 py-8 sm:px-8">
+    <div className="flex flex-col items-center px-5 py-5 short:py-3 sm:px-8 lg:py-8">
       <motion.span layoutId={`avatar-${to.id}`} className="relative">
         <span className="absolute -inset-3 animate-pulse-ring rounded-full ring-2 ring-cyan/30" />
-        <ContactAvatar contact={to} className="size-20 text-xl" />
+        <ContactAvatar contact={to} className="size-16 text-lg short:size-12 short:text-sm lg:size-20 lg:text-xl" />
       </motion.span>
-      <div className="mt-4 text-[15px] text-mist">You&apos;re sending</div>
-      <div className="mt-1 text-[56px] leading-none font-semibold tracking-[-0.04em] text-white tabular">{formatEUR(amount)}</div>
+      <div className="mt-3 text-[15px] text-mist short:mt-2 short:text-[13px] lg:mt-4">You&apos;re sending</div>
+      <div className="mt-1 text-[46px] leading-none short:text-[38px] lg:text-[56px] font-semibold tracking-[-0.04em] text-white tabular">{formatEUR(amount)}</div>
       <div className="mt-2 text-[15px] text-fog">
         to <span className="text-white">{to.name}</span>
         <button type="button" onClick={onEdit} className="focus-ring ml-2 cursor-pointer rounded text-cyan hover:underline">
@@ -532,14 +546,14 @@ function ReviewStep({
         </button>
       </div>
 
-      <dl className="mt-8 w-full max-w-[460px] rounded-2xl bg-white/[0.03] px-5 ring-1 ring-white/[0.06]">
+      <dl className="mt-5 w-full max-w-[460px] short:mt-3 lg:mt-8 rounded-2xl bg-white/[0.03] px-5 ring-1 ring-white/[0.06]">
         {rows.map(([k, v], i) => (
           <motion.div
             key={k}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 + i * 0.05, duration: 0.45, ease }}
-            className="flex items-center justify-between gap-4 py-3.5 text-[14.5px] [&:not(:last-child)]:border-b [&:not(:last-child)]:border-hairline"
+            className="flex items-center justify-between gap-4 py-3 text-[14.5px] short:py-2 short:text-[13.5px] lg:py-3.5 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-hairline"
           >
             <dt className="text-mist">{k}</dt>
             <dd className="truncate text-right text-white">{v}</dd>
@@ -547,7 +561,7 @@ function ReviewStep({
         ))}
       </dl>
 
-      <HoldToSend className="mt-8 w-full max-w-[460px]" onConfirm={onConfirm} />
+      <HoldToSend className="mt-5 w-full max-w-[460px] short:mt-3 short:h-14 lg:mt-8" onConfirm={onConfirm} />
       <p className="mt-3 flex items-center gap-1.5 text-[12.5px] text-mist">
         <ShieldCheck className="size-3.5 text-positive" /> Protected by device verification
       </p>
@@ -615,7 +629,7 @@ function HoldToSend({ onConfirm, className }: { onConfirm: () => void; className
 
 function Processing({ to, amount }: { to: Contact; amount: number }) {
   return (
-    <div className="flex min-h-[600px] flex-col items-center justify-center px-6 text-center">
+    <div className="flex min-h-[460px] flex-col items-center justify-center px-6 text-center lg:min-h-[600px]">
       <div className="relative grid size-40 place-items-center">
         {[0, 1, 2].map((i) => (
           <motion.span
@@ -710,7 +724,7 @@ function Success({
   if (note) rows.push(["Note", note]);
 
   return (
-    <div className="flex min-h-[600px] flex-col items-center px-5 py-10 text-center sm:px-8">
+    <div className="flex flex-col items-center px-5 py-6 text-center sm:px-8 lg:min-h-[600px] lg:py-10">
       <div className="relative grid size-32 place-items-center">
         <div ref={burst} className="pointer-events-none absolute inset-0" />
         <motion.span
@@ -735,7 +749,7 @@ function Success({
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6, ease }}>
-        <div className="mt-6 text-[44px] leading-none font-semibold tracking-[-0.04em] text-white tabular">{formatEUR(amount)}</div>
+        <div className="mt-4 text-[40px] leading-none lg:mt-6 lg:text-[44px] font-semibold tracking-[-0.04em] text-white tabular">{formatEUR(amount)}</div>
         <p className="mt-3 text-[16px] text-fog">
           sent to <span className="text-white">{to.name}</span>. It&apos;s already there.
         </p>
@@ -745,7 +759,7 @@ function Success({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7, duration: 0.6, ease }}
-        className="relative mt-8 w-full max-w-[420px] rounded-2xl bg-white/[0.03] px-5 text-left ring-1 ring-white/[0.06]"
+        className="relative mt-5 w-full max-w-[420px] rounded-2xl lg:mt-8 bg-white/[0.03] px-5 text-left ring-1 ring-white/[0.06]"
       >
         {rows.map(([k, v]) => (
           <div key={k} className="flex items-center justify-between py-3 text-[14px] [&:not(:last-child)]:border-b [&:not(:last-child)]:border-dashed [&:not(:last-child)]:border-hairline">
@@ -759,7 +773,7 @@ function Success({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.85, duration: 0.6, ease }}
-        className="mt-8 flex w-full max-w-[420px] flex-col gap-2.5"
+        className="mt-5 flex w-full max-w-[420px] flex-col gap-2.5 lg:mt-8"
       >
         <Link
           href="/"

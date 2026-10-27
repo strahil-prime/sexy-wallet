@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "sexy-wallet:sound";
+// v2: everyone starts with sound on again, whatever they chose before.
+const STORAGE_KEY = "sexy-wallet:sound:v2";
 
 export type TellerSound = {
   /** the viewer's preference */

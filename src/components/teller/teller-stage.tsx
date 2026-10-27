@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { registerPrimer, usePreloaded } from "@/components/shell/preloader";
 import { cn } from "@/lib/utils";
 import { clipFor, clips, type Clip, type ClipId, type TellerState } from "./machine";
 import type { TellerSound } from "./sound";
@@ -165,20 +166,46 @@ function OverlayClip({
   onEnded: () => void;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const ready = usePreloaded();
   const active = clipId !== "idle" && !!clip.src;
   const wantSound = useRef(sound.on);
   wantSound.current = sound.on;
   const { setBlocked } = sound;
 
+  /** Load the clip unless it's already the one on the element (the preloader may have started it). */
+  const load = useCallback(
+    (v: HTMLVideoElement) => {
+      if (v.dataset.clip === clipId) return;
+      v.dataset.clip = clipId;
+      v.src = sourceFor(v, clip) ?? "";
+      v.currentTime = 0;
+    },
+    [clipId, clip],
+  );
+
+  // The tap that dismisses the preloader starts the greeting inside the gesture, which is what
+  // iOS needs before it lets this element play with sound, now and for every later clip.
+  useEffect(() => {
+    if (!active) return;
+    registerPrimer(() => {
+      const v = ref.current;
+      if (!v || !wantSound.current) return;
+      load(v);
+      v.muted = false;
+      v.play().catch(() => {});
+    });
+    return () => registerPrimer(null);
+  }, [active, load]);
+
   useEffect(() => {
     const v = ref.current;
-    if (!v) return;
+    if (!v || !ready) return;
     if (!active) {
       v.pause();
+      delete v.dataset.clip;
       return;
     }
-    v.src = sourceFor(v, clip) ?? "";
-    v.currentTime = 0;
+    load(v);
     v.muted = !wantSound.current;
     v.play()
       .then(() => setBlocked(false))
@@ -189,7 +216,7 @@ function OverlayClip({
         setBlocked(wantSound.current);
         v.play().catch(onEnded);
       });
-  }, [active, clipId, clip, onEnded, setBlocked]);
+  }, [ready, active, load, onEnded, setBlocked]);
 
   // Follow the sound toggle mid-clip. Toggling is a tap, so the browser allows it.
   useEffect(() => {

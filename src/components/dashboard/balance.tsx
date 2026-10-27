@@ -5,6 +5,7 @@ import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Check, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { usePreloaded } from "@/components/shell/preloader";
 import { useWallet } from "@/lib/wallet-store";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +22,14 @@ export function Balance({ className }: { className?: string }) {
   const [code, setCode] = useState<Code>("EUR");
   const [mounted, setMounted] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const ready = usePreloaded();
 
+  // Count up once the preloader has lifted, so it's seen.
   useEffect(() => {
+    if (!ready) return;
     const t = setTimeout(() => setMounted(true), 450);
     return () => clearTimeout(t);
-  }, []);
+  }, [ready]);
 
   const rate = currencies.find((c) => c.code === code)!.rate;
   const value = mounted ? Math.round(balance * rate * 100) / 100 : 0;
@@ -91,10 +95,10 @@ export function Balance({ className }: { className?: string }) {
         initial={{ opacity: 0, y: 10, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ delay: 1.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-5 inline-flex h-11 items-center gap-2.5 rounded-full border border-positive/15 bg-positive/[0.08] px-4 text-positive backdrop-blur-md"
+        className="mt-2.5 inline-flex h-[31px] items-center gap-1.5 rounded-full border border-positive/15 bg-positive/[0.08] px-3 text-positive backdrop-blur-md"
       >
-        <ArrowUpRight className="size-[18px]" strokeWidth={2} />
-        <span className="text-[16px] font-medium">+24.6% this month</span>
+        <ArrowUpRight className="size-[13px]" strokeWidth={2.2} />
+        <span className="text-[11.5px] font-medium">+24.6% this month</span>
       </motion.div>
     </div>
   );

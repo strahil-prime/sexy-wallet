@@ -78,7 +78,9 @@ export function TellerStage({
           className="absolute inset-0"
           style={{ x, y, ...featherMask }}
           initial={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
-          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          // Drop the filter once the entrance ends: iOS Safari mis-draws videos inside an element
+          // that has both a mask and a filter (the clip showed as a cut-off strip).
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
           transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.div
@@ -237,17 +239,23 @@ function OverlayClip({
   }, [sound.blocked, setBlocked]);
 
   return (
-    <motion.video
-      ref={ref}
-      playsInline
-      preload="auto"
-      onEnded={() => active && onEnded()}
-      onError={() => active && onEnded()}
+    // The fade runs on a wrapper, not on the <video>: iOS Safari loses a video's geometry when its
+    // own opacity is animated inside a masked, transformed parent.
+    <motion.div
       initial={false}
       animate={{ opacity: active ? 1 : 0 }}
       transition={{ duration: 0.35 }}
-      className="absolute inset-0 size-full object-cover object-top"
-    />
+      className="absolute inset-0"
+    >
+      <video
+        ref={ref}
+        playsInline
+        preload="auto"
+        onEnded={() => active && onEnded()}
+        onError={() => active && onEnded()}
+        className="absolute inset-0 size-full object-cover object-top"
+      />
+    </motion.div>
   );
 }
 

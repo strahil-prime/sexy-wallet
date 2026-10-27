@@ -71,16 +71,22 @@ export function TellerStage({
 
       {/* Fixed-proportion portrait frame: always full stage height, never stretched.
           The still and the video clips share this frame, its object-fit and its edge mask. */}
+      {/* Phones: the frame simply fills the stage and the crop comes from object-position, so
+          Bella's video has no percentage transforms or aspect-ratio box around it. iPhone Safari
+          drew the video layer at a stale offset inside the translated square frame. */}
       <div
-        className="absolute top-0 left-1/2 h-full -translate-x-[62%] lg:-top-[7%] lg:left-[58%]"
-        style={{ aspectRatio: PORTRAIT_RATIO }}
+        className={cn(
+          "absolute",
+          phone ? "inset-0" : "top-0 left-1/2 h-full -translate-x-[62%] lg:-top-[7%] lg:left-[58%]",
+        )}
+        style={phone ? undefined : { aspectRatio: PORTRAIT_RATIO }}
       >
         <motion.div
           className="absolute inset-0"
           // On phones the frame is plain: iPhone Safari mis-draws video inside a masked, moving
           // layer (a clip showed as a cut-off strip). The stage's gradients still blend the edges.
           style={phone ? undefined : { x, y, ...featherMask }}
-          initial={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
+          initial={phone ? false : { opacity: 0, scale: 1.06, filter: "blur(12px)" }}
           // Drop the filter once the entrance ends: iOS Safari mis-draws videos inside an element
           // that has both a mask and a filter (the clip showed as a cut-off strip).
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
@@ -97,7 +103,7 @@ export function TellerStage({
               fill
               priority
               sizes="(min-width: 1024px) 60vw, 100vw"
-              className="object-cover object-top"
+              className={cn("object-cover", phone ? PHONE_CROP : "object-top")}
             />
             {/* Desktop: the idle loop always plays underneath and other clips fade in on top of it.
                 Phones: one video element plays everything, swapping clips, so there is only ever one
@@ -127,8 +133,13 @@ export function TellerStage({
   );
 }
 
-/** WebM when the browser can play it (smaller), MP4 otherwise. */
-function sourceFor(video: HTMLVideoElement, clip: Clip) {
+/** Where the phone crop of the square portrait sits, matching the desktop frame's offset. */
+const PHONE_CROP = "object-[79%_0%]";
+
+/** WebM when the browser can play it (smaller), MP4 otherwise. Phones always get the H.264 MP4,
+ *  which iPhones decode in hardware. */
+function sourceFor(video: HTMLVideoElement, clip: Clip, preferMp4 = false) {
+  if (preferMp4 && clip.src) return clip.src;
   return clip.webm && video.canPlayType('video/webm; codecs="vp9, opus"') ? clip.webm : clip.src;
 }
 
@@ -188,10 +199,10 @@ function OverlayClip({
       if (v.dataset.clip === id) return;
       v.dataset.clip = id;
       v.loop = c.loop;
-      v.src = sourceFor(v, c) ?? "";
+      v.src = sourceFor(v, c, single) ?? "";
       v.currentTime = 0;
     },
-    [clipId, clip],
+    [clipId, clip, single],
   );
 
   // The tap that dismisses the preloader starts the greeting inside the gesture, which is what
@@ -268,6 +279,7 @@ function OverlayClip({
         muted
         playsInline
         poster={single ? PORTRAIT : undefined}
+        style={single ? { objectPosition: "79% 0%" } : undefined}
         preload="auto"
         onEnded={() => active && onEnded()}
         onError={() => active && onEnded()}

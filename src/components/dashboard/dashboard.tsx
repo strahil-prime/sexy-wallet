@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { SearchField, TellerMenu } from "@/components/shell/top-actions";
 import { useTeller } from "@/components/teller/machine";
 import { SoundToggle, useTellerSound } from "@/components/teller/sound";
@@ -15,6 +17,12 @@ export function Dashboard() {
   const teller = useTeller();
   const sound = useTellerSound();
   const answering = teller.state.status === "talking";
+  const askRef = useRef<HTMLDivElement>(null);
+
+  // On short phones the ask bar can sit just below the fold; bring it (and the answer above it) into view.
+  useEffect(() => {
+    if (answering && window.matchMedia("(max-width: 1023px)").matches) askRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [answering]);
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:flex-row">
@@ -27,23 +35,25 @@ export function Dashboard() {
         <Balance className="mt-auto lg:mt-[clamp(0px,calc(100vh-840px),150px)]" />
 
         <div className="relative mt-8 flex flex-col gap-3 lg:mt-auto lg:ml-[10%] xl:ml-[16%]">
-          {/* On desktop an answer sits over the chips and ask bar (it has its own close button),
-              so it only overlaps Bella a little. The greeting and "thinking" stay above them. */}
-          <TellerBubble
-            state={teller.state}
-            onClose={teller.dismiss}
-            className={cn(
-              "w-full max-w-[460px] lg:absolute lg:flex",
-              answering ? "lg:inset-x-0 lg:bottom-0 lg:z-20 lg:max-w-none lg:[&>*]:w-full" : "lg:right-0 lg:bottom-full lg:mb-3 lg:justify-end",
-            )}
-          />
-          <div
-            className={cn(
-              "flex flex-col gap-3 transition-opacity duration-300",
-              answering && "lg:pointer-events-none lg:opacity-0",
-            )}
-          >
-            <QuestionChips state={teller.state} onAsk={teller.ask} />
+          {/* An answer covers the quick buttons (it has its own close button) and grows upward over
+              Bella a little, while the ask bar below stays visible. The greeting and "thinking" sit
+              above the buttons. Nothing here moves the layout, so the ask bar never jumps. */}
+          <div className="relative flex flex-col gap-3">
+            <TellerBubble
+              state={teller.state}
+              onClose={teller.dismiss}
+              className={cn(
+                "absolute flex w-full",
+                answering ? "inset-x-0 bottom-0 z-20 [&>*]:w-full" : "bottom-full mb-3 max-w-[460px] lg:right-0 lg:justify-end",
+              )}
+            />
+            <QuestionChips
+              state={teller.state}
+              onAsk={teller.ask}
+              className={cn("transition-opacity duration-300", answering && "pointer-events-none opacity-0")}
+            />
+          </div>
+          <div ref={askRef} className="max-lg:scroll-mb-[88px]">
             <AskBar />
           </div>
         </div>

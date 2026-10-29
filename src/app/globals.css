@@ -50,6 +50,17 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-6px); }
   }
+  /* Quick-question chips: a slow light sweep and a soft glow, a beat apart per chip, mostly at rest */
+  --animate-chip-sheen: chip-sheen 7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  --animate-chip-glow: chip-glow 7s ease-in-out infinite;
+  @keyframes chip-sheen {
+    0% { transform: translateX(-130%) skewX(-18deg); }
+    16%, 100% { transform: translateX(230%) skewX(-18deg); }
+  }
+  @keyframes chip-glow {
+    0%, 30%, 100% { box-shadow: 0 8px 24px -12px rgb(255 255 255 / 0.55), 0 0 0 0 rgb(94 240 255 / 0); }
+    10% { box-shadow: 0 8px 28px -10px rgb(255 255 255 / 0.7), 0 0 22px 0 rgb(94 240 255 / 0.32); }
+  }
   @keyframes pulse-ring {
     0% { transform: scale(0.9); opacity: 0.7; }
     100% { transform: scale(1.6); opacity: 0; }

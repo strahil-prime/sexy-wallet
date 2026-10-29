@@ -40,9 +40,20 @@ export function QuestionChips({ state, onAsk, className }: { state: TellerState;
             className={cn(
               "group focus-ring relative flex h-10 shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-full border px-4 text-[13.5px] backdrop-blur-xl transition-colors disabled:cursor-wait",
               "border-white bg-white font-medium text-ink-950 shadow-[0_8px_24px_-12px_rgb(255_255_255/0.55)] hover:bg-[#eef6f8]",
+              // Draws the eye to the demo's main controls: a soft glow and light sweep every few
+              // seconds, one chip after another, paused once a question is asked.
+              !activeIntent && "motion-safe:animate-chip-glow",
               active && "ring-2 ring-cyan ring-offset-2 ring-offset-ink-900",
             )}
+            style={{ animationDelay: `${2 + i * 0.35}s` }}
           >
+            {!activeIntent && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-cyan/30 to-transparent motion-safe:animate-chip-sheen"
+                style={{ animationDelay: `${2 + i * 0.35}s`, transform: "translateX(-130%)" }}
+              />
+            )}
             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
             <q.icon className="relative size-4 text-electric" strokeWidth={2} />
             <span className="relative hidden sm:inline">{q.label}</span>
@@ -77,10 +88,10 @@ export function AskBar({ className }: { className?: string }) {
     >
       <label
         onPointerDown={nudge}
-        className="glass group flex h-[84px] cursor-pointer items-center gap-4 rounded-[22px] px-4 transition-colors hover:border-hairline-strong sm:h-[100px] sm:px-5"
+        className="glass group flex h-[60px] cursor-pointer items-center gap-3 rounded-[20px] pr-4 pl-2.5 transition-colors hover:border-hairline-strong sm:h-[68px] sm:gap-3.5 sm:pr-5 sm:pl-3"
       >
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/[0.06] ring-1 ring-white/[0.06] sm:size-[62px]">
-          <MessageCircleMore className="size-6 text-fog" strokeWidth={1.6} />
+        <span className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-white/[0.06] ring-1 ring-white/[0.06] sm:size-11">
+          <MessageCircleMore className="size-5 text-fog" strokeWidth={1.6} />
         </span>
         <span className="relative min-w-0 flex-1">
           <input
@@ -104,11 +115,11 @@ export function AskBar({ className }: { className?: string }) {
                 exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
                 className="block"
               >
-                <span className="flex items-center gap-2 text-[17px] font-medium text-white sm:text-[19px]">
-                  Coming soon
-                  <span className="rounded-full bg-cyan/15 px-2 py-0.5 text-[11px] font-semibold tracking-wider text-cyan uppercase">Beta</span>
+                <span className="flex min-w-0 items-center gap-2 text-[15px] sm:text-[17px]">
+                  <span className="shrink-0 font-medium text-white">Coming soon</span>
+                  <span className="shrink-0 rounded-full bg-cyan/15 px-2 py-0.5 text-[10.5px] font-semibold tracking-wider text-cyan uppercase">Beta</span>
+                  <span className="truncate text-[13.5px] text-mist max-sm:hidden">Try a question above</span>
                 </span>
-                <span className="mt-1 block truncate text-[14px] text-mist">For now, try one of the questions above.</span>
               </motion.span>
             ) : (
               <motion.span
@@ -118,8 +129,11 @@ export function AskBar({ className }: { className?: string }) {
                 exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
                 className="block"
               >
-                <span className="block truncate text-[17px] font-medium text-white sm:text-[19px]">Ask me anything</span>
-                <span className="mt-1 block truncate text-[14px] text-mist">Payments, insights, rewards...</span>
+                <span className="block truncate text-[15px] sm:text-[17px]">
+                  <span className="font-medium text-white">Ask me anything</span>
+                  <span className="mx-2 text-white/25">·</span>
+                  <span className="text-[13.5px] text-mist sm:text-[15px]">Payments, insights, rewards...</span>
+                </span>
               </motion.span>
             )}
           </AnimatePresence>
@@ -180,6 +194,9 @@ function Header({ onClose }: { onClose?: () => void }) {
   );
 }
 
+/** The spoken answer leads each card: white and a step larger than the details under it. */
+const answerText = "text-[17px] leading-relaxed font-medium text-white sm:text-[18px]";
+
 const spendingCategories = [
   { name: "Groceries", value: 412.18, color: "#2ad1e6", note: "Lidl, 9 visits" },
   { name: "Travel", value: 312, color: "#1f7bff", note: "Airbnb in Lisbon" },
@@ -201,41 +218,113 @@ function MoneyAnswer() {
   const month = new Date().toLocaleDateString("en-GB", { month: "long" });
   return (
     <>
-      <p className="text-[15.5px] leading-relaxed text-fog">
+      <p className={answerText}>
         <Spoken
           text={`You've spent ${formatEUR(total)} in ${month}. Most of it went on ${top[0].name.toLowerCase()} (${pct(top[0].value)}%), then ${top[1].name.toLowerCase()}, which was mostly your Airbnb.`}
         />
       </p>
-      <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-white/5">
-        {cats.map((c, i) => (
-          <motion.span
-            key={c.name}
-            initial={{ width: 0 }}
-            animate={{ width: `${(c.value / total) * 100}%` }}
-            transition={{ delay: 0.6 + i * 0.08, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full first:rounded-l-full last:rounded-r-full [&:not(:last-child)]:mr-[2px]"
-            style={{ background: c.color }}
-          />
-        ))}
+      <SpendingDonut cats={top} total={total} month={month} />
+    </>
+  );
+}
+
+const RING_R = 42;
+const RING_GAP = 0.9; // in pathLength units, out of 100
+
+/** Donut of the month's spending with a legend; hovering either side highlights a category. */
+function SpendingDonut({ cats, total, month }: { cats: typeof spendingCategories; total: number; month: string }) {
+  const [hover, setHover] = useState<string | null>(null);
+  const focus = cats.find((c) => c.name === hover);
+  const pct = (v: number) => (v / total) * 100;
+  let at = 0;
+  const arcs = cats.map((c) => {
+    const len = pct(c.value);
+    const arc = { ...c, start: at, len: Math.max(len - RING_GAP, 0.4) };
+    at += len;
+    return arc;
+  });
+
+  return (
+    <div className="mt-5 flex items-center gap-5 sm:gap-6">
+      <div className="relative size-[128px] shrink-0 sm:size-[148px]">
+        {/* Soft colour bloom behind the ring */}
+        <div
+          aria-hidden
+          className="absolute inset-3 rounded-full opacity-40 blur-xl"
+          style={{ background: `conic-gradient(${arcs.map((a) => `${a.color} ${a.start}% ${a.start + a.len + RING_GAP}%`).join(", ")})` }}
+        />
+        <svg viewBox="0 0 100 100" className="relative size-full -rotate-90" role="img" aria-label={`Spending by category, ${formatEUR(total)} in total`}>
+          <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgb(255 255 255 / 0.05)" strokeWidth="9" />
+          {arcs.map((a, i) => (
+            <motion.circle
+              key={a.name}
+              cx="50"
+              cy="50"
+              r={RING_R}
+              fill="none"
+              stroke={a.color}
+              pathLength={100}
+              strokeDashoffset={-a.start}
+              initial={{ strokeDasharray: "0 100", strokeWidth: 9 }}
+              animate={{
+                strokeDasharray: `${a.len} ${100 - a.len}`,
+                strokeWidth: hover === a.name ? 12 : 9,
+                opacity: hover && hover !== a.name ? 0.35 : 1,
+              }}
+              transition={{
+                strokeDasharray: { delay: 0.55 + i * 0.12, duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+                default: { duration: 0.25 },
+              }}
+              onPointerEnter={() => setHover(a.name)}
+              onPointerLeave={() => setHover(null)}
+              className="cursor-pointer"
+            />
+          ))}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={focus?.name ?? "total"}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.18 }}
+            >
+              <div className="text-[10.5px] font-medium tracking-[0.14em] text-mist uppercase">{focus ? focus.name.split(" ")[0] : month}</div>
+              <div className="mt-0.5 text-[15px] font-semibold text-white tabular sm:text-[17px]">
+                {focus ? `${Math.round(pct(focus.value))}%` : formatEUR(total)}
+              </div>
+              {focus && <div className="text-[11px] text-mist tabular">{formatEUR(focus.value)}</div>}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-      <ul className="mt-3.5 space-y-2 text-[13px]">
-        {top.map((c, i) => (
+
+      <ul className="min-w-0 flex-1 space-y-2">
+        {cats.map((c, i) => (
           <motion.li
             key={c.name}
-            initial={{ opacity: 0, x: -6 }}
+            initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1 + i * 0.06 }}
-            className="flex items-center gap-2.5"
+            transition={{ delay: 0.9 + i * 0.07, duration: 0.35 }}
+            onPointerEnter={() => setHover(c.name)}
+            onPointerLeave={() => setHover(null)}
           >
-            <span className="size-2 shrink-0 rounded-full" style={{ background: c.color }} />
-            <span className="w-[112px] shrink-0 truncate text-white">{c.name}</span>
-            <span className="min-w-0 flex-1 truncate text-mist">{c.note}</span>
-            <span className="w-9 shrink-0 text-right text-mist tabular">{pct(c.value)}%</span>
-            <span className="w-[72px] shrink-0 text-right text-white tabular">{formatEUR(c.value)}</span>
+            <div className={cn("flex cursor-default items-center gap-2.5 transition-opacity duration-200", hover && hover !== c.name && "opacity-40")}>
+              <span className="size-2.5 shrink-0 rounded-[3px]" style={{ background: c.color, boxShadow: `0 0 10px ${c.color}66` }} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] leading-tight text-white">{c.name}</span>
+                <span className="block truncate text-[11.5px] leading-tight text-mist">{c.note}</span>
+              </span>
+              <span className="shrink-0 text-right leading-tight">
+                <span className="block text-[13px] text-white tabular">{formatEUR(c.value)}</span>
+                <span className="block text-[11.5px] text-mist tabular">{Math.round(pct(c.value))}%</span>
+              </span>
+            </div>
           </motion.li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 
@@ -255,7 +344,7 @@ function SubscriptionsAnswer() {
 
   return (
     <>
-      <p className="text-[15.5px] leading-relaxed text-fog">
+      <p className={answerText}>
         <Spoken
           text={`You pay ${formatEUR(monthly)} a month for ${subscriptions.length} subscriptions. One looks forgotten: ${forgotten.name.split(" ")[0]} still charges you, but you haven't listened since July.`}
         />
@@ -367,7 +456,7 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <p className="text-[15.5px] leading-relaxed text-fog">
+      <p className={answerText}>
         <Spoken text={`Last night's dinner at ${dinner.title} came to ${formatEUR(total)}. Split evenly, Janet owes you ${formatEUR(half)}.`} />
       </p>
       <motion.div
@@ -417,7 +506,7 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
               key="sent"
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-positive/12 text-[14.5px] font-medium text-positive ring-1 ring-positive/25"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-positive/12 px-6 sm:flex-none text-[14.5px] font-medium text-positive ring-1 ring-positive/25"
             >
               <motion.span initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                 <Check className="size-4" strokeWidth={2.5} />
@@ -432,7 +521,7 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
               onClick={send}
               exit={{ opacity: 0, scale: 0.96 }}
               whileTap={{ scale: 0.97 }}
-              className="group focus-ring flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-electric text-[14.5px] font-medium text-white shadow-[0_8px_24px_-8px_rgb(31_123_255/0.9)] transition-colors hover:bg-electric-soft"
+              className="group focus-ring flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-electric px-6 sm:flex-none text-[14.5px] font-medium text-white shadow-[0_8px_24px_-8px_rgb(31_123_255/0.9)] transition-colors hover:bg-electric-soft"
             >
               Request {formatEUR(half)}
               <span className="-ml-1 hidden sm:inline">from Janet</span>

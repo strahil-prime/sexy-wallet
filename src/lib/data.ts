@@ -9,6 +9,10 @@ export type BrandKey =
   | "ikea"
   | "lidl"
   | "audible"
+  | "appletv"
+  | "playstation"
+  | "hbo"
+  | "prime"
   | "dining";
 
 export type Activity = {
@@ -115,5 +119,9 @@ export const subscriptions: Subscription[] = [
   { id: "audible", brand: "audible", name: "Audible Premium Plus", monthly: 9.95, usage: "No listening since July", forgotten: true },
   { id: "netflix", brand: "netflix", name: "Netflix Standard", monthly: 15.99, usage: "Watched 11 times this month" },
   { id: "spotify", brand: "spotify", name: "Spotify Premium", monthly: 10.99, usage: "Used almost every day" },
-  { id: "apple", brand: "apple", name: "Apple One", monthly: 49, usage: "iCloud, Music and TV+" },
+  { id: "apple", brand: "apple", name: "Apple One", monthly: 49, usage: "iCloud, Music and Arcade" },
+  { id: "appletv", brand: "appletv", name: "Apple TV+", monthly: 9.99, usage: "Watched twice this month" },
+  { id: "playstation", brand: "playstation", name: "PlayStation Plus", monthly: 8.99, usage: "Played last weekend" },
+  { id: "hbo", brand: "hbo", name: "HBO Max", monthly: 9.99, usage: "Watched 4 times this month" },
+  { id: "prime", brand: "prime", name: "Amazon Prime", monthly: 8.99, usage: "3 deliveries this month" },
 ];

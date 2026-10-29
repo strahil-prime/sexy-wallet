@@ -202,7 +202,7 @@ const spendingCategories = [
   { name: "Travel", value: 312, color: "#1f7bff", note: "Airbnb in Lisbon" },
   { name: "Shopping", value: 289.95, color: "#7c5cff", note: "Zara and two online orders" },
   { name: "Dining & coffee", value: 272.8, color: "#5ef0ff", note: "Includes last night's dinner" },
-  { name: "Subscriptions", value: 85.93, color: "#8ea3ad", note: "4 active" },
+  { name: "Subscriptions", value: 123.89, color: "#8ea3ad", note: "8 active" },
 ];
 
 function MoneyAnswer() {
@@ -333,6 +333,7 @@ function SubscriptionsAnswer() {
   const monthly = subscriptions.reduce((s, x) => s + x.monthly, 0);
   const saving = subscriptions.filter((x) => cancelled.includes(x.id)).reduce((s, x) => s + x.monthly * 12, 0);
   const forgotten = subscriptions.find((x) => x.forgotten)!;
+  const [atEnd, setAtEnd] = useState(false);
 
   const cancel = (sub: Subscription) => {
     cancelSubscription(sub.id);
@@ -349,7 +350,14 @@ function SubscriptionsAnswer() {
           text={`You pay ${formatEUR(monthly)} a month for ${subscriptions.length} subscriptions. One looks forgotten: ${forgotten.name.split(" ")[0]} still charges you, but you haven't listened since July.`}
         />
       </p>
-      <ul className="mt-4 space-y-1.5">
+      {/* Three rows show at a time; the rest scroll, with a fade hinting there is more below. */}
+      <ul
+        onScroll={(e) => setAtEnd(e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight - 4)}
+        className={cn(
+          "no-scrollbar -mx-1 mt-4 max-h-[193px] space-y-1.5 overflow-y-auto overscroll-contain px-1 py-0.5",
+          !atEnd && "[mask-image:linear-gradient(to_bottom,#000_calc(100%-18px),transparent)]",
+        )}
+      >
         {subscriptions.map((sub, i) => {
           const off = cancelled.includes(sub.id);
           return (
@@ -358,7 +366,7 @@ function SubscriptionsAnswer() {
               layout
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 0.8 + Math.min(i, 3) * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className={cn(
                 "flex items-center gap-3 rounded-2xl p-2.5 pr-3 ring-1 transition-colors",
                 sub.forgotten && !off ? "bg-[#ffb547]/[0.08] ring-[#ffb547]/30" : "bg-white/[0.03] ring-white/[0.05]",

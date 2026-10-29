@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
@@ -328,12 +328,74 @@ function SpendingDonut({ cats, total, month }: { cats: typeof spendingCategories
   );
 }
 
+/**
+ * A list that scrolls with a 6px scrollbar of its own (phones hide native ones until you scroll),
+ * and a fade at the bottom while there is more below. The thumb can be dragged.
+ */
+function ScrollList({ className, children }: { className?: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLUListElement>(null);
+  const [m, setM] = useState({ ratio: 1, pos: 0, atEnd: true });
+  const measure = useCallback(() => {
+    const u = ref.current;
+    if (!u) return;
+    const max = u.scrollHeight - u.clientHeight;
+    setM({ ratio: u.clientHeight / u.scrollHeight, pos: max > 0 ? u.scrollTop / max : 0, atEnd: u.scrollTop >= max - 4 });
+  }, []);
+  useEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  const drag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const u = ref.current;
+    if (!u) return;
+    e.preventDefault();
+    const track = e.currentTarget.parentElement!.clientHeight;
+    const startY = e.clientY;
+    const startTop = u.scrollTop;
+    const perPx = (u.scrollHeight - u.clientHeight) / (track * (1 - m.ratio));
+    const move = (ev: PointerEvent) => (u.scrollTop = startTop + (ev.clientY - startY) * perPx);
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  return (
+    <div className="relative -ml-1">
+      <ul
+        ref={ref}
+        onScroll={measure}
+        className={cn(
+          "no-scrollbar overflow-y-auto overscroll-contain py-0.5 pr-4 pl-1",
+          !m.atEnd && "[mask-image:linear-gradient(to_bottom,#000_calc(100%-18px),transparent)]",
+          className,
+        )}
+      >
+        {children}
+      </ul>
+      {m.ratio < 1 && (
+        <div aria-hidden className="absolute top-0.5 right-0 bottom-0.5 w-1.5 rounded-full bg-white/[0.07]">
+          <div
+            onPointerDown={drag}
+            className="absolute inset-x-0 cursor-grab touch-none rounded-full bg-white/35 transition-colors hover:bg-white/60 active:cursor-grabbing"
+            style={{ height: `${m.ratio * 100}%`, top: `${m.pos * (1 - m.ratio) * 100}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SubscriptionsAnswer() {
   const { cancelled, cancelSubscription, restoreSubscription } = useWallet();
   const monthly = subscriptions.reduce((s, x) => s + x.monthly, 0);
   const saving = subscriptions.filter((x) => cancelled.includes(x.id)).reduce((s, x) => s + x.monthly * 12, 0);
   const forgotten = subscriptions.find((x) => x.forgotten)!;
-  const [atEnd, setAtEnd] = useState(false);
 
   const cancel = (sub: Subscription) => {
     cancelSubscription(sub.id);
@@ -350,14 +412,8 @@ function SubscriptionsAnswer() {
           text={`You pay ${formatEUR(monthly)} a month for ${subscriptions.length} subscriptions. One looks forgotten: ${forgotten.name.split(" ")[0]} still charges you, but you haven't listened since July.`}
         />
       </p>
-      {/* Three rows show at a time; the rest scroll, with a fade hinting there is more below. */}
-      <ul
-        onScroll={(e) => setAtEnd(e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight - 4)}
-        className={cn(
-          "no-scrollbar -mx-1 mt-4 max-h-[193px] space-y-1.5 overflow-y-auto overscroll-contain px-1 py-0.5",
-          !atEnd && "[mask-image:linear-gradient(to_bottom,#000_calc(100%-18px),transparent)]",
-        )}
-      >
+      {/* Three rows show at a time; the rest scroll. */}
+      <ScrollList className="mt-4 max-h-[193px] space-y-1.5">
         {subscriptions.map((sub, i) => {
           const off = cancelled.includes(sub.id);
           return (
@@ -424,7 +480,7 @@ function SubscriptionsAnswer() {
             </motion.li>
           );
         })}
-      </ul>
+      </ScrollList>
       <AnimatePresence initial={false}>
         {saving > 0 && (
           <motion.div

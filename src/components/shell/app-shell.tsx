@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { ProfileAvatar } from "./top-actions";
 import { usePathname } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { Toaster } from "sonner";
@@ -32,7 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Logo className="size-7" glow />
           </Link>
           <span className="text-sm font-medium tracking-wide text-fog">Sexy Wallet</span>
-          <Image src="/teller/bella-v3-avatar.jpg" alt="Bella" width={36} height={36} className="size-9 rounded-full object-cover ring-2 ring-cyan/40" />
+          <ProfileAvatar size={36} />
         </header>
 
         {/* Desktop frame */}

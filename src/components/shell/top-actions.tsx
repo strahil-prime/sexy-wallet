@@ -31,37 +31,61 @@ const tellers = [
   { id: "teller-3", name: "Teller three", role: "Arriving soon", available: false },
 ];
 
-/** Teller switcher. Only Bella is live in v1. */
-export function TellerMenu() {
+/** The signed-in user's photo. Profile itself is not live in v1. */
+export function ProfileAvatar({ size = 52, className }: { size?: number; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => comingSoon("Profile")}
+      aria-label="Your profile"
+      className={cn("focus-ring relative shrink-0 cursor-pointer rounded-full transition-transform hover:scale-[1.04]", className)}
+    >
+      <Image
+        src="/profile/strahil.jpg"
+        alt=""
+        width={size}
+        height={size}
+        style={{ width: size, height: size }}
+        className="rounded-full object-cover ring-1 ring-white/15"
+      />
+      <span className="absolute right-0 bottom-0 size-3 rounded-full bg-positive ring-2 ring-ink-900" />
+    </button>
+  );
+}
+
+/** Teller switcher, beside the sound button: Bella's face plus a chevron. Only Bella is live in v1. */
+export function TellerMenu({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <Dropdown.Root open={open} onOpenChange={setOpen}>
-      <Dropdown.Trigger className="focus-ring group flex shrink-0 cursor-pointer items-center gap-2 rounded-full p-0.5 pr-1">
+      <Dropdown.Trigger
+        aria-label="Choose your teller"
+        className={cn("focus-ring group flex shrink-0 cursor-pointer items-center gap-1 rounded-full", className)}
+      >
         <span className="relative">
-          <span className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-cyan via-electric to-violet opacity-80 blur-[1px] transition-opacity group-hover:opacity-100" />
+          <span className="absolute -inset-[2px] rounded-full bg-gradient-to-tr from-cyan via-electric to-violet opacity-80 transition-opacity group-hover:opacity-100" />
           <Image
             src="/teller/bella-v3-avatar.jpg"
-            alt="Bella"
-            width={52}
-            height={52}
-            className="relative size-[52px] rounded-full object-cover ring-2 ring-ink-900"
+            alt=""
+            width={40}
+            height={40}
+            className="relative size-10 rounded-full object-cover ring-2 ring-ink-900"
           />
-          <span className="absolute right-0 bottom-0.5 size-3 rounded-full bg-positive ring-2 ring-ink-900" />
         </span>
-        <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-fog">
-          <ChevronDown className="size-5" strokeWidth={1.8} />
+        <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-fog transition-colors group-hover:text-white">
+          <ChevronDown className="size-4" strokeWidth={2} />
         </motion.span>
       </Dropdown.Trigger>
       <AnimatePresence>
         {open && (
           <Dropdown.Portal forceMount>
-            <Dropdown.Content asChild align="end" sideOffset={10} forceMount>
+            <Dropdown.Content asChild align="start" sideOffset={10} forceMount>
               <motion.div
                 initial={{ opacity: 0, y: -6, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                className="glass-strong z-50 w-64 origin-top-right rounded-2xl p-1.5"
+                className="glass-strong z-50 w-64 origin-top-left rounded-2xl p-1.5"
               >
                 <div className="px-3 pt-2 pb-1.5 text-[11px] font-medium tracking-wider text-mist uppercase">Your teller</div>
                 {tellers.map((t) => (

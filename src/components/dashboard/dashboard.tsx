@@ -19,9 +19,11 @@ export function Dashboard() {
   const answering = teller.state.status === "talking";
   const askRef = useRef<HTMLDivElement>(null);
 
-  // On short phones the ask bar can sit just below the fold; bring it (and the answer above it) into view.
+  // On phones the answer pushes the ask bar down; once the card has swapped in, bring the bar into view.
   useEffect(() => {
-    if (answering && window.matchMedia("(max-width: 1023px)").matches) askRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (!answering || !window.matchMedia("(max-width: 1023px)").matches) return;
+    const t = window.setTimeout(() => askRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 650);
+    return () => window.clearTimeout(t);
   }, [answering]);
 
   return (
@@ -35,25 +37,26 @@ export function Dashboard() {
         </div>
 
         {/* 150px lower on desktop, eased off on short windows so the chips and ask bar stay on screen */}
-        <Balance className="mt-auto lg:mt-[clamp(0px,calc(100vh-840px),150px)]" />
+        <Balance className={cn("mt-auto lg:mt-[clamp(0px,calc(100vh-840px),150px)]", answering && "max-lg:hidden")} />
 
-        <div className="relative mt-8 flex flex-col gap-3 lg:mt-auto lg:ml-[10%] xl:ml-[16%]">
+        <div className={cn("relative mt-8 flex flex-col gap-3 lg:mt-auto lg:ml-[10%] xl:ml-[16%]", answering && "max-lg:mt-0")}>
           {/* An answer covers the quick buttons (it has its own close button) and grows upward over
               Bella a little, while the ask bar below stays visible. The greeting and "thinking" sit
-              above the buttons. Nothing here moves the layout, so the ask bar never jumps. */}
+              above the buttons. On phones the answer instead takes the place of the balance and
+              buttons, so it starts where "Total balance" was and keeps clear of Bella's face. */}
           <div className="relative flex flex-col gap-3">
             <TellerBubble
               state={teller.state}
               onClose={teller.dismiss}
               className={cn(
                 "absolute flex w-full",
-                answering ? "inset-x-0 bottom-0 z-20 [&>*]:w-full" : "bottom-full mb-3 max-w-[460px] lg:right-0 lg:justify-end",
+                answering ? "inset-x-0 bottom-0 z-20 max-lg:static [&>*]:w-full" : "bottom-full mb-3 max-w-[460px] lg:right-0 lg:justify-end",
               )}
             />
             <QuestionChips
               state={teller.state}
               onAsk={teller.ask}
-              className={cn("transition-opacity duration-300", answering && "pointer-events-none opacity-0")}
+              className={cn("transition-opacity duration-300", answering && "pointer-events-none opacity-0 max-lg:hidden")}
             />
           </div>
           <div ref={askRef} className="max-lg:scroll-mb-[88px]">

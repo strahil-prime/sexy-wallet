@@ -96,9 +96,9 @@ export const walletCards: WalletCard[] = [
   { id: "obsidian", name: "Obsidian", kind: "Metal", last4: "3305", number: "4532 7781 0466 3305", expiry: "04/30", cvv: "862", holder: "Strahil", finish: "obsidian" },
 ];
 
-export const teller = {
-  name: "Bella",
-  user: "Strahil",
+/** The signed-in user. */
+export const user = {
+  name: "Strahil",
 };
 
 /** Last night's dinner, used by the "split with Janet" quick question. */
@@ -111,7 +111,7 @@ export type Subscription = {
   monthly: number;
   /** how it was used in the last 30 days */
   usage: string;
-  /** true when Bella thinks it's been forgotten */
+  /** true when the teller thinks it's been forgotten */
   forgotten?: boolean;
 };
 

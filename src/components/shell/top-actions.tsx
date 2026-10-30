@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "motion/react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronDown, Lock, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePersona } from "@/components/teller/persona";
+import { personas, upcomingPersonas } from "@/lib/personas";
 import { comingSoon } from "./coming-soon";
 
 export function SearchField({ className }: { className?: string }) {
@@ -24,12 +26,6 @@ export function SearchField({ className }: { className?: string }) {
     </button>
   );
 }
-
-const tellers = [
-  { id: "bella", name: "Bella", role: "Lead teller", available: true },
-  { id: "teller-2", name: "Teller two", role: "Arriving soon", available: false },
-  { id: "teller-3", name: "Teller three", role: "Arriving soon", available: false },
-];
 
 /** The signed-in user's photo. Profile itself is not live in v1. */
 export function ProfileAvatar({ size = 52, className }: { size?: number; className?: string }) {
@@ -53,9 +49,10 @@ export function ProfileAvatar({ size = 52, className }: { size?: number; classNa
   );
 }
 
-/** Teller switcher, beside the sound button: Bella's face plus a chevron. Only Bella is live in v1. */
+/** Teller switcher, beside the sound button: the active teller's face plus a chevron. */
 export function TellerMenu({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const { persona, choose } = usePersona();
   return (
     <Dropdown.Root open={open} onOpenChange={setOpen}>
       <Dropdown.Trigger
@@ -65,7 +62,7 @@ export function TellerMenu({ className }: { className?: string }) {
         <span className="relative">
           <span className="absolute -inset-[2px] rounded-full bg-gradient-to-tr from-cyan via-electric to-violet opacity-80 transition-opacity group-hover:opacity-100" />
           <Image
-            src="/teller/bella-v3-avatar.jpg"
+            src={persona.avatar}
             alt=""
             width={40}
             height={40}
@@ -88,30 +85,29 @@ export function TellerMenu({ className }: { className?: string }) {
                 className="glass-strong z-50 w-64 origin-top-left rounded-2xl p-1.5"
               >
                 <div className="px-3 pt-2 pb-1.5 text-[11px] font-medium tracking-wider text-mist uppercase">Your teller</div>
-                {tellers.map((t) => (
+                {personas.map((p) => (
                   <Dropdown.Item
-                    key={t.id}
-                    disabled={!t.available}
-                    onSelect={(e) => {
-                      if (!t.available) e.preventDefault();
-                    }}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 outline-none",
-                      t.available ? "cursor-pointer data-[highlighted]:bg-white/[0.06]" : "opacity-50",
-                    )}
+                    key={p.id}
+                    onSelect={() => choose(p.id)}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 outline-none data-[highlighted]:bg-white/[0.06]"
                   >
-                    {t.available ? (
-                      <Image src="/teller/bella-v3-avatar.jpg" alt="" width={36} height={36} className="size-9 rounded-full object-cover" />
-                    ) : (
-                      <span className="grid size-9 place-items-center rounded-full bg-white/[0.06]">
-                        <Lock className="size-4 text-mist" />
-                      </span>
-                    )}
+                    <Image src={p.avatar} alt="" width={36} height={36} className="size-9 rounded-full object-cover" />
+                    <span className="flex-1">
+                      <span className="block text-sm text-white">{p.name}</span>
+                      <span className="block text-xs text-mist">{p.role}</span>
+                    </span>
+                    {p.id === persona.id && <Check className="size-4 text-cyan" />}
+                  </Dropdown.Item>
+                ))}
+                {upcomingPersonas.map((t) => (
+                  <Dropdown.Item key={t.id} disabled className="flex items-center gap-3 rounded-xl px-3 py-2.5 opacity-50 outline-none">
+                    <span className="grid size-9 place-items-center rounded-full bg-white/[0.06]">
+                      <Lock className="size-4 text-mist" />
+                    </span>
                     <span className="flex-1">
                       <span className="block text-sm text-white">{t.name}</span>
                       <span className="block text-xs text-mist">{t.role}</span>
                     </span>
-                    {t.available && <Check className="size-4 text-cyan" />}
                   </Dropdown.Item>
                 ))}
               </motion.div>

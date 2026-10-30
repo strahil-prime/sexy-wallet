@@ -1,19 +1,23 @@
 /**
- * Teller state machine.
+ * Teller state machine. Clips come from the active persona (lib/personas).
  *
- * Clips live in /public/teller/clips. The idle loop always plays underneath; any other
- * clip with a `src` fades in on top, plays once (with sound when allowed) and fades out.
- * A clip without a `src` falls back to `durationMs` timing over the idle loop.
+ * The idle loop always plays underneath; any other clip with a `src` fades in on top, plays
+ * once (with sound when allowed) and fades out. A clip without a `src` falls back to
+ * `durationMs` timing over the idle loop.
  *
  *   intro    → greeting, plays once on load, then idle
  *   idle     → seamless loop
- *   thinking → short beat while an intent is resolved
- *   talking  → the answer clip for the active intent; when it ends the video returns to
+ *   thinking → short beat while a question is resolved
+ *   talking  → the answer clip for the active question; when it ends the video returns to
  *              the idle loop while the answer stays on screen
  */
 import { useCallback, useEffect, useReducer, useRef } from "react";
+import type { Clip, Persona } from "@/lib/personas";
 
-export type Intent = "money-went" | "subscriptions" | "split-dinner";
+export type { Clip };
+
+/** A quick question, by its id in the persona's `questions`. */
+export type Intent = string;
 
 export type TellerState =
   | { status: "intro" }
@@ -23,30 +27,15 @@ export type TellerState =
 
 export type ClipId = "intro" | "idle" | "thinking" | `answer:${Intent}`;
 
-export type Clip = {
-  /** MP4 (H.264), the format every browser plays */
-  src?: string;
-  /** optional smaller WebM (VP9), tried first */
-  webm?: string;
-  loop: boolean;
-  /** fallback length when there is no video */
-  durationMs: number;
-  /** seconds where Bella is speaking, from ffmpeg silencedetect (-35dB, 0.25s) */
-  voice?: [number, number][];
-};
+const THINKING: Clip = { loop: true, durationMs: 900 };
 
-const INTRO_VOICE: [number, number][] = [[0, 0.94], [1.3, 2.38]];
-const ANSWER_VOICE: [number, number][] = [[0, 2.89], [3.37, 9.33], [9.92, 12.27]];
-
-export const clips: Record<ClipId, Clip> = {
-  intro: { src: "/teller/clips/intro.mp4", webm: "/teller/clips/intro.webm", loop: false, durationMs: 3200, voice: INTRO_VOICE },
-  idle: { src: "/teller/clips/idle.mp4", webm: "/teller/clips/idle.webm", loop: true, durationMs: 0 },
-  thinking: { src: undefined, loop: true, durationMs: 900 },
-  // One placeholder answer clip for all three questions until the real ones are recorded.
-  "answer:money-went": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000, voice: ANSWER_VOICE },
-  "answer:subscriptions": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 10000, voice: ANSWER_VOICE },
-  "answer:split-dinner": { src: "/teller/clips/answer.mp4", webm: "/teller/clips/answer.webm", loop: false, durationMs: 9000, voice: ANSWER_VOICE },
-};
+/** The clip a state plays, from the persona's media. */
+export function clipOf(persona: Persona, id: ClipId): Clip {
+  if (id === "intro") return persona.intro;
+  if (id === "idle") return persona.idle;
+  if (id === "thinking") return THINKING;
+  return persona.questions.find((q) => `answer:${q.id}` === id)?.clip ?? persona.idle;
+}
 
 export function clipFor(state: TellerState): ClipId {
   switch (state.status) {
@@ -80,19 +69,19 @@ function reducer(state: TellerState, event: Event): TellerState {
   }
 }
 
-export function useTeller() {
+export function useTeller(persona: Persona) {
   const [state, dispatch] = useReducer(reducer, { status: "intro" });
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Without video, emulate clip timing so the flow feels the same.
   useEffect(() => {
     clearTimeout(timer.current);
-    const clip = clips[clipFor(state)];
+    const clip = clipOf(persona, clipFor(state));
     if (clip.src) return;
     if (state.status === "intro") timer.current = setTimeout(() => dispatch({ type: "CLIP_ENDED" }), clip.durationMs);
     if (state.status === "thinking") timer.current = setTimeout(() => dispatch({ type: "RESOLVED" }), clip.durationMs);
     return () => clearTimeout(timer.current);
-  }, [state]);
+  }, [state, persona]);
 
   const ask = useCallback((intent: Intent) => dispatch({ type: "ASK", intent }), []);
   const dismiss = useCallback(() => dispatch({ type: "DISMISS" }), []);

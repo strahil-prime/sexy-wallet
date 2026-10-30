@@ -4,34 +4,39 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
-import { ArrowRight, Check, ChevronRight, MessageCircleMore, PieChart, Repeat, Sparkles, Split, X } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, MessageCircleMore, Sparkles, X } from "lucide-react";
 import { BrandLogo, BrandMark } from "@/components/brand/brand-mark";
 import { ContactAvatar } from "@/components/ui/avatar";
-import { contacts, initialActivity, lastDinnerId, subscriptions, teller, type Contact, type Subscription } from "@/lib/data";
+import { contacts, initialActivity, lastDinnerId, subscriptions, type Contact, type Subscription } from "@/lib/data";
+import type { AnswerKind, Persona } from "@/lib/personas";
 import { useWallet } from "@/lib/wallet-store";
 import { useVoiced } from "./voice";
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
 import type { Intent, TellerState } from "./machine";
 
-const questions: { intent: Intent; label: string; short: string; icon: typeof PieChart }[] = [
-  { intent: "money-went", label: "Where did my money go this month?", short: "Where did my money go?", icon: PieChart },
-  { intent: "subscriptions", label: "Any subscriptions I forgot about?", short: "Forgotten subscriptions?", icon: Repeat },
-  { intent: "split-dinner", label: "Split last night’s dinner with Janet", short: "Split dinner with Janet", icon: Split },
-];
-
-export function QuestionChips({ state, onAsk, className }: { state: TellerState; onAsk: (i: Intent) => void; className?: string }) {
+export function QuestionChips({
+  persona,
+  state,
+  onAsk,
+  className,
+}: {
+  persona: Persona;
+  state: TellerState;
+  onAsk: (i: Intent) => void;
+  className?: string;
+}) {
   const busy = state.status === "thinking";
   const activeIntent = state.status === "thinking" || state.status === "talking" ? state.intent : null;
   return (
     <div className={cn("no-scrollbar -mx-1.5 flex gap-2 overflow-x-auto px-1.5 py-1.5 [mask-image:linear-gradient(90deg,#000_92%,transparent)] lg:flex-wrap lg:overflow-visible lg:[mask-image:none]", className)}>
-      {questions.map((q, i) => {
-        const active = activeIntent === q.intent;
+      {persona.questions.map((q, i) => {
+        const active = activeIntent === q.id;
         return (
           <motion.button
-            key={q.intent}
+            key={q.id}
             type="button"
             disabled={busy}
-            onClick={() => onAsk(q.intent)}
+            onClick={() => onAsk(q.id)}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 + i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -164,12 +169,12 @@ function Spoken({ text, delay = 0 }: { text: string; delay?: number }) {
   );
 }
 
-function Header({ onClose }: { onClose?: () => void }) {
+function Header({ name, onClose }: { name: string; onClose?: () => void }) {
   // Bars move only while her voice is actually audible; otherwise they rest at the bottom.
   const speaking = useVoiced();
   return (
     <div className="mb-3 flex items-center gap-2.5">
-      <span className="text-[13px] font-semibold tracking-wide text-white">{teller.name}</span>
+      <span className="text-[13px] font-semibold tracking-wide text-white">{name}</span>
       <span className="flex h-4 items-end gap-[3px]" aria-hidden>
         {[0, 1, 2, 3].map((i) => (
           <motion.span
@@ -605,7 +610,26 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function TellerBubble({ state, onClose, className }: { state: TellerState; onClose: () => void; className?: string }) {
+/** The cards a quick question can open, by `Question.answer`. */
+const ANSWER_CARDS: Record<AnswerKind, (props: { onClose: () => void }) => React.ReactNode> = {
+  "money-went": () => <MoneyAnswer />,
+  subscriptions: () => <SubscriptionsAnswer />,
+  "split-dinner": ({ onClose }) => <SplitAnswer onClose={onClose} />,
+};
+
+export function TellerBubble({
+  persona,
+  state,
+  onClose,
+  className,
+}: {
+  persona: Persona;
+  state: TellerState;
+  onClose: () => void;
+  className?: string;
+}) {
+  const question = state.status === "talking" ? persona.questions.find((q) => q.id === state.intent) : undefined;
+  const Answer = question && ANSWER_CARDS[question.answer];
   const key = state.status === "talking" || state.status === "thinking" ? `${state.status}-${state.intent}` : state.status;
   return (
     <div className={cn("relative", className)} aria-live="polite">
@@ -614,19 +638,19 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
           // Desktop only: on mobile the greeting card would push the quick buttons down. It is
           // hidden on the card itself, so it stays hidden while it animates out too.
           <Bubble key="intro" className="max-lg:hidden">
-            <Header />
+            <Header name={persona.name} />
             <p className="text-[19px] leading-snug font-medium text-white">
-              <Spoken text="Hello Strahil." delay={0.2} />
+              <Spoken text={persona.greeting.headline} delay={0.2} />
             </p>
             <p className="mt-1 text-[15px] text-fog">
-              <Spoken text="Good to see you. What can I do for you today?" delay={0.6} />
+              <Spoken text={persona.greeting.line} delay={0.6} />
             </p>
           </Bubble>
         )}
         {state.status === "thinking" && (
           <Bubble key={key} compact>
             <div className="flex items-center gap-3">
-              <span className="text-[13px] font-semibold text-white">{teller.name}</span>
+              <span className="text-[13px] font-semibold text-white">{persona.name}</span>
               <span className="flex gap-1">
                 {[0, 1, 2].map((i) => (
                   <motion.span
@@ -643,10 +667,8 @@ export function TellerBubble({ state, onClose, className }: { state: TellerState
         )}
         {state.status === "talking" && (
           <Bubble key={key}>
-            <Header onClose={onClose} />
-            {state.intent === "money-went" && <MoneyAnswer />}
-            {state.intent === "subscriptions" && <SubscriptionsAnswer />}
-            {state.intent === "split-dinner" && <SplitAnswer onClose={onClose} />}
+            <Header name={persona.name} onClose={onClose} />
+            {Answer && <Answer onClose={onClose} />}
           </Bubble>
         )}
       </AnimatePresence>

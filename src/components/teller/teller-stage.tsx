@@ -5,12 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { registerPrimer, usePreloaded } from "@/components/shell/preloader";
 import { cn } from "@/lib/utils";
-import { clipFor, clips, type Clip, type ClipId, type TellerState } from "./machine";
+import type { Persona } from "@/lib/personas";
+import { clipFor, clipOf, type Clip, type ClipId, type TellerState } from "./machine";
 import type { TellerSound } from "./sound";
 import { setVoiced } from "./voice";
 
-/** First frame of the idle loop, so the still and the video line up exactly. */
-const PORTRAIT = "/teller/clips/idle-poster.jpg";
 /** Width / height of the portrait. Export the video clips at this same ratio (square, 2048×2048 or 1080×1080). */
 const PORTRAIT_RATIO = "1 / 1";
 
@@ -29,18 +28,22 @@ const featherMask: React.CSSProperties = {
  * answers) on top of that.
  */
 export function TellerStage({
+  persona,
   state,
   sound,
   onClipEnded,
   className,
 }: {
+  persona: Persona;
   state: TellerState;
   sound: TellerSound;
   onClipEnded: () => void;
   className?: string;
 }) {
   const clipId = clipFor(state);
-  const clip = clips[clipId];
+  const clip = clipOf(persona, clipId);
+  // The poster is the idle loop's first frame, so the still and the video line up exactly.
+  const portrait = persona.poster;
 
   // Gentle pointer parallax so the still frame feels alive.
   const px = useMotionValue(0);
@@ -62,13 +65,31 @@ export function TellerStage({
 
   const speaking = (state.status === "talking" && !state.clipDone) || state.status === "intro";
   const phone = usePhoneLayout();
+  const ready = usePreloaded();
+
+  // Once the greeting is over, quietly fetch the three answer clips so a quick question starts
+  // playing at once instead of buffering. Fetches the same format the video element will pick.
+  const idle = state.status === "idle";
+  const warmed = useRef(false);
+  useEffect(() => {
+    if (!idle || !ready || warmed.current) return;
+    const t = window.setTimeout(() => {
+      warmed.current = true;
+      const probe = document.createElement("video");
+      for (const q of persona.questions) {
+        const url = sourceFor(probe, q.clip, phone);
+        if (url) fetch(url, { priority: "low" } as RequestInit).catch(() => {});
+      }
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [idle, ready, phone, persona]);
 
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
       {/* Backdrop that extends past the portrait. It matches the portrait's edge colour, so wide
           windows grow the background instead of cropping Bella. */}
       <div className="absolute inset-0 bg-[radial-gradient(55%_75%_at_60%_35%,#072232_0%,#04151f_55%,var(--color-ink-900)_100%)]" />
-      <Image src={PORTRAIT} alt="" aria-hidden fill sizes="40vw" className="scale-125 object-cover opacity-35 blur-[70px]" />
+      <Image src={portrait} alt="" aria-hidden fill sizes="40vw" className="scale-125 object-cover opacity-35 blur-[70px]" />
 
       {/* Fixed-proportion portrait frame: always full stage height, never stretched.
           The still and the video clips share this frame, its object-fit and its edge mask. */}
@@ -99,8 +120,8 @@ export function TellerStage({
             transition={phone ? { duration: 0 } : { duration: 9, repeat: Infinity, ease: "easeInOut" }}
           >
             <Image
-              src={PORTRAIT}
-              alt="Bella, your teller"
+              src={portrait}
+              alt={`${persona.name}, your teller`}
               fill
               priority
               sizes="(min-width: 1024px) 60vw, 100vw"
@@ -109,8 +130,8 @@ export function TellerStage({
             {/* Desktop: the idle loop always plays underneath and other clips fade in on top of it.
                 Phones: one video element plays everything, swapping clips, so there is only ever one
                 video layer to draw. */}
-            {clips.idle.src && !phone && <LoopVideo clip={clips.idle} />}
-            <OverlayClip clipId={clipId} clip={clip} sound={sound} onEnded={onClipEnded} single={phone} />
+            {persona.idle.src && !phone && <LoopVideo clip={persona.idle} poster={portrait} />}
+            <OverlayClip clipId={clipId} clip={clip} idle={persona.idle} poster={portrait} sound={sound} onEnded={onClipEnded} single={phone} />
           </motion.div>
         </motion.div>
       </div>
@@ -144,7 +165,7 @@ function sourceFor(video: HTMLVideoElement, clip: Clip, preferMp4 = false) {
   return clip.webm && video.canPlayType('video/webm; codecs="vp9, opus"') ? clip.webm : clip.src;
 }
 
-function LoopVideo({ clip }: { clip: Clip }) {
+function LoopVideo({ clip, poster }: { clip: Clip; poster: string }) {
   // React sets `muted` as a property after hydration, which some browsers see too late for
   // autoplay, so start playback explicitly once mounted.
   const ref = useRef<HTMLVideoElement>(null);
@@ -162,7 +183,7 @@ function LoopVideo({ clip }: { clip: Clip }) {
       loop
       playsInline
       preload="auto"
-      poster={PORTRAIT}
+      poster={poster}
       className="absolute inset-0 size-full object-cover object-top"
     />
   );
@@ -176,12 +197,16 @@ function LoopVideo({ clip }: { clip: Clip }) {
 function OverlayClip({
   clipId,
   clip,
+  idle,
+  poster,
   sound,
   onEnded,
   single,
 }: {
   clipId: ClipId;
   clip: Clip;
+  idle: Clip;
+  poster: string;
   sound: TellerSound;
   onEnded: () => void;
   /** Also plays the idle loop between clips, instead of a separate loop element underneath. */
@@ -224,8 +249,8 @@ function OverlayClip({
     const v = ref.current;
     if (!v) return;
     if (!active) {
-      if (single && clips.idle.src) {
-        load(v, "idle", clips.idle);
+      if (single && idle.src) {
+        load(v, "idle", idle);
         v.muted = true;
         v.play().catch(() => {});
       } else {
@@ -246,7 +271,7 @@ function OverlayClip({
         setBlocked(wantSound.current);
         v.play().catch(onEnded);
       });
-  }, [ready, active, single, load, onEnded, setBlocked]);
+  }, [ready, active, single, idle, load, onEnded, setBlocked]);
 
   // Tell the cards' equaliser when her voice is audible: playing, unmuted, in a spoken stretch.
   useEffect(() => {
@@ -299,7 +324,7 @@ function OverlayClip({
         ref={ref}
         muted
         playsInline
-        poster={single ? PORTRAIT : undefined}
+        poster={single ? poster : undefined}
         style={single ? { objectPosition: "79% 0%" } : undefined}
         preload="auto"
         onEnded={() => active && onEnded()}

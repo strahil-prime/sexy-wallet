@@ -4,9 +4,11 @@ import { useEffect, useRef } from "react";
 
 import { ProfileAvatar, SearchField, TellerMenu } from "@/components/shell/top-actions";
 import { useTeller } from "@/components/teller/machine";
+import { usePersona } from "@/components/teller/persona";
 import { SoundToggle, useTellerSound } from "@/components/teller/sound";
 import { TellerStage } from "@/components/teller/teller-stage";
 import { AskBar, QuestionChips, TellerBubble } from "@/components/teller/conversation";
+import type { Persona } from "@/lib/personas";
 import { cn } from "@/lib/utils";
 import { ActivityList } from "./activity-list";
 import { Balance } from "./balance";
@@ -14,7 +16,13 @@ import { CardPreview } from "./card-preview";
 import { QuickActions } from "./quick-actions";
 
 export function Dashboard() {
-  const teller = useTeller();
+  // A new teller starts fresh, greeting included.
+  const { persona } = usePersona();
+  return <Home key={persona.id} persona={persona} />;
+}
+
+function Home({ persona }: { persona: Persona }) {
+  const teller = useTeller(persona);
   const sound = useTellerSound();
   const answering = teller.state.status === "talking";
   const askRef = useRef<HTMLDivElement>(null);
@@ -30,7 +38,7 @@ export function Dashboard() {
     <div className="flex min-h-full flex-col lg:h-full lg:flex-row">
       {/* Stage */}
       <section className="@container relative isolate flex min-h-[92svh] min-w-0 flex-1 flex-col px-5 pt-[50svh] pb-6 sm:px-8 lg:min-h-0 lg:px-10 lg:pt-[calc(max(33vh,200px)-50px)] lg:pb-7 xl:px-12">
-        <TellerStage state={teller.state} sound={sound} onClipEnded={teller.onClipEnded} className="-z-10 bottom-auto h-[78svh] lg:bottom-0 lg:h-auto" />
+        <TellerStage persona={persona} state={teller.state} sound={sound} onClipEnded={teller.onClipEnded} className="-z-10 bottom-auto h-[78svh] lg:bottom-0 lg:h-auto" />
         <div className="absolute top-4 left-5 z-10 flex items-center gap-3 sm:left-8 lg:top-7 lg:left-10 xl:left-12">
           <SoundToggle sound={sound} />
           <TellerMenu />
@@ -46,6 +54,7 @@ export function Dashboard() {
               buttons, so it starts where "Total balance" was and keeps clear of Bella's face. */}
           <div className="relative flex flex-col gap-3">
             <TellerBubble
+              persona={persona}
               state={teller.state}
               onClose={teller.dismiss}
               className={cn(
@@ -54,6 +63,7 @@ export function Dashboard() {
               )}
             />
             <QuestionChips
+              persona={persona}
               state={teller.state}
               onAsk={teller.ask}
               className={cn("transition-opacity duration-300", answering && "pointer-events-none opacity-0 max-lg:hidden")}

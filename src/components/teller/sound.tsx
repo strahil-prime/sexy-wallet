@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePersona } from "./persona";
 
 // v2: everyone starts with sound on again, whatever they chose before.
 const STORAGE_KEY = "sexy-wallet:sound:v2";
@@ -40,9 +41,10 @@ export function useTellerSound(): TellerSound {
   return { on, blocked, setBlocked, toggle };
 }
 
-/** Sound on/off for Bella's clips. Shows a "Tap for sound" hint when autoplay with sound was blocked. */
+/** Sound on/off for the teller's clips. Shows a "Tap for sound" hint when autoplay with sound was blocked. */
 export function SoundToggle({ sound, className }: { sound: TellerSound; className?: string }) {
   const audible = sound.on && !sound.blocked;
+  const { name } = usePersona().persona;
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
@@ -53,7 +55,7 @@ export function SoundToggle({ sound, className }: { sound: TellerSound; classNam
       <button
         type="button"
         onClick={sound.toggle}
-        aria-label={audible ? "Mute Bella" : "Turn Bella's sound on"}
+        aria-label={audible ? `Mute ${name}` : `Turn ${name}'s sound on`}
         aria-pressed={audible}
         className="glass focus-ring relative grid size-10 cursor-pointer place-items-center rounded-full text-fog transition-colors hover:text-white"
       >

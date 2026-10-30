@@ -208,9 +208,10 @@ const spendingCategories = [
   { name: "Shopping", value: 289.95, color: "#7c5cff", note: "Zara and two online orders" },
   { name: "Dining & coffee", value: 272.8, color: "#5ef0ff", note: "Includes last night's dinner" },
   { name: "Subscriptions", value: 123.89, color: "#8ea3ad", note: "8 active" },
+  { name: "Transport", value: 52, color: "#f472b6", note: "Uber, 3 rides" },
 ];
 
-function MoneyAnswer() {
+function MoneyAnswer({ reply }: { reply?: string }) {
   const { activity } = useWallet();
   const sent = useMemo(
     () => activity.filter((a) => a.id.startsWith("tx_")).reduce((s, a) => s - a.amount, 0),
@@ -225,7 +226,10 @@ function MoneyAnswer() {
     <>
       <p className={answerText}>
         <Spoken
-          text={`You've spent ${formatEUR(total)} in ${month}. Most of it went on ${top[0].name.toLowerCase()} (${pct(top[0].value)}%), then ${top[1].name.toLowerCase()}, which was mostly your Airbnb.`}
+          text={
+            reply ??
+            `You've spent ${formatEUR(total)} in ${month}. Most of it went on ${top[0].name.toLowerCase()} (${pct(top[0].value)}%), then ${top[1].name.toLowerCase()}, which was mostly your Airbnb.`
+          }
         />
       </p>
       <SpendingDonut cats={top} total={total} month={month} />
@@ -611,8 +615,8 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
 }
 
 /** The cards a quick question can open, by `Question.answer`. */
-const ANSWER_CARDS: Record<AnswerKind, (props: { onClose: () => void }) => React.ReactNode> = {
-  "money-went": () => <MoneyAnswer />,
+const ANSWER_CARDS: Record<AnswerKind, (props: { onClose: () => void; reply?: string }) => React.ReactNode> = {
+  "money-went": ({ reply }) => <MoneyAnswer reply={reply} />,
   subscriptions: () => <SubscriptionsAnswer />,
   "split-dinner": ({ onClose }) => <SplitAnswer onClose={onClose} />,
 };
@@ -668,7 +672,7 @@ export function TellerBubble({
         {state.status === "talking" && (
           <Bubble key={key}>
             <Header name={persona.name} onClose={onClose} />
-            {Answer && <Answer onClose={onClose} />}
+            {Answer && <Answer onClose={onClose} reply={question.reply} />}
           </Bubble>
         )}
       </AnimatePresence>

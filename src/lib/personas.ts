@@ -43,6 +43,8 @@ export type Question = {
   short: string;
   icon: LucideIcon;
   answer: AnswerKind;
+  /** the card's spoken line, word for word what the clip says (else the card writes its own) */
+  reply?: string;
   clip: Clip;
 };
 
@@ -93,6 +95,7 @@ const bella: Persona = {
       short: "Where did my money go?",
       icon: PieChart,
       answer: "money-went",
+      reply: "You've spent €1,462.82 in October. Most of it went on groceries (28%), then travel, which was mostly your Airbnb.",
       clip: clip("bella", "ask-1", 12300, BELLA_VOICE_1),
     },
     {

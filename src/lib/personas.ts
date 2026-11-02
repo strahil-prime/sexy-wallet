@@ -1,4 +1,4 @@
-import { PieChart, Repeat, Split, type LucideIcon } from "lucide-react";
+import { CalendarClock, Lightbulb, PieChart, Repeat, ShieldAlert, Split, type LucideIcon } from "lucide-react";
 import { user } from "./data";
 
 /**
@@ -32,7 +32,7 @@ export type Clip = {
 };
 
 /** The answer cards that exist. A question shows one of these under the spoken reply. */
-export type AnswerKind = "money-went" | "subscriptions" | "split-dinner";
+export type AnswerKind = "money-went" | "subscriptions" | "split-dinner" | "bills" | "double-charge" | "coffee-tip";
 
 export type Question = {
   /** stable id, unique within the persona */
@@ -117,14 +117,52 @@ const bella: Persona = {
   ],
 };
 
+const sebastian: Persona = {
+  id: "sebastian",
+  name: "Sebastian",
+  role: "Money coach",
+  avatar: "/personas/sebastian/avatar.jpg",
+  poster: "/personas/sebastian/idle-poster.jpg",
+  edgeColor: "#0c1921",
+  greeting: { headline: `Hey ${user.name}.`, line: "What can I help you with today?" },
+  idle: clip("sebastian", "idle", 0, undefined, true),
+  intro: clip("sebastian", "intro", 2133, [[0, 1.04], [1.39, 2.13]]),
+  questions: [
+    {
+      id: "bills",
+      label: "Bills coming up",
+      short: "Bills coming up",
+      icon: CalendarClock,
+      answer: "bills",
+      reply: "3 bills this week: rent, 950 euros on Friday, phone 25, and Netflix 13.99. You’ll still have 410 left. You’re covered.",
+      clip: clip("sebastian", "ask-1", 12533, [[0, 1.27], [1.74, 2.18], [2.44, 4.53], [4.95, 6.27], [6.66, 8.65], [9.18, 10.88], [11.28, 12.19], [12.45, 12.53]]),
+    },
+    {
+      id: "unusual",
+      label: "Unusual activity",
+      short: "Unusual activity",
+      icon: ShieldAlert,
+      answer: "double-charge",
+      reply: "Spotify charged you twice yesterday, 10.99 each. Probably a mistake. You should flag it for a return.",
+      clip: clip("sebastian", "ask-2", 7733, [[0, 2.18], [2.57, 3.9], [4.35, 5.37], [5.81, 7.73]]),
+    },
+    {
+      id: "tip",
+      label: "Money tip of the day",
+      short: "Money tip of the day",
+      icon: Lightbulb,
+      answer: "coffee-tip",
+      reply: "Today’s tip: your coffees cost sixty-four euros last month. Brew half at home.",
+      clip: clip("sebastian", "ask-3", 7200, [[0, 0.77], [1.36, 4.24], [4.76, 7.2]]),
+    },
+  ],
+};
+
 /** Live personas, in picker order. The first is the default. */
-export const personas: readonly Persona[] = [bella];
+export const personas: readonly Persona[] = [bella, sebastian];
 
 /** Locked rows in the picker until their videos exist. */
-export const upcomingPersonas = [
-  { id: "teller-2", name: "Teller two", role: "Arriving soon" },
-  { id: "teller-3", name: "Teller three", role: "Arriving soon" },
-] as const;
+export const upcomingPersonas = [{ id: "teller-3", name: "Teller three", role: "Arriving soon" }] as const;
 
 export function personaById(id: string | null | undefined): Persona {
   return personas.find((p) => p.id === id) ?? personas[0];

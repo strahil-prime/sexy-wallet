@@ -11,6 +11,8 @@ import { contacts, initialActivity, lastDinnerId, subscriptions, type Contact, t
 import type { AnswerKind, Persona } from "@/lib/personas";
 import { useWallet } from "@/lib/wallet-store";
 import { useVoiced } from "./voice";
+import { answerText, Spoken } from "./card-kit";
+import { BillsAnswer, CoffeeTipAnswer, DoubleChargeAnswer } from "./cards-sebastian";
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
 import type { Intent, TellerState } from "./machine";
 
@@ -149,26 +151,6 @@ export function AskBar({ className }: { className?: string }) {
   );
 }
 
-/** Splits text into words that blur in like captions. */
-function Spoken({ text, delay = 0 }: { text: string; delay?: number }) {
-  const words = text.split(" ");
-  return (
-    <span>
-      {words.map((w, i) => (
-        <motion.span
-          key={i}
-          className="inline-block whitespace-pre"
-          initial={{ opacity: 0, y: 6, filter: "blur(6px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ delay: delay + i * 0.055, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {w + (i < words.length - 1 ? " " : "")}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
-
 function Header({ name, onClose }: { name: string; onClose?: () => void }) {
   // Bars move only while her voice is actually audible; otherwise they rest at the bottom.
   const speaking = useVoiced();
@@ -199,8 +181,6 @@ function Header({ name, onClose }: { name: string; onClose?: () => void }) {
   );
 }
 
-/** The spoken answer leads each card: white and a step larger than the details under it. */
-const answerText = "text-[17px] leading-relaxed font-medium text-white sm:text-[18px]";
 
 const spendingCategories = [
   { name: "Groceries", value: 412.18, color: "#2ad1e6", note: "Lidl, 9 visits" },
@@ -619,6 +599,9 @@ const ANSWER_CARDS: Record<AnswerKind, (props: { onClose: () => void; reply?: st
   "money-went": ({ reply }) => <MoneyAnswer reply={reply} />,
   subscriptions: () => <SubscriptionsAnswer />,
   "split-dinner": ({ onClose }) => <SplitAnswer onClose={onClose} />,
+  bills: (p) => <BillsAnswer {...p} />,
+  "double-charge": (p) => <DoubleChargeAnswer {...p} />,
+  "coffee-tip": (p) => <CoffeeTipAnswer {...p} />,
 };
 
 export function TellerBubble({

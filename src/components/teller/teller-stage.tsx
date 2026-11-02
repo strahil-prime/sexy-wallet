@@ -335,12 +335,16 @@ function OverlayClip({
   );
 }
 
+// Remembered after the first check, so a stage mounted later (switching teller) starts with the
+// right setup instead of loading the desktop WebM for one render on a phone.
+let knownPhone: boolean | null = null;
+
 /** Below the desktop breakpoint, where the stage switches to its simpler phone setup. */
 function usePhoneLayout() {
-  const [phone, setPhone] = useState(false);
+  const [phone, setPhone] = useState(knownPhone ?? false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
-    const update = () => setPhone(mq.matches);
+    const update = () => setPhone((knownPhone = mq.matches));
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);

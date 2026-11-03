@@ -113,8 +113,8 @@ function Sparkline() {
         strokeWidth="2.2"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
+        initial={{ clipPath: "inset(-20% 100% -20% -2%)" }}
+        animate={{ clipPath: "inset(-20% -2% -20% -2%)" }}
         transition={{ delay: 0.4, duration: 1.4, ease }}
         style={{ filter: "drop-shadow(0 0 6px rgb(94 240 255 / 0.6))" }}
       />

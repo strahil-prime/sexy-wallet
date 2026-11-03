@@ -50,7 +50,7 @@ export function ProfileAvatar({ size = 52, className }: { size?: number; classNa
 }
 
 /** Teller switcher, beside the sound button: the active teller's face plus a chevron. */
-export function TellerMenu({ className }: { className?: string }) {
+export function TellerMenu({ className, align = "start" }: { className?: string; align?: "start" | "end" }) {
   const [open, setOpen] = useState(false);
   const { persona, choose } = usePersona();
   return (
@@ -76,13 +76,13 @@ export function TellerMenu({ className }: { className?: string }) {
       <AnimatePresence>
         {open && (
           <Dropdown.Portal forceMount>
-            <Dropdown.Content asChild align="start" sideOffset={10} forceMount>
+            <Dropdown.Content asChild align={align} sideOffset={10} forceMount>
               <motion.div
                 initial={{ opacity: 0, y: -6, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                className="glass-strong z-50 w-64 origin-top-left rounded-2xl p-1.5"
+                className={cn("glass-strong z-50 w-64 rounded-2xl p-1.5", align === "end" ? "origin-top-right" : "origin-top-left")}
               >
                 <div className="px-3 pt-2 pb-1.5 text-[11px] font-medium tracking-wider text-mist uppercase">Your teller</div>
                 {personas.map((p) => (

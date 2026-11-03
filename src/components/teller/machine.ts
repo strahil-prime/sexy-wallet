@@ -69,8 +69,16 @@ function reducer(state: TellerState, event: Event): TellerState {
   }
 }
 
+// Personas that have already greeted in this visit, so coming back to the Assistant view (or to
+// a teller) doesn't replay the greeting.
+const greeted = new Set<string>();
+
 export function useTeller(persona: Persona) {
-  const [state, dispatch] = useReducer(reducer, { status: "intro" });
+  const [state, dispatch] = useReducer(reducer, persona.id, (id): TellerState => (greeted.has(id) ? { status: "idle" } : { status: "intro" }));
+
+  useEffect(() => {
+    if (state.status !== "intro") greeted.add(persona.id);
+  }, [state.status, persona.id]);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Without video, emulate clip timing so the flow feels the same.

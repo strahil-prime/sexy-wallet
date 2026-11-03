@@ -181,8 +181,8 @@ function Header({ name, onClose }: { name: string; onClose?: () => void }) {
   );
 }
 
-
-const spendingCategories = [
+/** October's spending, shared by Bella's answer and the Dashboard view. */
+export const spendingCategories = [
   { name: "Groceries", value: 412.18, color: "#2ad1e6", note: "Lidl, 9 visits" },
   { name: "Travel", value: 312, color: "#1f7bff", note: "Airbnb in Lisbon" },
   { name: "Shopping", value: 289.95, color: "#7c5cff", note: "Zara and two online orders" },
@@ -221,7 +221,7 @@ const RING_R = 42;
 const RING_GAP = 0.9; // in pathLength units, out of 100
 
 /** Donut of the month's spending with a legend; hovering either side highlights a category. */
-function SpendingDonut({ cats, total, month }: { cats: typeof spendingCategories; total: number; month: string }) {
+export function SpendingDonut({ cats, total, month }: { cats: typeof spendingCategories; total: number; month: string }) {
   const [hover, setHover] = useState<string | null>(null);
   const focus = cats.find((c) => c.name === hover);
   const pct = (v: number) => (v / total) * 100;

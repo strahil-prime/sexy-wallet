@@ -92,13 +92,13 @@ export type WalletCard = {
 };
 
 export const walletCards: WalletCard[] = [
-  { id: "aurora", name: "Aurora", kind: "Virtual", last4: "8920", number: "4716 2093 5581 8920", expiry: "09/29", cvv: "417", holder: "Strahil", finish: "aurora" },
-  { id: "obsidian", name: "Obsidian", kind: "Metal", last4: "3305", number: "4532 7781 0466 3305", expiry: "04/30", cvv: "862", holder: "Strahil", finish: "obsidian" },
+  { id: "aurora", name: "Aurora", kind: "Virtual", last4: "8920", number: "4716 2093 5581 8920", expiry: "09/29", cvv: "417", holder: "Eddie", finish: "aurora" },
+  { id: "obsidian", name: "Obsidian", kind: "Metal", last4: "3305", number: "4532 7781 0466 3305", expiry: "04/30", cvv: "862", holder: "Eddie", finish: "obsidian" },
 ];
 
 /** The signed-in user. */
 export const user = {
-  name: "Strahil",
+  name: "Eddie",
 };
 
 /** Last night's dinner, used by the "split with Janet" quick question. */

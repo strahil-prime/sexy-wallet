@@ -492,7 +492,7 @@ function SubscriptionsAnswer() {
   );
 }
 
-const me: Contact = { id: "me", name: "Strahil", handle: "@strahil", iban: "", hue: ["#2ad1e6", "#1f7bff"] };
+const me: Contact = { id: "me", name: "Eddie", handle: "@eddie", iban: "", hue: ["#2ad1e6", "#1f7bff"] };
 
 function SplitAnswer({ onClose }: { onClose: () => void }) {
   const { activity, request } = useWallet();

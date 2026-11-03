@@ -66,8 +66,9 @@ const views = [
 ] as const;
 
 function ViewTabs({ view, onChange, className }: { view: View; onChange: (v: View) => void; className?: string }) {
+  // Quiet text tabs with a thin glowing underline, so they don't compete with the white chips below.
   return (
-    <div role="tablist" aria-label="Home view" className={cn("glass inline-flex h-10 items-center gap-0.5 rounded-full p-1", className)}>
+    <div role="tablist" aria-label="Home view" className={cn("inline-flex h-10 items-center gap-6", className)}>
       {views.map((v) => {
         const on = view === v.id;
         return (
@@ -78,19 +79,20 @@ function ViewTabs({ view, onChange, className }: { view: View; onChange: (v: Vie
             aria-selected={on}
             onClick={() => onChange(v.id)}
             className={cn(
-              "focus-ring relative flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-[13.5px] font-medium transition-colors",
-              on ? "text-ink-950" : "text-fog hover:text-white",
+              "focus-ring relative flex h-10 cursor-pointer items-center gap-2 rounded-md text-[14px] font-medium tracking-[0.01em] transition-colors duration-300 [text-shadow:0_1px_10px_rgb(0_0_0/0.55)]",
+              on ? "text-white" : "text-white/45 hover:text-white/80",
             )}
           >
+            <v.icon className={cn("size-[17px] transition-colors duration-300", on && "text-cyan-300")} strokeWidth={1.8} />
+            <span>{v.label}</span>
             {on && (
               <motion.span
                 layoutId="home-view-tab"
-                className="absolute inset-0 rounded-full bg-white shadow-[0_6px_18px_-8px_rgb(255_255_255/0.6)]"
-                transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                aria-hidden
+                className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-gradient-to-r from-cyan-300/0 via-cyan-300 to-cyan-300/0 shadow-[0_0_12px_rgb(103_232_249/0.8)]"
+                transition={{ type: "spring", stiffness: 420, damping: 36 }}
               />
             )}
-            <v.icon className="relative size-4" strokeWidth={1.9} />
-            <span className="relative">{v.label}</span>
           </button>
         );
       })}

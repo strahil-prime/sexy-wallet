@@ -2,12 +2,15 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 /** The spoken answer leads each card: white and a step larger than the details under it. */
 export const answerText = "text-[17px] leading-relaxed font-medium text-white sm:text-[18px]";
 
 export const ease = [0.16, 1, 0.3, 1] as const;
+
+/** The secondary card button: a soft grey fill a step lighter than the card's surface. */
+export const secondaryButton =
+  "focus-ring h-11 cursor-pointer rounded-full bg-white/[0.08] px-5 text-[14.5px] text-fog transition-colors hover:bg-white/[0.13] hover:text-white";
 
 /** Splits text into words that blur in like captions. */
 export function Spoken({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -77,7 +80,7 @@ export function CardActions({
       <button
         type="button"
         onClick={onClose}
-        className={cn("focus-ring h-11 cursor-pointer rounded-full px-5 text-[14.5px] text-fog transition-colors hover:bg-white/5 hover:text-white")}
+        className={secondaryButton}
       >
         {done ? "Done" : "Not now"}
       </button>

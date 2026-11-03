@@ -97,7 +97,7 @@ function ViewTabs({ view, onChange, className }: { view: View; onChange: (v: Vie
               <motion.span
                 layoutId="home-view-tab"
                 aria-hidden
-                className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-gradient-to-r from-cyan-300/0 via-cyan-300 to-cyan-300/0 shadow-[0_0_12px_rgb(103_232_249/0.8)]"
+                className="absolute inset-x-0 -bottom-px h-[2px] bg-cyan-300 shadow-[0_0_8px_rgb(103_232_249/0.45)]"
                 transition={{ type: "spring", stiffness: 420, damping: 36 }}
               />
             )}

@@ -11,7 +11,7 @@ import { contacts, initialActivity, lastDinnerId, subscriptions, type Contact, t
 import type { AnswerKind, Persona } from "@/lib/personas";
 import { useWallet } from "@/lib/wallet-store";
 import { useVoiced } from "./voice";
-import { answerText, Spoken } from "./card-kit";
+import { answerText, secondaryButton, Spoken } from "./card-kit";
 import { BillsAnswer, CoffeeTipAnswer, DoubleChargeAnswer } from "./cards-sebastian";
 import { InvestAnswer, PortfolioAnswer, RetirementAnswer } from "./cards-michael";
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
@@ -586,7 +586,7 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          className="focus-ring h-11 cursor-pointer rounded-full px-5 text-[14.5px] text-fog transition-colors hover:bg-white/5 hover:text-white"
+          className={secondaryButton}
         >
           {requested ? "Done" : "Not now"}
         </button>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, CreditCard, Ellipsis } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Ellipsis, QrCode } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import { comingSoon } from "@/components/shell/coming-soon";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const actions = [
   { label: "Send", icon: ArrowUpRight, href: "/send", primary: true },
   { label: "Receive", icon: ArrowDownLeft },
-  { label: "Buy", icon: CreditCard },
+  { label: "QR", icon: QrCode },
   { label: "More", icon: Ellipsis },
 ];
 

@@ -37,9 +37,13 @@ export function Dashboard() {
         <Assistant key={persona.id} persona={persona} tabs={tabs} />
       ) : (
         <ScrollFade className="lg:overflow-y-auto">
-          <section className="@container relative min-w-0 px-4 pt-4 pb-8 sm:px-8 lg:px-10 lg:pt-7 lg:pb-7 xl:px-12">
+          <section className="@container relative min-w-0 px-4 pt-4 pb-4 sm:px-8 lg:px-10 lg:pt-7 lg:pb-7 xl:px-12">
             {tabs}
-            <div className="mt-5 lg:mt-6">
+            {/* Phones: balance, then the right-rail cards, then the rest (below the rail). */}
+            <div className="mt-5 lg:hidden">
+              <Overview part="balance" onAsk={() => setView("assistant")} />
+            </div>
+            <div className="hidden lg:mt-6 lg:block">
               <Overview onAsk={() => setView("assistant")} />
             </div>
           </section>
@@ -56,6 +60,12 @@ export function Dashboard() {
         <CardPreview />
         <ActivityList />
       </aside>
+
+      {view === "dashboard" && (
+        <section className="@container -mt-2 min-w-0 px-4 pb-8 sm:px-8 lg:hidden">
+          <Overview part="rest" onAsk={() => setView("assistant")} />
+        </section>
+      )}
     </div>
   );
 }

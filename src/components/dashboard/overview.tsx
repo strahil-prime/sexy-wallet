@@ -145,7 +145,11 @@ function MonthBars({ values, months, color, highlight }: { values: number[]; mon
       </div>
       <div className="mt-2 flex justify-between gap-2.5">
         {months.map((m, i) => (
-          <span key={i} className={cn("max-w-9 flex-1 text-center text-[11px]", i === months.length - 1 ? "text-white" : "text-mist")} suppressHydrationWarning>
+          <span
+            key={i}
+            className={cn("max-w-9 flex-1 text-center text-[11px]", i === months.length - 1 ? "text-white" : "text-mist")}
+            suppressHydrationWarning
+          >
             {m}
           </span>
         ))}
@@ -170,7 +174,8 @@ const bills = [
   { id: "netflix", name: "Netflix", amount: 13.99, weekday: 6, icon: null, color: "#e50914" },
 ] as const;
 
-export function Overview({ onAsk }: { onAsk: () => void }) {
+/** `part` lets phones split the dashboard: the balance first, then the right-rail cards, then the rest. */
+export function Overview({ onAsk, part = "all" }: { onAsk: () => void; part?: "all" | "balance" | "rest" }) {
   const months = useMonths();
   const { persona } = usePersona();
   const [budgetSet, setBudgetSet] = useState(false);
@@ -192,169 +197,188 @@ export function Overview({ onAsk }: { onAsk: () => void }) {
   return (
     <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @5xl:grid-cols-3 xl:gap-5">
       {/* Balance with its 30-day trend */}
-      <Card className="@xl:col-span-2" delay={0}>
-        <div className="@container relative">
-          <Balance />
-          <div className="pointer-events-none mt-4 h-[90px] @lg:absolute @lg:right-0 @lg:bottom-0 @lg:mt-0 @lg:h-[110px] @lg:w-[48%]">
-            <Sparkline />
-          </div>
-        </div>
-      </Card>
-
-      {/* A nudge from the active teller */}
-      <Card delay={0.05}>
-        <div className="relative flex h-full flex-col">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-5 -z-0 rounded-[var(--radius-panel)] sm:-inset-6 bg-[radial-gradient(120%_90%_at_100%_100%,rgb(31_123_255/0.35),transparent_60%)]"
-          />
-          <div className="relative flex items-center gap-2.5">
-            <Image src={persona.avatar} alt="" width={32} height={32} className="size-8 rounded-full object-cover ring-1 ring-white/15" />
-            <span className="text-[15px] font-medium text-white">{persona.name}&apos;s insight</span>
-            <Sparkles className="ml-auto size-4 text-cyan" />
-          </div>
-          <p className="relative mt-3 text-[14.5px] leading-relaxed text-fog">
-            <span className="text-white">Dining and coffee came to {formatEUR(272.8)} in {lastMonthLong}.</span> A €220 monthly cap would keep
-            about €50 more in your pocket.
-          </p>
-          <div className="relative mt-auto flex flex-wrap gap-2 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setBudgetSet(true);
-                toast("Dining budget set", { description: `€220 a month. We'll tell you when you're close.` });
-              }}
-              disabled={budgetSet}
-              className="focus-ring h-10 cursor-pointer rounded-full bg-white px-4 text-[13.5px] font-medium text-ink-950 transition-colors hover:bg-[#eef6f8] disabled:cursor-default disabled:bg-positive/15 disabled:text-positive"
-            >
-              {budgetSet ? "Budget set" : "Set budget"}
-            </button>
-            <button
-              type="button"
-              onClick={onAsk}
-              className="focus-ring h-10 cursor-pointer rounded-full border border-hairline-strong px-4 text-[13.5px] text-white transition-colors hover:bg-white/5"
-            >
-              Ask {persona.name}
-            </button>
-          </div>
-        </div>
-      </Card>
-
-      <Card delay={0.1}>
-        <CardTitle>Monthly spending</CardTitle>
-        <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
-          <Amount value={spentByMonth[5]} />
-          <span className="pb-1.5 text-[12px] text-mist">
-            <Change value={spentChange} good={spentChange < 0} /> vs {months[4]}
-          </span>
-        </div>
-        <MonthBars values={spentByMonth} months={months} color="rgb(31 123 255 / 0.45)" highlight="#4c97ff" />
-      </Card>
-
-      <Card delay={0.15}>
-        <CardTitle>Money in</CardTitle>
-        <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
-          <Amount value={inByMonth[5]} />
-          <span className="pb-1.5 text-[12px] text-mist">
-            <Change value={inChange} good={inChange >= 0} /> vs {months[4]}
-          </span>
-        </div>
-        <MonthBars values={inByMonth} months={months} color="rgb(42 209 230 / 0.35)" highlight="#5ef0ff" />
-      </Card>
-
-      <Card delay={0.2}>
-        <CardTitle onMore={() => comingSoon("Rewards")}>Rewards</CardTitle>
-        <div className="mt-3 flex items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] text-fog">Aurora Rewards</span>
-              <span className="rounded-full border border-[#f5c76a]/40 bg-[#f5c76a]/10 px-2 py-0.5 text-[11px] font-semibold text-[#f5c76a]">Gold</span>
-            </div>
-            <div className="mt-1.5 text-[28px] font-semibold tracking-tight text-white tabular">
-              2,480 <span className="text-[14px] font-normal text-mist">points</span>
+      {part !== "rest" && (
+        <Card className="@xl:col-span-2" delay={0}>
+          <div className="@container relative">
+            <Balance />
+            <div className="pointer-events-none mt-4 h-[90px] @lg:absolute @lg:right-0 @lg:bottom-0 @lg:mt-0 @lg:h-[110px] @lg:w-[48%]">
+              <Sparkline />
             </div>
           </div>
-          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#f5c76a] to-[#a8782a] shadow-[0_0_24px_rgb(245_199_106/0.35)] ring-4 ring-[#f5c76a]/15">
-            <Star className="size-6 fill-ink-950/70 text-ink-950/70" />
-          </span>
-        </div>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${(2480 / 3000) * 100}%` }}
-            transition={{ delay: 0.7, duration: 0.9, ease }}
-            className="h-full rounded-full bg-gradient-to-r from-electric to-cyan"
-          />
-        </div>
-        <div className="mt-2 flex justify-between text-[12px] text-mist">
-          <span>
-            <span className="text-white">520 points</span> to Platinum
-          </span>
-          <span className="tabular">3,000</span>
-        </div>
-      </Card>
+        </Card>
+      )}
 
-      {/* Where last month's money went */}
-      <Card className="@xl:col-span-2 @5xl:row-span-2" delay={0.25}>
-        <CardTitle onMore={() => onAsk()}>Spending by category</CardTitle>
-        <p className="mt-1 text-[12.5px] text-mist" suppressHydrationWarning>
-          {lastMonthLong} · {formatEUR(total)}
-        </p>
-        <div className="[&>div]:mt-3">
-          <SpendingDonut cats={[...spendingCategories].sort((a, b) => b.value - a.value)} total={total} month={lastMonth} />
-        </div>
-      </Card>
+      {part !== "balance" && (
+        <>
+          {/* A nudge from the active teller */}
+          <Card delay={0.05}>
+            <div className="relative flex h-full flex-col">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-5 -z-0 rounded-[var(--radius-panel)] sm:-inset-6 bg-[radial-gradient(120%_90%_at_100%_100%,rgb(31_123_255/0.35),transparent_60%)]"
+              />
+              <div className="relative flex items-center gap-2.5">
+                <Image
+                  src={persona.avatar}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="size-8 rounded-full object-cover ring-1 ring-white/15"
+                />
+                <span className="text-[15px] font-medium text-white">{persona.name}&apos;s insight</span>
+                <Sparkles className="ml-auto size-4 text-cyan" />
+              </div>
+              <p className="relative mt-3 text-[14.5px] leading-relaxed text-fog">
+                <span className="text-white">
+                  Dining and coffee came to {formatEUR(272.8)} in {lastMonthLong}.
+                </span>{" "}
+                A €220 monthly cap would keep about €50 more in your pocket.
+              </p>
+              <div className="relative mt-auto flex flex-wrap gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBudgetSet(true);
+                    toast("Dining budget set", { description: `€220 a month. We'll tell you when you're close.` });
+                  }}
+                  disabled={budgetSet}
+                  className="focus-ring h-10 cursor-pointer rounded-full bg-white px-4 text-[13.5px] font-medium text-ink-950 transition-colors hover:bg-[#eef6f8] disabled:cursor-default disabled:bg-positive/15 disabled:text-positive"
+                >
+                  {budgetSet ? "Budget set" : "Set budget"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onAsk}
+                  className="focus-ring h-10 cursor-pointer rounded-full border border-hairline-strong px-4 text-[13.5px] text-white transition-colors hover:bg-white/5"
+                >
+                  Ask {persona.name}
+                </button>
+              </div>
+            </div>
+          </Card>
 
-      <Card delay={0.3}>
-        <CardTitle onMore={() => comingSoon("Bills")}>Upcoming bills</CardTitle>
-        <ul className="mt-3 space-y-1">
-          {bills.map((b) => (
-            <li key={b.id} className="flex items-center gap-3 rounded-xl py-1.5">
-              {b.icon ? (
-                <span className="grid size-9 shrink-0 place-items-center rounded-full" style={{ background: `${b.color}22`, color: b.color }}>
-                  <b.icon className="size-4" strokeWidth={1.9} />
-                </span>
-              ) : (
-                <BrandLogo brand="netflix" className="size-9 [&_svg]:size-4" />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] text-white">{b.name}</span>
-                <span className="block truncate text-[12px] text-mist" suppressHydrationWarning>
-                  {dueOn(b.weekday)}
-                </span>
+          <Card delay={0.1}>
+            <CardTitle>Monthly spending</CardTitle>
+            <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
+              <Amount value={spentByMonth[5]} />
+              <span className="pb-1.5 text-[12px] text-mist">
+                <Change value={spentChange} good={spentChange < 0} /> vs {months[4]}
               </span>
-              <span className="text-[14px] text-white tabular">− {formatEUR(b.amount)}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card delay={0.35}>
-        <CardTitle onMore={() => comingSoon("Savings goals")}>Savings goal</CardTitle>
-        <div className="mt-3 flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-electric/15 text-electric-soft">
-            <Plane className="size-[18px]" strokeWidth={1.9} />
-          </span>
-          <div className="min-w-0">
-            <div className="text-[14px] text-fog">Trip to Tokyo</div>
-            <div className="text-[20px] font-semibold text-white tabular">
-              €3,200 <span className="text-[14px] font-normal text-mist">/ €5,000</span>
             </div>
-          </div>
-        </div>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: "64%" }}
-            transition={{ delay: 0.8, duration: 0.9, ease }}
-            className="h-full rounded-full bg-gradient-to-r from-cyan to-aqua shadow-[0_0_12px_rgb(94_240_255/0.5)]"
-          />
-        </div>
-        <div className="mt-2 flex justify-between text-[12px] text-mist">
-          <span>64% saved</span>
-          <span>Target 1 Mar 2027</span>
-        </div>
-      </Card>
+            <MonthBars values={spentByMonth} months={months} color="rgb(31 123 255 / 0.45)" highlight="#4c97ff" />
+          </Card>
+
+          <Card delay={0.15}>
+            <CardTitle>Money in</CardTitle>
+            <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
+              <Amount value={inByMonth[5]} />
+              <span className="pb-1.5 text-[12px] text-mist">
+                <Change value={inChange} good={inChange >= 0} /> vs {months[4]}
+              </span>
+            </div>
+            <MonthBars values={inByMonth} months={months} color="rgb(42 209 230 / 0.35)" highlight="#5ef0ff" />
+          </Card>
+
+          <Card delay={0.2}>
+            <CardTitle onMore={() => comingSoon("Rewards")}>Rewards</CardTitle>
+            <div className="mt-3 flex items-center gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] text-fog">Aurora Rewards</span>
+                  <span className="rounded-full border border-[#f5c76a]/40 bg-[#f5c76a]/10 px-2 py-0.5 text-[11px] font-semibold text-[#f5c76a]">
+                    Gold
+                  </span>
+                </div>
+                <div className="mt-1.5 text-[28px] font-semibold tracking-tight text-white tabular">
+                  2,480 <span className="text-[14px] font-normal text-mist">points</span>
+                </div>
+              </div>
+              <span className="grid size-14 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#f5c76a] to-[#a8782a] shadow-[0_0_24px_rgb(245_199_106/0.35)] ring-4 ring-[#f5c76a]/15">
+                <Star className="size-6 fill-ink-950/70 text-ink-950/70" />
+              </span>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(2480 / 3000) * 100}%` }}
+                transition={{ delay: 0.7, duration: 0.9, ease }}
+                className="h-full rounded-full bg-gradient-to-r from-electric to-cyan"
+              />
+            </div>
+            <div className="mt-2 flex justify-between text-[12px] text-mist">
+              <span>
+                <span className="text-white">520 points</span> to Platinum
+              </span>
+              <span className="tabular">3,000</span>
+            </div>
+          </Card>
+
+          {/* Where last month's money went */}
+          <Card className="@xl:col-span-2 @5xl:row-span-2" delay={0.25}>
+            <CardTitle onMore={() => onAsk()}>Spending by category</CardTitle>
+            <p className="mt-1 text-[12.5px] text-mist" suppressHydrationWarning>
+              {lastMonthLong} · {formatEUR(total)}
+            </p>
+            <div className="[&>div]:mt-3">
+              <SpendingDonut cats={[...spendingCategories].sort((a, b) => b.value - a.value)} total={total} month={lastMonth} />
+            </div>
+          </Card>
+
+          <Card delay={0.3}>
+            <CardTitle onMore={() => comingSoon("Bills")}>Upcoming bills</CardTitle>
+            <ul className="mt-3 space-y-1">
+              {bills.map((b) => (
+                <li key={b.id} className="flex items-center gap-3 rounded-xl py-1.5">
+                  {b.icon ? (
+                    <span
+                      className="grid size-9 shrink-0 place-items-center rounded-full"
+                      style={{ background: `${b.color}22`, color: b.color }}
+                    >
+                      <b.icon className="size-4" strokeWidth={1.9} />
+                    </span>
+                  ) : (
+                    <BrandLogo brand="netflix" className="size-9 [&_svg]:size-4" />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] text-white">{b.name}</span>
+                    <span className="block truncate text-[12px] text-mist" suppressHydrationWarning>
+                      {dueOn(b.weekday)}
+                    </span>
+                  </span>
+                  <span className="text-[14px] text-white tabular">− {formatEUR(b.amount)}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          <Card delay={0.35}>
+            <CardTitle onMore={() => comingSoon("Savings goals")}>Savings goal</CardTitle>
+            <div className="mt-3 flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-electric/15 text-electric-soft">
+                <Plane className="size-[18px]" strokeWidth={1.9} />
+              </span>
+              <div className="min-w-0">
+                <div className="text-[14px] text-fog">Trip to Tokyo</div>
+                <div className="text-[20px] font-semibold text-white tabular">
+                  €3,200 <span className="text-[14px] font-normal text-mist">/ €5,000</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "64%" }}
+                transition={{ delay: 0.8, duration: 0.9, ease }}
+                className="h-full rounded-full bg-gradient-to-r from-cyan to-aqua shadow-[0_0_12px_rgb(94_240_255/0.5)]"
+              />
+            </div>
+            <div className="mt-2 flex justify-between text-[12px] text-mist">
+              <span>64% saved</span>
+              <span>Target 1 Mar 2027</span>
+            </div>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

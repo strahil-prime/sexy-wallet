@@ -128,7 +128,7 @@ const NOW = START + GAIN;
 const contributions = [
   { id: "tech", name: "Tech", value: 236, color: "#22d3ee" },
   { id: "global", name: "Other stocks", value: 78, color: "#1f7bff" },
-  { id: "bonds", name: "Bonds", value: 6, color: "#a78bfa", note: "held steady" },
+  { id: "bonds", name: "Bonds", value: 6, color: "#a78bfa", note: "held" },
 ];
 
 /** A month of daily values ending 2.4% up, with a few gentle dips. */
@@ -172,8 +172,8 @@ function Curve({ values, height = 70, color = "#34d399" }: { values: number[]; h
         strokeWidth={2}
         vectorEffect="non-scaling-stroke"
         strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
+        initial={{ clipPath: "inset(0 100% 0 0)" }}
+        animate={{ clipPath: "inset(0 0% 0 0)" }}
         transition={{ delay: 0.8, duration: 1.1, ease }}
         style={{ filter: `drop-shadow(0 0 6px ${color}99)` }}
       />
@@ -205,34 +205,30 @@ export function PortfolioAnswer({ reply, onClose }: CardProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.6, ease }}
-        className={panel}
+        className={cn(panel, "mt-3 p-3")}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className={caption}>Portfolio</span>
+            <span className={caption}>Portfolio · 30 days</span>
             <div className="mt-1 text-[22px] leading-none font-medium text-white tabular">{eur0(NOW)}</div>
           </div>
           <span className="flex items-center gap-1 rounded-full bg-positive/12 px-2.5 py-1 text-[12.5px] font-medium text-positive ring-1 ring-positive/25">
             <TrendingUp className="size-3.5" strokeWidth={2.2} />+{eur0(GAIN)} · 2.4%
           </span>
         </div>
-        <div className="mt-3 h-[64px]">
-          <Curve values={curve} height={64} />
-        </div>
-        <div className="mt-1 flex justify-between text-[10.5px] text-mist">
-          <span>30 days ago</span>
-          <span>Today</span>
+        <div className="mt-2 h-[46px]">
+          <Curve values={curve} height={46} />
         </div>
 
         {/* Where this month's gain came from */}
-        <div className="mt-3 border-t border-hairline pt-3">
+        <div className="mt-2.5 border-t border-hairline pt-2.5">
           <span className={caption}>What moved it</span>
-          <ul className="mt-2 space-y-2">
+          <ul className="mt-1.5 space-y-1">
             {contributions.map((c, i) => (
               <li key={c.id} className="flex items-center gap-3">
-                <span className="w-[92px] shrink-0 text-[13px] text-white">
+                <span className="w-[126px] shrink-0 truncate text-[13px] text-white">
                   {c.name}
-                  {c.note && <span className="block text-[11px] text-mist">{c.note}</span>}
+                  {c.note && <span className="text-[11px] text-mist"> · {c.note}</span>}
                 </span>
                 <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
                   <motion.span
@@ -293,13 +289,13 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
   const moreEnd = Math.floor(more[more.length - 1] / 1000) * 1000; // ≈ €510,000
 
   const w = 300;
-  const h = 120;
+  const h = 76;
   const top = more[more.length - 1];
   const toPath = (vals: number[]) =>
-    vals.map((v, i) => `${i ? "L" : "M"}${((i / (vals.length - 1)) * w).toFixed(1)},${(h - (v / top) * (h - 18)).toFixed(1)}`).join(" ");
+    vals.map((v, i) => `${i ? "L" : "M"}${((i / (vals.length - 1)) * w).toFixed(1)},${(h - (v / top) * (h - 12)).toFixed(1)}`).join(" ");
   const basePath = toPath(base);
   const morePath = toPath(more);
-  const yOf = (v: number) => h - (v / top) * (h - 18);
+  const yOf = (v: number) => h - (v / top) * (h - 12);
 
   return (
     <>
@@ -311,14 +307,14 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.6, ease }}
-        className={panel}
+        className={cn(panel, "mt-3 p-3")}
       >
         <div className="flex items-baseline justify-between">
           <span className={caption}>Pot at {RETIRE}</span>
           <span className="text-[12px] text-mist">6.5% a year, assumed</span>
         </div>
 
-        <div className="relative mt-3 h-[120px] pr-[78px]">
+        <div className="relative mt-2 h-[76px] pr-[78px]">
           <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-full w-full overflow-visible">
             <defs>
               <linearGradient id="rt-fill" x1="0" x2="0" y1="0" y2="1">
@@ -354,8 +350,8 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
               strokeWidth={2.5}
               vectorEffect="non-scaling-stroke"
               strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
+              initial={{ clipPath: "inset(0 100% 0 0)" }}
+              animate={{ clipPath: "inset(0 0% 0 0)" }}
               transition={{ delay: 1.1, duration: 1.2, ease }}
               style={{ filter: "drop-shadow(0 0 6px rgb(167 139 250 / 0.7))" }}
             />
@@ -365,7 +361,7 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 2.1 }}
-            className="absolute right-0 -translate-y-1/2 rounded-md bg-[#a78bfa]/15 px-1.5 py-0.5 text-[11.5px] font-medium text-[#c4b5fd] tabular"
+            className="absolute right-0 -translate-y-[80%] rounded-md bg-[#a78bfa]/15 px-1.5 py-0.5 text-[11.5px] font-medium text-[#c4b5fd] tabular"
             style={{ top: `${(yOf(more[more.length - 1]) / h) * 100}%` }}
           >
             {eur0(moreEnd)}
@@ -374,7 +370,7 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.5 }}
-            className="absolute right-0 -translate-y-1/2 rounded-md bg-cyan-400/10 px-1.5 py-0.5 text-[11.5px] font-medium text-cyan-200 tabular"
+            className="absolute right-0 -translate-y-[20%] rounded-md bg-cyan-400/10 px-1.5 py-0.5 text-[11.5px] font-medium text-cyan-200 tabular"
             style={{ top: `${(yOf(base[base.length - 1]) / h) * 100}%` }}
           >
             {eur0(baseEnd)}
@@ -386,15 +382,15 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
           <span>Age {RETIRE}</span>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-hairline pt-3 text-[12.5px]">
+        <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-hairline pt-2.5 text-[12px]">
           <span className="flex items-center gap-2 text-fog">
             <span className="h-0 w-4 border-t-2 border-dashed border-cyan-400" />
-            Now, {eur0(PER_MONTH)}/mo
+            Now {eur0(PER_MONTH)}/mo
           </span>
           <span className="flex items-center gap-2 text-white">
             <span className="h-[3px] w-4 rounded-full bg-[#a78bfa] shadow-[0_0_8px_#a78bfa]" />+{eur0(EXTRA)}/mo
           </span>
-          <span className="ml-auto flex items-center gap-1 text-positive">
+          <span className="ml-auto hidden items-center gap-1 text-positive sm:flex">
             <ShieldCheck className="size-3.5" strokeWidth={2.2} />
             +{eur0(moreEnd - baseEnd)}
           </span>

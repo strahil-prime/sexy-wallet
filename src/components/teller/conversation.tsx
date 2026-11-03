@@ -13,6 +13,7 @@ import { useWallet } from "@/lib/wallet-store";
 import { useVoiced } from "./voice";
 import { answerText, Spoken } from "./card-kit";
 import { BillsAnswer, CoffeeTipAnswer, DoubleChargeAnswer } from "./cards-sebastian";
+import { InvestAnswer, PortfolioAnswer, RetirementAnswer } from "./cards-michael";
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
 import type { Intent, TellerState } from "./machine";
 
@@ -602,6 +603,9 @@ const ANSWER_CARDS: Record<AnswerKind, (props: { onClose: () => void; reply?: st
   bills: (p) => <BillsAnswer {...p} />,
   "double-charge": (p) => <DoubleChargeAnswer {...p} />,
   "coffee-tip": (p) => <CoffeeTipAnswer {...p} />,
+  invest: (p) => <InvestAnswer {...p} />,
+  portfolio: (p) => <PortfolioAnswer {...p} />,
+  retirement: (p) => <RetirementAnswer {...p} />,
 };
 
 export function TellerBubble({

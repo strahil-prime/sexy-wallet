@@ -1,4 +1,4 @@
-import { CalendarClock, Lightbulb, PieChart, Repeat, ShieldAlert, Split, type LucideIcon } from "lucide-react";
+import { Briefcase, CalendarClock, Hourglass, Lightbulb, PieChart, Repeat, ShieldAlert, Split, Sprout, type LucideIcon } from "lucide-react";
 import { user } from "./data";
 
 /**
@@ -32,7 +32,16 @@ export type Clip = {
 };
 
 /** The answer cards that exist. A question shows one of these under the spoken reply. */
-export type AnswerKind = "money-went" | "subscriptions" | "split-dinner" | "bills" | "double-charge" | "coffee-tip";
+export type AnswerKind =
+  | "money-went"
+  | "subscriptions"
+  | "split-dinner"
+  | "bills"
+  | "double-charge"
+  | "coffee-tip"
+  | "invest"
+  | "portfolio"
+  | "retirement";
 
 export type Question = {
   /** stable id, unique within the persona */
@@ -158,11 +167,52 @@ const sebastian: Persona = {
   ],
 };
 
+const michael: Persona = {
+  id: "michael",
+  name: "Michael",
+  role: "Investment mentor",
+  avatar: "/personas/michael/avatar.jpg",
+  poster: "/personas/michael/idle-poster.jpg",
+  edgeColor: "#051a20",
+  greeting: { headline: `Good to see you, ${user.name}.`, line: "Patience pays. What shall we look at today?" },
+  idle: clip("michael", "idle", 0, undefined, true),
+  intro: clip("michael", "intro", 2666, [[0, 1.2], [1.66, 2.1], [2.51, 2.67]]),
+  questions: [
+    {
+      id: "invest",
+      label: "Where should I invest?",
+      short: "Where should I invest?",
+      icon: Sprout,
+      answer: "invest",
+      reply: "Keep 3 months of expenses as cash. Put the rest of your €8,000 in a low-cost global index fund. Boring works.",
+      clip: clip("michael", "ask-1", 8800, [[0, 2.29], [2.79, 6.72], [7.21, 8.35], [8.68, 8.8]]),
+    },
+    {
+      id: "portfolio",
+      label: "How’s my portfolio?",
+      short: "How’s my portfolio?",
+      icon: Briefcase,
+      answer: "portfolio",
+      reply: "Your portfolio is up 2.4% this month, about €320. Tech led, bonds held. Stay the course.",
+      clip: clip("michael", "ask-2", 8289, [[0, 2.91], [3.19, 4.81], [5.32, 5.88], [6.19, 6.79], [7.2, 7.98]]),
+    },
+    {
+      id: "retirement",
+      label: "Retirement check",
+      short: "Retirement check",
+      icon: Hourglass,
+      answer: "retirement",
+      reply: "At this pace, €400,000 by 65. Add €100 a month and you’ll pass €500,000.",
+      clip: clip("michael", "ask-3", 7200, [[0, 4.76], [5.27, 7.2]]),
+    },
+  ],
+};
+
 /** Live personas, in picker order. The first is the default. */
-export const personas: readonly Persona[] = [bella, sebastian];
+export const personas: readonly Persona[] = [bella, sebastian, michael];
 
 /** Locked rows in the picker until their videos exist. */
-export const upcomingPersonas = [{ id: "teller-3", name: "Teller three", role: "Arriving soon" }] as const;
+export const upcomingPersonas: readonly { id: string; name: string; role: string }[] = [];
 
 export function personaById(id: string | null | undefined): Persona {
   return personas.find((p) => p.id === id) ?? personas[0];

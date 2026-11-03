@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { LayoutGrid, Sparkles } from "lucide-react";
 
 import { ProfileAvatar, SearchField, TellerMenu } from "@/components/shell/top-actions";
 import { useTeller } from "@/components/teller/machine";
@@ -71,8 +70,8 @@ export function Dashboard() {
 }
 
 const views = [
-  { id: "assistant", label: "Assistant", icon: Sparkles },
-  { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
+  { id: "assistant", label: "Assistant" },
+  { id: "dashboard", label: "Dashboard" },
 ] as const;
 
 function ViewTabs({ view, onChange, className }: { view: View; onChange: (v: View) => void; className?: string }) {
@@ -89,11 +88,10 @@ function ViewTabs({ view, onChange, className }: { view: View; onChange: (v: Vie
             aria-selected={on}
             onClick={() => onChange(v.id)}
             className={cn(
-              "focus-ring relative flex h-10 cursor-pointer items-center gap-2 rounded-md text-[14px] font-medium tracking-[0.01em] transition-colors duration-300 [text-shadow:0_1px_10px_rgb(0_0_0/0.55)]",
+              "focus-ring relative flex h-10 cursor-pointer items-center rounded-md text-[14px] font-medium tracking-[0.01em] transition-colors duration-300 [text-shadow:0_1px_10px_rgb(0_0_0/0.55)]",
               on ? "text-white" : "text-white/45 hover:text-white/80",
             )}
           >
-            <v.icon className={cn("size-[17px] transition-colors duration-300", on && "text-cyan-300")} strokeWidth={1.8} />
             <span>{v.label}</span>
             {on && (
               <motion.span

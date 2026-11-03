@@ -60,13 +60,13 @@ export function TellerMenu({ className, align = "start" }: { className?: string;
         className={cn("focus-ring group flex shrink-0 cursor-pointer items-center gap-1 rounded-full", className)}
       >
         <span className="relative">
-          <span className="absolute -inset-[2px] rounded-full bg-gradient-to-tr from-cyan via-electric to-violet opacity-80 transition-opacity group-hover:opacity-100" />
+          <span className="absolute -inset-[2px] rounded-[11px] bg-gradient-to-tr from-cyan via-electric to-violet opacity-80 transition-opacity group-hover:opacity-100" />
           <Image
             src={persona.avatar}
             alt=""
-            width={40}
-            height={40}
-            className="relative size-10 rounded-full object-cover ring-2 ring-ink-900"
+            width={32}
+            height={32}
+            className="relative size-8 rounded-[9px] object-cover ring-2 ring-ink-900"
           />
         </span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-fog transition-colors group-hover:text-white">

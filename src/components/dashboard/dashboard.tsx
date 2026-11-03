@@ -12,6 +12,7 @@ import { TellerStage } from "@/components/teller/teller-stage";
 import { AskBar, QuestionChips, TellerBubble } from "@/components/teller/conversation";
 import type { Persona } from "@/lib/personas";
 import { cn } from "@/lib/utils";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 import { ActivityList } from "./activity-list";
 import { Balance } from "./balance";
 import { CardPreview } from "./card-preview";
@@ -35,12 +36,14 @@ export function Dashboard() {
         // A new teller starts fresh (greeting once per visit, see useTeller).
         <Assistant key={persona.id} persona={persona} tabs={tabs} />
       ) : (
-        <section className="@container relative min-w-0 flex-1 px-4 pt-4 pb-8 sm:px-8 lg:overflow-y-auto lg:px-10 lg:pt-7 lg:pb-7 xl:px-12">
-          {tabs}
-          <div className="mt-5 lg:mt-6">
-            <Overview onAsk={() => setView("assistant")} />
-          </div>
-        </section>
+        <ScrollFade className="lg:overflow-y-auto">
+          <section className="@container relative min-w-0 px-4 pt-4 pb-8 sm:px-8 lg:px-10 lg:pt-7 lg:pb-7 xl:px-12">
+            {tabs}
+            <div className="mt-5 lg:mt-6">
+              <Overview onAsk={() => setView("assistant")} />
+            </div>
+          </section>
+        </ScrollFade>
       )}
 
       {/* Right rail */}

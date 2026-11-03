@@ -174,7 +174,7 @@ const michael: Persona = {
   avatar: "/personas/michael/avatar.jpg",
   poster: "/personas/michael/idle-poster.jpg",
   edgeColor: "#051a20",
-  greeting: { headline: `Good to see you, ${user.name}.`, line: "Patience pays. What shall we look at today?" },
+  greeting: { headline: "Morning, Eddie.", line: "Patience pays." },
   idle: clip("michael", "idle", 0, undefined, true),
   intro: clip("michael", "intro", 2666, [[0, 1.2], [1.66, 2.1], [2.51, 2.67]]),
   questions: [

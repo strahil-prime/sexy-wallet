@@ -184,8 +184,8 @@ const michael: Persona = {
       short: "Where should I invest?",
       icon: Sprout,
       answer: "invest",
-      reply: "Keep 3 months of expenses as cash. Put the rest of your €8,000 in a low-cost global index fund. Boring works.",
-      clip: clip("michael", "ask-1", 8800, [[0, 2.29], [2.79, 6.72], [7.21, 8.35], [8.68, 8.8]]),
+      reply: "Put €5,000 in VWCE, Vanguard’s global ETF. Boring works. And don't forget to keep at least €3,000 as an emergency fund.",
+      clip: clip("michael", "ask-1", 9079, [[0, 2.82], [3.19, 4.83], [5.29, 9.08]]),
     },
     {
       id: "portfolio",

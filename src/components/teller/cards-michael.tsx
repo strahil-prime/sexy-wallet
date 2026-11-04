@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { Globe2, PiggyBank, ShieldCheck, TrendingUp } from "lucide-react";
+import { ShieldCheck, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { answerText, CardActions, ease, Spoken } from "./card-kit";
 
@@ -18,33 +18,47 @@ const panel = "mt-4 rounded-2xl bg-white/[0.04] p-3.5 ring-1 ring-white/[0.06]";
 const caption = "text-[11px] font-medium tracking-[0.12em] text-mist uppercase";
 
 // ---------------------------------------------------------------------------------------------
-// Where should I invest? €8,000: 3 months of spending as cash, the rest in a global index fund
+// Where should I invest? €5,000 into VWCE, Vanguard's global ETF. Keep at least €3,000 as an emergency fund.
 
 const SAVINGS = 8000;
-const MONTHLY_SPEND = 1462.82;
-const CASH = Math.round((MONTHLY_SPEND * 3) / 100) * 100; // €4,400
-const INVEST = SAVINGS - CASH; // €3,600
+const INVEST = 5000;
+const CASH = SAVINGS - INVEST; // €3,000
+
+/** An illustrative five-year path for a global equity ETF: up overall, with a dip on the way. */
+const VWCE_5Y = [100, 104, 109, 113, 108, 117, 122, 118, 111, 104, 109, 114, 112, 119, 125, 129, 127, 134, 139, 137, 144, 150, 147, 155, 161];
+
+function Spark({ values, color, id }: { values: number[]; color: string; id: string }) {
+  const w = 56;
+  const h = 24;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const pts = values.map((v, i) => [(i / (values.length - 1)) * w, h - 2 - ((v - min) / (max - min)) * (h - 4)] as const);
+  const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const [lx, ly] = pts[pts.length - 1];
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="shrink-0 overflow-visible" aria-hidden>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <motion.g
+        initial={{ clipPath: "inset(-20% 100% -20% -5%)" }}
+        animate={{ clipPath: "inset(-20% -10% -20% -5%)" }}
+        transition={{ delay: 1.1, duration: 1.1, ease }}
+      >
+        <path d={`${d} L${w},${h} L0,${h} Z`} fill={`url(#${id})`} />
+        <path d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={lx} cy={ly} r="2.2" fill={color} />
+      </motion.g>
+    </svg>
+  );
+}
 
 export function InvestAnswer({ reply, onClose }: CardProps) {
   const [done, setDone] = useState(false);
-  const parts = [
-    {
-      id: "cash",
-      name: "Cash buffer",
-      note: `3 months of spending, about ${eur0(MONTHLY_SPEND)} each`,
-      value: CASH,
-      color: "#22d3ee",
-      icon: PiggyBank,
-    },
-    {
-      id: "fund",
-      name: "Global index fund",
-      note: "3,000+ companies in one fund, 0.2% a year in fees",
-      value: INVEST,
-      color: "#7c5cff",
-      icon: Globe2,
-    },
-  ];
+  const share = (v: number) => `${((v / SAVINGS) * 100).toFixed(1)}%`;
 
   return (
     <>
@@ -60,45 +74,74 @@ export function InvestAnswer({ reply, onClose }: CardProps) {
       >
         <div className="flex items-baseline justify-between">
           <span className={caption}>Your {eur0(SAVINGS)}</span>
-          <span className="text-[12px] text-mist">Suggested split</span>
+          <span className="text-[12px] text-mist">Suggested allocation</span>
         </div>
 
-        {/* One bar, split in two */}
-        <div className="mt-3 flex h-3 gap-[3px] overflow-hidden rounded-full bg-white/5">
-          {parts.map((p, i) => (
+        {/* Allocation bar */}
+        <div className="mt-3 flex h-2.5 gap-[3px] overflow-hidden rounded-full bg-white/5">
+          {[
+            { v: INVEST, c: "#7c5cff" },
+            { v: CASH, c: "#22d3ee" },
+          ].map((p, i) => (
             <motion.span
-              key={p.id}
+              key={p.c}
               initial={{ width: 0 }}
-              animate={{ width: `${(p.value / SAVINGS) * 100}%` }}
+              animate={{ width: `${(p.v / SAVINGS) * 100}%` }}
               transition={{ delay: 0.85 + i * 0.15, duration: 0.8, ease }}
               className="h-full first:rounded-l-full last:rounded-r-full"
-              style={{ background: p.color, boxShadow: `0 0 12px ${p.color}66` }}
+              style={{ background: p.c, boxShadow: `0 0 12px ${p.c}66` }}
             />
           ))}
         </div>
 
         <ul className="mt-3.5 space-y-2.5">
-          {parts.map((p, i) => (
-            <motion.li
-              key={p.id}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.05 + i * 0.1, duration: 0.4 }}
-              className="flex items-center gap-3"
-            >
-              <span className="grid size-8 shrink-0 place-items-center rounded-full" style={{ background: `${p.color}22`, color: p.color }}>
-                <p.icon className="size-4" strokeWidth={1.9} />
+          {/* The ETF, as a holding row: ticker, name, five-year line, amount */}
+          <motion.li
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.05, duration: 0.4 }}
+            className="flex items-center gap-3"
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-[linear-gradient(140deg,#8b6dff,#5b3fe0)] text-[9px] font-bold tracking-wide text-white shadow-[0_4px_14px_-4px_rgb(124_92_255/0.8)]">
+              ETF
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5 text-[14px] text-white">
+                VWCE
+                <span className="hidden rounded bg-white/[0.08] px-1 py-px text-[10px] font-medium text-fog sm:inline">Global</span>
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[14px] text-white">{p.name}</span>
-                <span className="block text-[12px] leading-snug text-mist">{p.note}</span>
+              <span className="block truncate text-[12px] leading-snug text-mist">
+                Vanguard<span className="hidden sm:inline"> FTSE All-World</span>
               </span>
-              <span className="text-right">
-                <span className="block text-[14px] text-white tabular">{eur0(p.value)}</span>
-                <span className="block text-[11.5px] text-mist tabular">{Math.round((p.value / SAVINGS) * 100)}%</span>
-              </span>
-            </motion.li>
-          ))}
+            </span>
+            <span className="flex flex-col items-end">
+              <Spark values={VWCE_5Y} color="#a78bfa" id="vwce-spark" />
+              <span className="text-[10px] text-mist">5 years</span>
+            </span>
+            <span className="w-[62px] text-right">
+              <span className="block text-[14px] text-white tabular">{eur0(INVEST)}</span>
+              <span className="block text-[11.5px] text-mist tabular">{share(INVEST)}</span>
+            </span>
+          </motion.li>
+
+          <motion.li
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.15, duration: 0.4 }}
+            className="flex items-center gap-3"
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-cyan-400/15 text-cyan-300">
+              <ShieldCheck className="size-4" strokeWidth={1.9} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] text-white">Emergency fund</span>
+              <span className="block truncate text-[12px] leading-snug text-mist">Cash, ready any time</span>
+            </span>
+            <span className="w-[62px] text-right">
+              <span className="block text-[14px] text-white tabular">{eur0(CASH)}</span>
+              <span className="block text-[11.5px] text-mist tabular">{share(CASH)}</span>
+            </span>
+          </motion.li>
         </ul>
       </motion.div>
 
@@ -111,7 +154,7 @@ export function InvestAnswer({ reply, onClose }: CardProps) {
         onAction={() => {
           setDone(true);
           toast("Investment plan set", {
-            description: `${eur0(CASH)} stays as cash, ${eur0(INVEST)} goes into the global index fund.`,
+            description: `${eur0(INVEST)} goes into VWCE, ${eur0(CASH)} stays as your emergency fund.`,
           });
         }}
       />

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Logo } from "@/components/brand/logo";
+import { NudgeLogo } from "@/components/brand/nudge";
 import { cn } from "@/lib/utils";
 import { comingSoon } from "./coming-soon";
 import { isActive, navItems } from "./nav";
@@ -15,11 +15,11 @@ export function Sidebar() {
     <aside className="relative z-10 hidden w-[200px] shrink-0 flex-col border-r border-hairline bg-ink-900/55 px-4 pt-7 pb-6 backdrop-blur-xl lg:flex">
       <Link href="/" className="focus-ring mb-10 ml-2.5 inline-flex w-fit rounded-lg text-white" aria-label="Home">
         <motion.span
-          whileHover={{ rotate: 90, scale: 1.08 }}
-          transition={{ type: "spring", stiffness: 260, damping: 14 }}
-          className="inline-flex"
+          whileHover={{ scale: 1.04 }}
+          transition={{ type: "spring", stiffness: 300, damping: 18 }}
+          className="inline-flex drop-shadow-[0_0_14px_rgb(17_92_225/0.45)]"
         >
-          <Logo className="size-9" glow />
+          <NudgeLogo className="h-[30px]" />
         </motion.span>
       </Link>
 

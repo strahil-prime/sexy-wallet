@@ -41,7 +41,7 @@ export const QuickInvest = forwardRef<HTMLDivElement, { fund: Ticker; onFund: (t
   return (
     <Panel ref={ref} className="scroll-mt-6 p-5 sm:p-7">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-[17px] font-medium text-white">Invest</h2>
+        <h2 className="text-[17px] font-medium text-white">Top picks</h2>
         <span className="text-[12.5px] text-mist">
           Available <span className="text-white tabular">{formatEUR0(free)}</span>
         </span>

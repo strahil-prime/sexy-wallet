@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Snowflake, Wifi } from "lucide-react";
-import { Logo } from "@/components/brand/logo";
+import { NudgeMark } from "@/components/brand/nudge";
 import { VisaMark } from "@/components/brand/visa";
 import type { WalletCard } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -97,7 +97,7 @@ export function PaymentCard({ card, frozen, flipped, interactive = true, classNa
             <div className="relative flex h-full flex-col justify-between p-[7%]">
               <div className="flex items-start justify-between">
                 <span className="text-[11px] font-medium tracking-[0.18em] text-white/70 uppercase">{card.name}</span>
-                <Logo className="-mt-1 -mr-1 h-auto w-[18%] text-ink-950/90 drop-shadow-[0_1px_0_rgb(255_255_255/0.25)]" />
+                <NudgeMark mono className="mt-0.5 h-auto w-[17%] text-ink-950/90 drop-shadow-[0_1px_0_rgb(255_255_255/0.25)]" />
               </div>
               <div className="flex items-center gap-3">
                 <Chip className="h-auto w-[15%]" />

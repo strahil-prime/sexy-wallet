@@ -3,11 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Volume2 } from "lucide-react";
+import { NUDGE_BLUE, NUDGE_BLUE_DEEP, NudgeLogotype } from "@/components/brand/nudge";
+import { N_LEGS, N_STAR } from "@/components/brand/nudge-paths";
 
-/** Same four-point star as <Logo />, rotated into an X. */
-const STAR =
-  "M12 0.5C12.6 8.2 15.8 11.4 23.5 12 15.8 12.6 12.6 15.8 12 23.5 11.4 15.8 8.2 12.6 0.5 12 8.2 11.4 11.4 8.2 12 0.5Z";
-const WORDMARK = "Sexy Wallet";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 /** A tenth of a second of silence, to ask the browser whether sound may autoplay. */
@@ -100,7 +98,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
           <motion.div
             key="preloader"
             role="status"
-            aria-label="Loading Sexy Wallet"
+            aria-label="Loading Nudge"
             onClick={phase === "gate" ? enter : undefined}
             exit={{ opacity: 0, transition: { duration: 0.8, ease, delay: 0.15 } }}
             className="fixed inset-0 z-[100] grid cursor-default place-items-center overflow-hidden bg-ink-950 select-none data-[gate=true]:cursor-pointer"
@@ -150,71 +148,18 @@ export function Preloader({ children }: { children: React.ReactNode }) {
                   />
                 </motion.svg>
 
-                {/* Star: outline draws itself, then fills and glows */}
-                <motion.svg
-                  viewBox="0 0 24 24"
-                  className="relative size-[76px] text-white"
-                  initial={{ rotate: -135, scale: 0.55 }}
-                  animate={{ rotate: 0, scale: 1 }}
-                  transition={{ duration: 1.4, ease }}
-                >
-                  <defs>
-                    <filter id="pl-glow" x="-60%" y="-60%" width="220%" height="220%">
-                      <feGaussianBlur stdDeviation="1.1" result="b" />
-                      <feMerge>
-                        <feMergeNode in="b" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <g transform="rotate(45 12 12)">
-                    <motion.path
-                      d={STAR}
-                      fill="none"
-                      stroke="#5ef0ff"
-                      strokeWidth="0.35"
-                      strokeLinejoin="round"
-                      initial={{ pathLength: 0, opacity: 1 }}
-                      animate={{ pathLength: 1, opacity: [1, 1, 0] }}
-                      transition={{ pathLength: { duration: 1, ease: "easeInOut" }, opacity: { duration: 1.6, times: [0, 0.7, 1] } }}
-                    />
-                    <motion.path
-                      d={STAR}
-                      fill="currentColor"
-                      filter="url(#pl-glow)"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.85, duration: 0.6 }}
-                    />
-                  </g>
-                </motion.svg>
-
-                {/* Glint that sweeps through once the star lands */}
-                <motion.span
-                  aria-hidden
-                  className="absolute size-3 rounded-full bg-white shadow-[0_0_24px_8px_rgb(94_240_255/0.7)]"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: [0, 1.6, 0], opacity: [0, 1, 0] }}
-                  transition={{ delay: 1.15, duration: 0.7, ease: "easeOut" }}
-                />
+                <NudgeIntro />
               </motion.div>
 
-              {/* Wordmark */}
+              {/* Logotype */}
               <motion.div
-                className="mt-6 flex text-[15px] font-medium tracking-[0.32em] text-fog uppercase"
+                className="mt-5 text-white"
+                initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: 8, transition: { duration: 0.35 } }}
+                transition={{ delay: 1.15, duration: 0.8, ease }}
               >
-                {WORDMARK.split("").map((ch, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 1 + i * 0.045, duration: 0.6, ease }}
-                    className="whitespace-pre"
-                  >
-                    {ch}
-                  </motion.span>
-                ))}
+                <NudgeLogotype className="h-[30px]" />
               </motion.div>
 
               {/* Progress hairline, then the tap prompt if the browser needs one for sound */}
@@ -248,15 +193,15 @@ export function Preloader({ children }: { children: React.ReactNode }) {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -6, transition: { duration: 0.2 } }}
                       transition={{ duration: 0.5, ease }}
-                      className="glass focus-ring relative flex h-11 cursor-pointer items-center gap-2.5 rounded-full px-5 text-[14px] font-medium text-white"
+                      className="focus-ring relative flex h-11 cursor-pointer items-center gap-2.5 rounded-full bg-white px-5 text-[14px] font-semibold text-ink-950 shadow-[0_8px_30px_-8px_rgb(17_92_225/0.7)] transition-colors hover:bg-white/90"
                     >
                       <motion.span
                         aria-hidden
-                        className="absolute inset-0 rounded-full ring-1 ring-cyan/60"
+                        className="absolute inset-0 rounded-full ring-1 ring-white/70"
                         animate={{ scale: [1, 1.18], opacity: [0.7, 0] }}
                         transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
                       />
-                      <Volume2 className="size-4 text-cyan" strokeWidth={2} />
+                      <Volume2 className="size-4" style={{ color: NUDGE_BLUE }} strokeWidth={2.2} />
                       Tap to enter
                     </motion.button>
                   )}
@@ -267,5 +212,63 @@ export function Preloader({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
     </ReadyContext.Provider>
+  );
+}
+
+/**
+ * The N builds from left to right (left leg, diagonal, right leg), then the star pops in and
+ * blinks. Star centre in the 228 x 125 artboard is at (146.4, 27.8).
+ */
+function NudgeIntro() {
+  return (
+    <div className="relative w-[104px]">
+      <svg viewBox="0 0 228 125" className="relative block w-full overflow-visible drop-shadow-[0_0_18px_rgb(46_117_232/0.55)]">
+        <defs>
+          <clipPath id="pl-wipe">
+            <motion.rect
+              x="-10"
+              y="-10"
+              height="150"
+              initial={{ width: 0 }}
+              animate={{ width: 250 }}
+              transition={{ delay: 0.25, duration: 1.05, ease: [0.65, 0, 0.35, 1] }}
+            />
+          </clipPath>
+          <linearGradient id="pl-star" x1="139.5" y1="13" x2="151.5" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#5b9bff" />
+            <stop offset="1" stopColor="#2E75E8" />
+          </linearGradient>
+        </defs>
+        <g clipPath="url(#pl-wipe)">
+          {N_LEGS.map((d, i) => (
+            <motion.path
+              key={i}
+              d={d}
+              fill={i === 1 ? NUDGE_BLUE_DEEP : NUDGE_BLUE}
+              initial={{ y: 22, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 + i * 0.28, duration: 0.7, ease }}
+            />
+          ))}
+        </g>
+        <motion.path
+          d={N_STAR}
+          fill="url(#pl-star)"
+          style={{ transformBox: "fill-box", transformOrigin: "center" }}
+          initial={{ scale: 0, rotate: -90, opacity: 0 }}
+          animate={{ scale: [0, 1.3, 1, 1, 1, 1], rotate: [-90, 0, 0, 0, 0, 0], opacity: [0, 1, 1, 0.2, 1, 1] }}
+          transition={{ delay: 1.25, duration: 1.1, times: [0, 0.3, 0.45, 0.62, 0.8, 1], ease: "easeOut" }}
+        />
+      </svg>
+      {/* The blink's flash, sitting on the star */}
+      <motion.span
+        aria-hidden
+        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_22px_8px_rgb(91_155_255/0.75)]"
+        style={{ left: "64.2%", top: "22.2%" }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: [0, 1.5, 0, 1.2, 0], opacity: [0, 1, 0, 0.9, 0] }}
+        transition={{ delay: 1.4, duration: 1.1, times: [0, 0.2, 0.45, 0.65, 1], ease: "easeOut" }}
+      />
+    </div>
   );
 }

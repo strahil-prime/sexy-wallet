@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { ShieldCheck, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useWallet } from "@/lib/wallet-store";
 import { answerText, CardActions, ease, Spoken } from "./card-kit";
 
 /** Michael's three answer cards. Their numbers match what he says in the clips. */
@@ -57,7 +59,9 @@ function Spark({ values, color, id }: { values: number[]; color: string; id: str
 }
 
 export function InvestAnswer({ reply, onClose }: CardProps) {
-  const [done, setDone] = useState(false);
+  const { investLog, invest, setSafetyNet } = useWallet();
+  const router = useRouter();
+  const done = investLog.some((e) => e.kind === "buy" && e.ticker === "VWCE" && e.detail?.includes("Michael"));
   const share = (v: number) => `${((v / SAVINGS) * 100).toFixed(1)}%`;
 
   return (
@@ -148,13 +152,18 @@ export function InvestAnswer({ reply, onClose }: CardProps) {
       <CardActions
         done={done}
         label={`Invest ${eur0(INVEST)}`}
-        doneLabel="Plan set"
+        doneLabel="Invested"
         delay={1.4}
         onClose={onClose}
         onAction={() => {
-          setDone(true);
-          toast("Investment plan set", {
-            description: `${eur0(INVEST)} goes into VWCE, ${eur0(CASH)} stays as your emergency fund.`,
+          if (!invest("VWCE", INVEST, "Michael")) {
+            toast("Not enough in your balance", { description: `You need ${eur0(INVEST)} available to invest.` });
+            return;
+          }
+          setSafetyNet(CASH, "Michael");
+          toast(`${eur0(INVEST)} invested in VWCE`, {
+            description: `${eur0(CASH)} stays in cash as your safety net.`,
+            action: { label: "View", onClick: () => router.push("/invest") },
           });
         }}
       />
@@ -234,7 +243,9 @@ function Curve({ values, height = 70, color = "#34d399" }: { values: number[]; h
 }
 
 export function PortfolioAnswer({ reply, onClose }: CardProps) {
-  const [done, setDone] = useState(false);
+  const { investLog, stayTheCourse, portfolio } = useWallet();
+  const router = useRouter();
+  const done = investLog.some((e) => e.kind === "hold");
   const curve = useMonthCurve();
   const maxC = Math.max(...contributions.map((c) => c.value));
 
@@ -253,7 +264,7 @@ export function PortfolioAnswer({ reply, onClose }: CardProps) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className={caption}>Portfolio · 30 days</span>
-            <div className="mt-1 text-[22px] leading-none font-medium text-white tabular">{eur0(NOW)}</div>
+            <div className="mt-1 text-[22px] leading-none font-medium text-white tabular">{eur0(portfolio)}</div>
           </div>
           <span className="flex items-center gap-1 rounded-full bg-positive/12 px-2.5 py-1 text-[12.5px] font-medium text-positive ring-1 ring-positive/25">
             <TrendingUp className="size-3.5" strokeWidth={2.2} />+{eur0(GAIN)} · 2.4%
@@ -296,8 +307,11 @@ export function PortfolioAnswer({ reply, onClose }: CardProps) {
         delay={1.5}
         onClose={onClose}
         onAction={() => {
-          setDone(true);
-          toast("Plan kept", { description: "Your monthly investment carries on as usual." });
+          stayTheCourse("Michael");
+          toast("Plan kept", {
+            description: "Your monthly investment carries on as usual.",
+            action: { label: "View", onClick: () => router.push("/invest") },
+          });
         }}
       />
     </>
@@ -325,7 +339,9 @@ function project(monthly: number) {
 }
 
 export function RetirementAnswer({ reply, onClose }: CardProps) {
-  const [done, setDone] = useState(false);
+  const { plan, setPlan } = useWallet();
+  const router = useRouter();
+  const done = plan >= PER_MONTH + EXTRA;
   const base = useMemo(() => project(PER_MONTH), []);
   const more = useMemo(() => project(PER_MONTH + EXTRA), []);
   const baseEnd = Math.round(base[base.length - 1] / 1000) * 1000; // ≈ €400,000
@@ -447,9 +463,10 @@ export function RetirementAnswer({ reply, onClose }: CardProps) {
         delay={1.6}
         onClose={onClose}
         onAction={() => {
-          setDone(true);
+          setPlan(Math.max(plan, PER_MONTH) + EXTRA, "Michael");
           toast("Monthly investment raised", {
-            description: `${eur0(PER_MONTH + EXTRA)} a month from now on. On track for ${eur0(moreEnd)} at ${RETIRE}.`,
+            description: `${eur0(Math.max(plan, PER_MONTH) + EXTRA)} a month from now on. On track for ${eur0(moreEnd)} at ${RETIRE}.`,
+            action: { label: "View", onClick: () => router.push("/invest") },
           });
         }}
       />

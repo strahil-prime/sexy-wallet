@@ -28,6 +28,8 @@ export type Activity = {
   card?: boolean;
   /** money requests stay pending until the other person pays */
   pending?: boolean;
+  /** money moved into an investment fund */
+  invest?: { ticker: string };
 };
 
 export type Contact = {
@@ -59,9 +61,11 @@ export const initialActivity: Activity[] = [
   { id: "a2", title: "Starbucks", at: today(7, 24), amount: -6.7, category: "Coffee", brand: "starbucks", card: true },
   { id: "a10", title: "Trattoria Da Enzo", at: daysAgo(1, 21, 47), amount: -86.4, category: "Dining", brand: "dining", card: true },
   { id: "a3", title: "Transfer from Alex", at: daysAgo(1, 16, 18), amount: 250, category: "Transfer", peer: { name: "Alex", direction: "in" } },
+  // Spotify charged twice yesterday: Sebastian's "unusual activity".
+  { id: "a5", title: "Spotify", at: daysAgo(1, 7, 2), amount: -10.99, category: "Entertainment", brand: "spotify", card: true },
+  { id: "a5b", title: "Spotify", at: daysAgo(1, 7, 2), amount: -10.99, category: "Entertainment", brand: "spotify", card: true },
   { id: "a4", title: "Netflix", at: daysAgo(4, 9, 0), amount: -15.99, category: "Entertainment", brand: "netflix", card: true },
   { id: "a11", title: "Audible", at: daysAgo(4, 6, 2), amount: -9.95, category: "Subscriptions", brand: "audible", card: true },
-  { id: "a5", title: "Spotify", at: daysAgo(5, 10, 12), amount: -10.99, category: "Entertainment", brand: "spotify", card: true },
   { id: "a6", title: "Uber", at: daysAgo(6, 22, 41), amount: -18.4, category: "Transport", brand: "uber", card: true },
   { id: "a7", title: "Zara", at: daysAgo(8, 14, 3), amount: -89.95, category: "Shopping", brand: "zara", card: true },
   { id: "a8", title: "Lidl", at: daysAgo(9, 18, 20), amount: -42.18, category: "Groceries", brand: "lidl", card: true },

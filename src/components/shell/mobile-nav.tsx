@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { comingSoon } from "./coming-soon";
 import { isActive, navItems } from "./nav";
 
-const tabs = ["/", "/card", "/send", "/activity", "/profile"];
+const tabs = ["/", "/card", "/send", "/activity", "/invest"];
 
 export function MobileNav() {
   const pathname = usePathname();

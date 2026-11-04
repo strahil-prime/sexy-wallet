@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { AlertTriangle, Coffee, Home, ShieldCheck, Smartphone } from "lucide-react";
 import { BrandLogo } from "@/components/brand/brand-mark";
 import { cn, formatEUR } from "@/lib/utils";
+import { useWallet } from "@/lib/wallet-store";
 import { answerText, CardActions, ease, Spoken } from "./card-kit";
 
 /** Sebastian's three answer cards. Their numbers match what he says in the clips. */
@@ -41,7 +42,7 @@ export function BillsAnswer({ reply, onClose }: CardProps) {
   const week = useWeek();
   const due = bills.reduce((s, b) => s + b.amount, 0);
   const available = due + LEFT_AFTER_BILLS;
-  const [reminded, setReminded] = useState(false);
+  const { billReminders: reminded, setBillReminders } = useWallet();
   const dayOf = (weekday: number) => week.find((d) => d.date.getDay() === weekday)!.date;
 
   return (
@@ -157,7 +158,7 @@ export function BillsAnswer({ reply, onClose }: CardProps) {
         delay={1.5}
         onClose={onClose}
         onAction={() => {
-          setReminded(true);
+          setBillReminders(true);
           toast("Reminders on", { description: "We'll nudge you the day before each bill." });
         }}
       />
@@ -169,9 +170,12 @@ export function BillsAnswer({ reply, onClose }: CardProps) {
 // Unusual activity: Spotify charged twice
 
 const SPOTIFY = 10.99;
+/** The second of yesterday's two Spotify charges, in the activity list. */
+const DUPLICATE_CHARGE = "a5b";
 
 export function DoubleChargeAnswer({ reply, onClose }: CardProps) {
-  const [flagged, setFlagged] = useState(false);
+  const { refunds, flagRefund } = useWallet();
+  const flagged = refunds.includes(DUPLICATE_CHARGE);
   // Six months of Spotify charges, the current one doubled.
   const months = useMemo(() => {
     const now = new Date();
@@ -290,7 +294,7 @@ export function DoubleChargeAnswer({ reply, onClose }: CardProps) {
         delay={1.5}
         onClose={onClose}
         onAction={() => {
-          setFlagged(true);
+          flagRefund(DUPLICATE_CHARGE, { title: "Spotify refund", amount: SPOTIFY, brand: "spotify" });
           toast("Flagged for a refund", {
             description: `We've asked Spotify to return ${formatEUR(SPOTIFY)}. It usually takes 3 to 5 days.`,
           });
@@ -309,10 +313,11 @@ const COFFEES = 23;
 const HOME_CUP = 0.35;
 
 export function CoffeeTipAnswer({ reply, onClose }: CardProps) {
-  const [budget, setBudget] = useState(false);
+  const { budgets, setBudget } = useWallet();
   const spent = coffeeWeeks.reduce((s, w) => s + w, 0);
   const withTip = Math.round(spent / 2 + (COFFEES / 2) * HOME_CUP);
   const saved = Math.round(spent - withTip);
+  const budget = budgets.coffee === withTip;
   const month = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString("en-GB", { month: "long" });
@@ -397,7 +402,7 @@ export function CoffeeTipAnswer({ reply, onClose }: CardProps) {
         delay={1.5}
         onClose={onClose}
         onAction={() => {
-          setBudget(true);
+          setBudget("coffee", withTip);
           toast("Coffee budget set", { description: `${formatEUR(withTip)} a month. We'll tell you when you're close.` });
         }}
       />

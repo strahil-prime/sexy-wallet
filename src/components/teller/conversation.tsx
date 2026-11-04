@@ -501,7 +501,7 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
   const total = -dinner.amount;
   const half = Math.round((total / 2) * 100) / 100;
   const note = `Dinner at ${dinner.title}`;
-  const requested = activity.some((a) => a.pending && a.category === note);
+  const requested = activity.some((a) => a.id.startsWith("rq_") && a.category === note);
 
   const send = () => {
     request(janet, half, note);

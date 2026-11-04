@@ -1,5 +1,5 @@
 import { siAirbnb, siApple, siAppletv, siAudible, siHbo, siIkea, siLidl, siNetflix, siPlaystation, siSpotify, siStarbucks, siUber, siZara } from "simple-icons";
-import { ArrowDownLeft, ArrowUpRight, UtensilsCrossed } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ChartNoAxesCombined, UtensilsCrossed } from "lucide-react";
 import type { Activity, BrandKey } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,18 @@ export function BrandMark({ activity, className }: { activity: Activity; classNa
         )}
       >
         <Icon className="size-5" strokeWidth={1.75} />
+      </div>
+    );
+  }
+  if (activity.invest) {
+    return (
+      <div
+        className={cn(
+          "grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#9b82ff] to-[#5b3fe0] text-white ring-1 ring-white/10",
+          className,
+        )}
+      >
+        <ChartNoAxesCombined className="size-5" strokeWidth={1.75} />
       </div>
     );
   }

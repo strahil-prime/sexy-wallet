@@ -27,3 +27,12 @@ export function formatWhen(date: Date, now = new Date()) {
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const eur0 = new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+/** Whole euros: €8,000. */
+export function formatEUR0(value: number, opts?: { sign?: boolean }) {
+  const formatted = eur0.format(Math.abs(Math.round(value)));
+  if (!opts?.sign) return value < 0 ? `-${formatted}` : formatted;
+  return `${value < 0 ? "−" : "+"}${formatted}`;
+}

@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { ArrowDownRight, ArrowUpRight, ChevronRight, Home as HomeIcon, Plane, Smartphone, Sparkles, Star } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BellRing, ChevronRight, Home as HomeIcon, Plane, Smartphone, Sparkles, Star } from "lucide-react";
 import { BrandLogo } from "@/components/brand/brand-mark";
 import { comingSoon } from "@/components/shell/coming-soon";
 import { SpendingDonut, spendingCategories } from "@/components/teller/conversation";
 import { usePersona } from "@/components/teller/persona";
 import { Panel } from "@/components/ui/panel";
 import { cn, formatEUR } from "@/lib/utils";
+import { useWallet } from "@/lib/wallet-store";
 import { Balance } from "./balance";
 
 /**
@@ -33,7 +34,7 @@ function useMonths() {
 const spentByMonth = [1290.4, 1512.7, 1655.2, 1401.3, 1388.4, 1462.82];
 const inByMonth = [3600, 3720, 3600, 3985, 3600, 3850];
 /** Balance over the last 30 days, for the sparkline (ends at today's balance). */
-const balanceTrend = [19.8, 19.6, 20.1, 20.4, 20.2, 20.9, 21.3, 21.1, 21.6, 22.4, 22.1, 22.8, 23.2, 23.0, 23.9, 24.68];
+const balanceHistory = [19.8, 19.6, 20.1, 20.4, 20.2, 20.9, 21.3, 21.1, 21.6, 22.4, 22.1, 22.8, 23.2, 23.0, 23.9];
 
 function Card({ className, delay = 0, children }: { className?: string; delay?: number; children: React.ReactNode }) {
   return (
@@ -78,6 +79,9 @@ function Change({ value, good }: { value: number; good: boolean }) {
 }
 
 function Sparkline() {
+  // The last point follows the live balance, so money sent or invested shows up on the line.
+  const { balance } = useWallet();
+  const balanceTrend = [...balanceHistory, balance / 1000];
   const w = 320;
   const h = 96;
   const min = Math.min(...balanceTrend) - 0.4;
@@ -178,7 +182,8 @@ const bills = [
 export function Overview({ onAsk, part = "all" }: { onAsk: () => void; part?: "all" | "balance" | "rest" }) {
   const months = useMonths();
   const { persona } = usePersona();
-  const [budgetSet, setBudgetSet] = useState(false);
+  const { budgets, setBudget, billReminders, cancelled } = useWallet();
+  const budgetSet = budgets.dining === 220;
   const total = spendingCategories.reduce((s, c) => s + c.value, 0);
   const lastMonth = months[months.length - 1];
   const lastMonthLong = useMemo(() => {
@@ -238,7 +243,7 @@ export function Overview({ onAsk, part = "all" }: { onAsk: () => void; part?: "a
                 <button
                   type="button"
                   onClick={() => {
-                    setBudgetSet(true);
+                    setBudget("dining", 220);
                     toast("Dining budget set", { description: `€220 a month. We'll tell you when you're close.` });
                   }}
                   disabled={budgetSet}
@@ -326,8 +331,14 @@ export function Overview({ onAsk, part = "all" }: { onAsk: () => void; part?: "a
 
           <Card delay={0.3}>
             <CardTitle onMore={() => comingSoon("Bills")}>Upcoming bills</CardTitle>
+            {billReminders && (
+              <p className="mt-1 flex items-center gap-1.5 text-[12px] text-cyan">
+                <BellRing className="size-3.5" strokeWidth={2.2} />
+                Reminders on, the day before each bill
+              </p>
+            )}
             <ul className="mt-3 space-y-1">
-              {bills.map((b) => (
+              {bills.filter((b) => !cancelled.includes(b.id)).map((b) => (
                 <li key={b.id} className="flex items-center gap-3 rounded-xl py-1.5">
                   {b.icon ? (
                     <span

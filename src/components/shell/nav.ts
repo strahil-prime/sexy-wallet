@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpRight, Clock3, CreditCard, Gift, House, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowDownToLine, ArrowUpRight, ChartNoAxesCombined, Clock3, CreditCard, Gift, House, type LucideIcon } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon; live: boolean };
 
@@ -9,7 +9,7 @@ export const navItems: NavItem[] = [
   { label: "Receive", href: "/receive", icon: ArrowDownToLine, live: false },
   { label: "Activity", href: "/activity", icon: Clock3, live: false },
   { label: "Rewards", href: "/rewards", icon: Gift, live: false },
-  { label: "Profile", href: "/profile", icon: UserRound, live: false },
+  { label: "Invest", href: "/invest", icon: ChartNoAxesCombined, live: true },
 ];
 
 export function isActive(pathname: string, href: string) {

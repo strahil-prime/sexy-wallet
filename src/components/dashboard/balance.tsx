@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Check, ChevronDown, Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, Check, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { usePreloaded } from "@/components/shell/preloader";
 import { useWallet } from "@/lib/wallet-store";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ const currencies = [
 type Code = (typeof currencies)[number]["code"];
 
 export function Balance({ className }: { className?: string }) {
-  const { balance } = useWallet();
+  const { balance, portfolio } = useWallet();
   const [code, setCode] = useState<Code>("EUR");
   const [mounted, setMounted] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -91,15 +92,39 @@ export function Balance({ className }: { className?: string }) {
         </NumberFlowGroup>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 10, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 0.35, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-2.5 inline-flex h-[31px] items-center gap-1.5 rounded-full border border-positive/15 bg-positive/[0.08] px-3 text-positive backdrop-blur-md"
-      >
-        <ArrowUpRight className="size-[13px]" strokeWidth={2.2} />
-        <span className="text-[11.5px] font-medium">+24.6% this month</span>
-      </motion.div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.35, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="inline-flex h-[31px] items-center gap-1.5 rounded-full border border-positive/15 bg-positive/[0.08] px-3 text-positive backdrop-blur-md"
+        >
+          <ArrowUpRight className="size-[13px]" strokeWidth={2.2} />
+          <span className="text-[11.5px] font-medium">+24.6% this month</span>
+        </motion.div>
+        {/* Cash above; what's invested sits one tap away */}
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Link
+            href="/invest"
+            className="group focus-ring inline-flex h-[31px] items-center gap-1.5 rounded-full border border-[#8b6dff]/25 bg-[#8b6dff]/[0.1] pr-2 pl-3 text-[#c4b5fd] backdrop-blur-md transition-colors hover:bg-[#8b6dff]/[0.18]"
+          >
+            <span className="text-[11.5px] font-medium">
+              Invested{" "}
+              <NumberFlow
+                value={hidden ? 0 : Math.round(portfolio)}
+                locales="en-IE"
+                format={{ style: "currency", currency: "EUR", maximumFractionDigits: 0 }}
+                className={cn("tabular", hidden && "blur-[5px]")}
+              />
+            </span>
+            <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2.2} />
+          </Link>
+        </motion.div>
+      </div>
     </div>
   );
 }

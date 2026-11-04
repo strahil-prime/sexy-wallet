@@ -58,7 +58,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const markTap = () => (tapped.current = true);
     window.addEventListener("pointerdown", markTap, { capture: true });
-    const minTime = new Promise((r) => setTimeout(r, reduced ? 600 : 2300));
+    const minTime = new Promise((r) => setTimeout(r, reduced ? 600 : 2900));
     const loaded = new Promise((r) => (document.readyState === "complete" ? r(null) : window.addEventListener("load", r, { once: true })));
     const fonts = document.fonts?.ready ?? Promise.resolve();
     // Never hold the site hostage to a slow asset.
@@ -216,55 +216,80 @@ export function Preloader({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * The N builds from left to right (left leg, diagonal, right leg), then the star pops in and
- * blinks. White symbol; star centre in the 217 x 123 artboard is at (139.8, 29.7).
+ * The N is written as one pen stroke: up the left column, down the middle, up the right
+ * (a stroked path in a mask draws on, so the three columns read as a single letter). Then the
+ * star bursts on with a flare and blinks. White symbol, 217 x 123 artboard; star centre at
+ * (139.8, 29.7).
  */
+const PEN = "M5.2 148.4 L71.4 29.4 L80.3 29.4 L131.9 122.2 L145.6 122.2 L211.8 3.2";
+const WRITE_AT = 0.3;
+const WRITE_FOR = 1.25;
+const STAR_AT = WRITE_AT + WRITE_FOR - 0.25;
+
 function NudgeIntro() {
   return (
     <div className="relative w-[104px]">
       <svg viewBox="0 0 217 123" className="relative block w-full overflow-visible drop-shadow-[0_0_16px_rgb(94_240_255/0.35)]">
         <defs>
-          <clipPath id="pl-wipe">
-            <motion.rect
-              x="-10"
-              y="-10"
-              height="150"
-              initial={{ width: 0 }}
-              animate={{ width: 250 }}
-              transition={{ delay: 0.25, duration: 1.05, ease: [0.65, 0, 0.35, 1] }}
-            />
-          </clipPath>
-        </defs>
-        <g clipPath="url(#pl-wipe)">
-          {NW_LEGS.map((d, i) => (
+          <mask id="pl-pen" maskUnits="userSpaceOnUse" x="-20" y="-20" width="257" height="180">
             <motion.path
-              key={i}
-              d={d}
-              fill="white"
-              initial={{ y: 22, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 + i * 0.28, duration: 0.7, ease }}
+              d={PEN}
+              fill="none"
+              stroke="white"
+              strokeWidth="46"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ delay: WRITE_AT, duration: WRITE_FOR, ease: [0.55, 0.05, 0.35, 1] }}
             />
+          </mask>
+        </defs>
+        <g mask="url(#pl-pen)">
+          {NW_LEGS.map((d, i) => (
+            <path key={i} d={d} fill="white" />
           ))}
         </g>
         <motion.path
           d={NW_STAR}
           fill="white"
           style={{ transformBox: "fill-box", transformOrigin: "center" }}
-          initial={{ scale: 0, rotate: -90, opacity: 0 }}
-          animate={{ scale: [0, 1.3, 1, 1, 1, 1], rotate: [-90, 0, 0, 0, 0, 0], opacity: [0, 1, 1, 0.2, 1, 1] }}
-          transition={{ delay: 1.25, duration: 1.1, times: [0, 0.3, 0.45, 0.62, 0.8, 1], ease: "easeOut" }}
+          initial={{ scale: 0, rotate: -120, opacity: 0 }}
+          animate={{
+            scale: [0, 1.9, 0.85, 1.35, 1],
+            rotate: [-120, 0, 0, 0, 0],
+            opacity: [0, 1, 0.35, 1, 1],
+          }}
+          transition={{ delay: STAR_AT, duration: 1.1, times: [0, 0.28, 0.5, 0.7, 1], ease: "easeOut" }}
         />
       </svg>
-      {/* The blink's flash, sitting on the star */}
-      <motion.span
-        aria-hidden
-        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_22px_8px_rgb(94_240_255/0.7)]"
-        style={{ left: "64.4%", top: "24.1%" }}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: [0, 1.5, 0, 1.2, 0], opacity: [0, 1, 0, 0.9, 0] }}
-        transition={{ delay: 1.4, duration: 1.1, times: [0, 0.2, 0.45, 0.65, 1], ease: "easeOut" }}
-      />
+
+      {/* Star burst: flash, shock ring and lens flare, all centred on the star */}
+      <div aria-hidden className="pointer-events-none absolute size-0" style={{ left: "64.4%", top: "24.1%" }}>
+        <motion.span
+          className="absolute -top-1.5 -left-1.5 size-3 rounded-full bg-white shadow-[0_0_30px_12px_rgb(255_255_255/0.85),0_0_70px_26px_rgb(94_240_255/0.55)]"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 2.2, 0.3, 1.6, 0], opacity: [0, 1, 0.2, 1, 0] }}
+          transition={{ delay: STAR_AT + 0.05, duration: 1.15, times: [0, 0.22, 0.48, 0.68, 1], ease: "easeOut" }}
+        />
+        <motion.span
+          className="absolute -top-5 -left-5 size-10 rounded-full ring-2 ring-white/80"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 0.4, 3.4], opacity: [0, 0.9, 0] }}
+          transition={{ delay: STAR_AT + 0.1, duration: 0.75, times: [0, 0.08, 1], ease: "easeOut" }}
+        />
+        <motion.span
+          className="absolute -top-px -left-[90px] h-0.5 w-[180px] bg-[linear-gradient(90deg,transparent,rgb(255_255_255/0.95),transparent)] blur-[0.5px]"
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: [0, 1, 0.4, 1, 0], opacity: [0, 1, 0.3, 0.9, 0] }}
+          transition={{ delay: STAR_AT + 0.05, duration: 1.15, times: [0, 0.22, 0.48, 0.68, 1], ease: "easeOut" }}
+        />
+        <motion.span
+          className="absolute -top-[50px] -left-px h-[100px] w-0.5 bg-[linear-gradient(180deg,transparent,rgb(255_255_255/0.9),transparent)] blur-[0.5px]"
+          initial={{ scaleY: 0, opacity: 0 }}
+          animate={{ scaleY: [0, 1, 0.4, 1, 0], opacity: [0, 1, 0.3, 0.9, 0] }}
+          transition={{ delay: STAR_AT + 0.05, duration: 1.15, times: [0, 0.22, 0.48, 0.68, 1], ease: "easeOut" }}
+        />
+      </div>
     </div>
   );
 }

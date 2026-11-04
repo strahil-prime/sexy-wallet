@@ -63,7 +63,7 @@ function MobileTopBar({ home }: { home: boolean }) {
       style={{ background: persona.edgeColor }}
     >
       <Link href="/" aria-label="Nudge, home" className="text-white">
-        <NudgeLogo mono className="h-[19.5px]" label="Nudge" />
+        <NudgeLogo mono className="h-[23.4px]" label="Nudge" />
       </Link>
       <ProfileAvatar size={36} />
     </header>

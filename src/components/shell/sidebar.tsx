@@ -17,9 +17,9 @@ export function Sidebar() {
         <motion.span
           whileHover={{ scale: 1.04 }}
           transition={{ type: "spring", stiffness: 300, damping: 18 }}
-          className="inline-flex drop-shadow-[0_0_14px_rgb(17_92_225/0.45)]"
+          className="inline-flex"
         >
-          <NudgeLogo className="h-[30px]" />
+          <NudgeLogo mono className="h-[22.5px]" />
         </motion.span>
       </Link>
 

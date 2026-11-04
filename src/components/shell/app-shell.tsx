@@ -62,8 +62,8 @@ function MobileTopBar({ home }: { home: boolean }) {
       className={cn("sticky top-0 z-30 h-16 items-center justify-between border-b border-hairline px-5 lg:hidden", home ? "flex" : "hidden")}
       style={{ background: persona.edgeColor }}
     >
-      <Link href="/" aria-label="Nudge, home" className="text-white drop-shadow-[0_0_12px_rgb(17_92_225/0.45)]">
-        <NudgeLogo className="h-[26px]" label="Nudge" />
+      <Link href="/" aria-label="Nudge, home" className="text-white">
+        <NudgeLogo mono className="h-[19.5px]" label="Nudge" />
       </Link>
       <ProfileAvatar size={36} />
     </header>

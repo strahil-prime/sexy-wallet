@@ -3,8 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Volume2 } from "lucide-react";
-import { NUDGE_BLUE, NUDGE_BLUE_DEEP, NudgeLogotype } from "@/components/brand/nudge";
-import { N_LEGS, N_STAR } from "@/components/brand/nudge-paths";
+import { NUDGE_BLUE, NudgeLogotype } from "@/components/brand/nudge";
+import { NW_LEGS, NW_STAR } from "@/components/brand/nudge-paths";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -217,12 +217,12 @@ export function Preloader({ children }: { children: React.ReactNode }) {
 
 /**
  * The N builds from left to right (left leg, diagonal, right leg), then the star pops in and
- * blinks. Star centre in the 228 x 125 artboard is at (146.4, 27.8).
+ * blinks. White symbol; star centre in the 217 x 123 artboard is at (139.8, 29.7).
  */
 function NudgeIntro() {
   return (
     <div className="relative w-[104px]">
-      <svg viewBox="0 0 228 125" className="relative block w-full overflow-visible drop-shadow-[0_0_18px_rgb(46_117_232/0.55)]">
+      <svg viewBox="0 0 217 123" className="relative block w-full overflow-visible drop-shadow-[0_0_16px_rgb(94_240_255/0.35)]">
         <defs>
           <clipPath id="pl-wipe">
             <motion.rect
@@ -234,17 +234,13 @@ function NudgeIntro() {
               transition={{ delay: 0.25, duration: 1.05, ease: [0.65, 0, 0.35, 1] }}
             />
           </clipPath>
-          <linearGradient id="pl-star" x1="139.5" y1="13" x2="151.5" y2="56" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#5b9bff" />
-            <stop offset="1" stopColor="#2E75E8" />
-          </linearGradient>
         </defs>
         <g clipPath="url(#pl-wipe)">
-          {N_LEGS.map((d, i) => (
+          {NW_LEGS.map((d, i) => (
             <motion.path
               key={i}
               d={d}
-              fill={i === 1 ? NUDGE_BLUE_DEEP : NUDGE_BLUE}
+              fill="white"
               initial={{ y: 22, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 + i * 0.28, duration: 0.7, ease }}
@@ -252,8 +248,8 @@ function NudgeIntro() {
           ))}
         </g>
         <motion.path
-          d={N_STAR}
-          fill="url(#pl-star)"
+          d={NW_STAR}
+          fill="white"
           style={{ transformBox: "fill-box", transformOrigin: "center" }}
           initial={{ scale: 0, rotate: -90, opacity: 0 }}
           animate={{ scale: [0, 1.3, 1, 1, 1, 1], rotate: [-90, 0, 0, 0, 0, 0], opacity: [0, 1, 1, 0.2, 1, 1] }}
@@ -263,8 +259,8 @@ function NudgeIntro() {
       {/* The blink's flash, sitting on the star */}
       <motion.span
         aria-hidden
-        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_22px_8px_rgb(91_155_255/0.75)]"
-        style={{ left: "64.2%", top: "22.2%" }}
+        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_22px_8px_rgb(94_240_255/0.7)]"
+        style={{ left: "64.4%", top: "24.1%" }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: [0, 1.5, 0, 1.2, 0], opacity: [0, 1, 0, 0.9, 0] }}
         transition={{ delay: 1.4, duration: 1.1, times: [0, 0.2, 0.45, 0.65, 1], ease: "easeOut" }}

@@ -35,12 +35,12 @@ export function NudgeMark({ className, mono = false }: { className?: string; mon
   );
 }
 
-/** Blue N with the "Nudge" wordmark beside it. The wordmark takes the current text colour. */
-export function NudgeLogo({ className, label = "Nudge" }: { className?: string; label?: string }) {
+/** N with the "Nudge" wordmark beside it. The wordmark takes the current text colour; `mono` paints the N in it too. */
+export function NudgeLogo({ className, label = "Nudge", mono = false }: { className?: string; label?: string; mono?: boolean }) {
   const id = useId();
   return (
     <svg viewBox="0 0 595 143" className={cn("h-7 w-auto", className)} role="img" aria-label={label}>
-      <MarkPaths mono={false} gradId={`nl${id}`} />
+      <MarkPaths mono={mono} gradId={`nl${id}`} />
       {H_WORD.map((d, i) => (
         <path key={i} d={d} fill="currentColor" />
       ))}

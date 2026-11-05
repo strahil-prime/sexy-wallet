@@ -23,17 +23,18 @@ import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { comingSoon } from "@/components/shell/coming-soon";
 import { ContactAvatar } from "@/components/ui/avatar";
 import { Panel } from "@/components/ui/panel";
+import { TransferVeil } from "./transfer-veil";
 import { contacts, type Contact } from "@/lib/data";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR } from "@/lib/utils";
 
-type Step = "recipient" | "amount" | "review" | "processing" | "success";
+type Step = "recipient" | "amount" | "review" | "success";
 const steps: { id: Step; label: string }[] = [
   { id: "recipient", label: "Recipient" },
   { id: "amount", label: "Amount" },
   { id: "review", label: "Review" },
 ];
-const order: Step[] = ["recipient", "amount", "review", "processing", "success"];
+const order: Step[] = ["recipient", "amount", "review", "success"];
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -58,15 +59,17 @@ export function SendFlow() {
     setStep(next);
   }, [step]);
 
+  const [transferring, setTransferring] = useState(false);
   const confirm = () => {
+    if (to) setTransferring(true);
+  };
+  // Runs once the transfer veil fully covers the card, so the result swaps in underneath.
+  const complete = () => {
     if (!to) return;
-    go("processing");
-    setTimeout(() => {
-      const tx = send(to, amount, note);
-      setReceipt({ id: tx.id.replace("tx_", "SW-").toUpperCase(), at: new Date(), balanceAfter: balance - amount });
-      setDirection(1);
-      setStep("success");
-    }, 1700);
+    const tx = send(to, amount, note);
+    setReceipt({ id: tx.id.replace("tx_", "SW-").toUpperCase(), at: new Date(), balanceAfter: balance - amount });
+    setDirection(1);
+    setStep("success");
   };
 
   const restart = () => {
@@ -80,7 +83,7 @@ export function SendFlow() {
 
   const back = () => {
     const i = order.indexOf(step);
-    if (i > 0 && step !== "processing" && step !== "success") go(order[i - 1]);
+    if (i > 0 && !transferring && step !== "success") go(order[i - 1]);
   };
 
   // Mobile scrolls the whole page, so start each step from the top.
@@ -88,7 +91,7 @@ export function SendFlow() {
     if (window.matchMedia("(max-width: 1023px)").matches) window.scrollTo({ top: 0 });
   }, [step]);
 
-  const canGoBack = step === "amount" || step === "review";
+  const canGoBack = !transferring && (step === "amount" || step === "review");
 
   return (
     <div className="relative isolate min-h-full pb-10 max-lg:-mb-28 max-lg:min-h-lvh max-lg:pb-28">
@@ -102,8 +105,8 @@ export function SendFlow() {
 
       <LayoutGroup>
         <div className="grid gap-5 px-4 sm:px-8 lg:px-10 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <Panel spotlight={false} className="overflow-hidden lg:min-h-[640px]">
-            {step !== "success" && step !== "processing" && (
+          <Panel spotlight={false} className="relative overflow-hidden lg:min-h-[640px]">
+            {step !== "success" && (
               <Stepper step={step} onBack={step !== "recipient" ? back : undefined} />
             )}
             <div className="relative">
@@ -144,11 +147,11 @@ export function SendFlow() {
                   {step === "review" && to && (
                     <ReviewStep to={to} amount={amount} note={note} balance={balance} onEdit={() => go("amount")} onConfirm={confirm} />
                   )}
-                  {step === "processing" && to && <Processing to={to} amount={amount} />}
                   {step === "success" && to && receipt && <Success to={to} amount={amount} note={note} receipt={receipt} onAgain={restart} />}
                 </motion.div>
               </AnimatePresence>
             </div>
+            {transferring && <TransferVeil onCovered={complete} onDone={() => setTransferring(false)} />}
           </Panel>
 
           <Summary to={to} amount={amount} balance={step === "success" && receipt ? receipt.balanceAfter + amount : balance} step={step} />
@@ -627,33 +630,6 @@ function HoldToSend({ onConfirm, className }: { onConfirm: () => void; className
 }
 
 /* ───────────────────────── Processing / Success ───────────────────────── */
-
-function Processing({ to, amount }: { to: Contact; amount: number }) {
-  return (
-    <div className="flex min-h-[460px] flex-col items-center justify-center px-6 text-center lg:min-h-[600px]">
-      <div className="relative grid size-40 place-items-center">
-        {[0, 1, 2].map((i) => (
-          <motion.span
-            key={i}
-            className="absolute inset-0 rounded-full border border-cyan/40"
-            animate={{ scale: [0.6, 1.3], opacity: [0.8, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.6, ease: "easeOut" }}
-          />
-        ))}
-        <motion.span
-          className="absolute inset-4 rounded-full border-2 border-transparent border-t-cyan border-r-electric"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
-        <motion.span layoutId={`avatar-${to.id}`}>
-          <ContactAvatar contact={to} className="size-20 text-xl" />
-        </motion.span>
-      </div>
-      <p className="mt-8 text-[20px] font-medium text-white">Sending {formatEUR(amount)}</p>
-      <p className="text-shimmer mt-1 text-[14px]">Securing your transfer to {to.name.split(" ")[0]}</p>
-    </div>
-  );
-}
 
 function Success({
   to,

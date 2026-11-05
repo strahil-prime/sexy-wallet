@@ -66,7 +66,6 @@ export function Ambient() {
       <div className="absolute -top-40 left-[10%] size-[620px] rounded-full bg-electric/15 blur-[140px]" />
       <div className="absolute top-[30%] -right-40 size-[520px] rounded-full bg-cyan/10 blur-[140px]" />
       <div className="absolute -bottom-60 left-[30%] size-[560px] rounded-full bg-violet/10 blur-[160px]" />
-      <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgb(255_255_255)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_at_50%_20%,#000,transparent_70%)]" />
     </div>
   );
 }

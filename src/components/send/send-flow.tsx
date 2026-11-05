@@ -60,12 +60,17 @@ export function SendFlow() {
   }, [step]);
 
   const [transferring, setTransferring] = useState(false);
+  const [locked, setLocked] = useState<number | null>(null);
+  const body = useRef<HTMLDivElement>(null);
   const confirm = () => {
     if (to) setTransferring(true);
   };
   // Runs once the transfer veil fully covers the card, so the result swaps in underneath.
   const complete = () => {
     if (!to) return;
+    // Hold the card at the Review step's height so it doesn't jump when the result swaps in.
+    const card = body.current?.parentElement;
+    if (card) setLocked(card.clientHeight);
     const tx = send(to, amount, note);
     setReceipt({ id: tx.id.replace("tx_", "SW-").toUpperCase(), at: new Date(), balanceAfter: balance - amount });
     setDirection(1);
@@ -77,6 +82,7 @@ export function SendFlow() {
     setRaw("");
     setNote("");
     setReceipt(null);
+    setLocked(null);
     router.replace("/send");
     go("recipient");
   };
@@ -106,10 +112,11 @@ export function SendFlow() {
       <LayoutGroup>
         <div className="grid gap-5 px-4 sm:px-8 lg:px-10 xl:grid-cols-[minmax(0,1fr)_380px]">
           <Panel spotlight={false} className="relative overflow-hidden lg:min-h-[640px]">
+            <div ref={body} className="flex flex-col" style={step === "success" && locked ? { minHeight: locked } : undefined}>
             {step !== "success" && (
               <Stepper step={step} onBack={step !== "recipient" ? back : undefined} />
             )}
-            <div className="relative">
+            <div className="relative flex flex-1 flex-col">
               <AnimatePresence mode="wait" custom={direction} initial={false}>
                 <motion.div
                   key={step}
@@ -123,6 +130,7 @@ export function SendFlow() {
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.45, ease }}
+                  className="flex flex-1 flex-col"
                 >
                   {step === "recipient" && (
                     <RecipientStep
@@ -150,6 +158,7 @@ export function SendFlow() {
                   {step === "success" && to && receipt && <Success to={to} amount={amount} note={note} receipt={receipt} onAgain={restart} />}
                 </motion.div>
               </AnimatePresence>
+            </div>
             </div>
             {transferring && <TransferVeil onCovered={complete} onDone={() => setTransferring(false)} />}
           </Panel>
@@ -701,16 +710,16 @@ function Success({
   if (note) rows.push(["Note", note]);
 
   return (
-    <div className="flex flex-col items-center px-5 py-6 text-center sm:px-8 lg:min-h-[600px] lg:py-10">
-      <div className="relative grid size-32 place-items-center">
+    <div className="flex flex-1 flex-col items-center justify-center px-5 py-4 text-center sm:px-8 lg:py-10">
+      <div className="relative grid size-24 place-items-center lg:size-32">
         <div ref={burst} className="pointer-events-none absolute inset-0" />
         <motion.span
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 15 }}
-          className="absolute inset-3 rounded-full bg-gradient-to-br from-positive to-cyan shadow-[0_0_60px_-6px_rgb(62_227_154/0.8)]"
+          className="absolute inset-2 rounded-full bg-gradient-to-br from-positive to-cyan shadow-[0_0_60px_-6px_rgb(62_227_154/0.8)]"
         />
-        <svg viewBox="0 0 52 52" className="relative size-14 text-ink-950">
+        <svg viewBox="0 0 52 52" className="relative size-11 text-ink-950 lg:size-14">
           <motion.path
             d="M14 27l8 8 16-18"
             fill="none"
@@ -726,8 +735,8 @@ function Success({
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6, ease }}>
-        <div className="mt-4 text-[40px] leading-none lg:mt-6 lg:text-[44px] font-semibold tracking-[-0.04em] text-white tabular">{formatEUR(amount)}</div>
-        <p className="mt-3 text-[16px] text-fog">
+        <div className="mt-3 text-[36px] leading-none lg:mt-6 lg:text-[44px] font-semibold tracking-[-0.04em] text-white tabular">{formatEUR(amount)}</div>
+        <p className="mt-2 text-[15px] text-fog lg:mt-3 lg:text-[16px]">
           sent to <span className="text-white">{to.name}</span>. It&apos;s already there.
         </p>
       </motion.div>
@@ -736,10 +745,10 @@ function Success({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7, duration: 0.6, ease }}
-        className="relative mt-5 w-full max-w-[420px] rounded-2xl lg:mt-8 bg-white/[0.03] px-5 text-left ring-1 ring-white/[0.06]"
+        className="relative mt-4 w-full max-w-[420px] rounded-2xl lg:mt-8 bg-white/[0.03] px-5 text-left ring-1 ring-white/[0.06]"
       >
         {rows.map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between py-3 text-[14px] [&:not(:last-child)]:border-b [&:not(:last-child)]:border-dashed [&:not(:last-child)]:border-hairline">
+          <div key={k} className="flex items-center justify-between py-2.5 text-[14px] lg:py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-dashed [&:not(:last-child)]:border-hairline">
             <dt className="text-mist">{k}</dt>
             <dd className="font-medium text-white">{v}</dd>
           </div>
@@ -750,22 +759,22 @@ function Success({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.85, duration: 0.6, ease }}
-        className="mt-5 flex w-full max-w-[420px] flex-col gap-2.5 lg:mt-8"
+        className="mt-4 flex w-full max-w-[420px] flex-col gap-2 lg:mt-8 lg:gap-2.5"
       >
         <Link
           href="/"
-          className="group focus-ring flex h-14 items-center justify-center gap-2 rounded-full bg-electric text-[16px] font-medium text-white shadow-[0_14px_34px_-12px_rgb(31_123_255/0.9)] transition-colors hover:bg-electric-soft"
+          className="group focus-ring flex h-12 items-center lg:h-14 justify-center gap-2 rounded-full bg-electric text-[16px] font-medium text-white shadow-[0_14px_34px_-12px_rgb(31_123_255/0.9)] transition-colors hover:bg-electric-soft"
         >
           Back to home
         </Link>
         <div className="flex gap-2.5">
-          <button type="button" onClick={onAgain} className="focus-ring h-12 flex-1 cursor-pointer rounded-full bg-white/[0.06] text-[14.5px] text-white ring-1 ring-white/10 transition-colors hover:bg-white/10">
+          <button type="button" onClick={onAgain} className="focus-ring h-11 flex-1 cursor-pointer rounded-full bg-white/[0.06] text-[14.5px] text-white ring-1 ring-white/10 transition-colors hover:bg-white/10 lg:h-12">
             Send again
           </button>
           <button
             type="button"
             onClick={() => comingSoon("Sharing receipts")}
-            className="focus-ring flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-white/[0.06] text-[14.5px] text-white ring-1 ring-white/10 transition-colors hover:bg-white/10"
+            className="focus-ring flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-white/[0.06] text-[14.5px] lg:h-12 text-white ring-1 ring-white/10 transition-colors hover:bg-white/10"
           >
             <Share2 className="size-4" /> Share receipt
           </button>

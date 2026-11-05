@@ -24,6 +24,7 @@ import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { Panel } from "@/components/ui/panel";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR } from "@/lib/utils";
+import { CrownBadge3D } from "./crown-badge";
 import { Badge3D, metals, useSpinBadge, useTiltBadge, type Metal, type Shape } from "./badge-3d";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -169,7 +170,7 @@ function TierHero() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
           <div {...handlers} className="relative cursor-grab touch-pan-y select-none active:cursor-grabbing" aria-label="Gold tier badge, drag to spin">
-            <Badge3D metal={metals.gold} shape="circle" icon={Crown} size={170} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
+            <CrownBadge3D size={190} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
           </div>
           <motion.div
             aria-hidden

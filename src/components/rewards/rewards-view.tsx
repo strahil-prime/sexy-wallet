@@ -2,20 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  ChartNoAxesCombined,
+  Anchor,
+  ChartPie,
   Crown,
+  Earth,
   Flame,
-  Hand,
-  Leaf,
+  Handshake,
   PiggyBank,
-  Plane,
+  Rocket,
+  Scissors,
   Sparkles,
   Star,
-  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -24,8 +25,7 @@ import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { Panel } from "@/components/ui/panel";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR } from "@/lib/utils";
-import { CrownBadge3D } from "./crown-badge";
-import { Badge3D, metals, useSpinBadge, useTiltBadge, type Metal, type Shape } from "./badge-3d";
+import { Badge3D, metals, useSpinBadge, useTiltBadge, type Metal } from "./badge-3d";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -38,7 +38,6 @@ type Badge = {
   about: string;
   icon: LucideIcon;
   metal: Metal;
-  shape: Shape;
   earned?: string;
   progress?: { have: number; need: number; unit?: string; how: string; href?: string };
   points: number;
@@ -53,17 +52,17 @@ function useBadges(): Badge[] {
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return [
-    { id: "first", name: "Day One", about: "Opened your account and made your first payment.", icon: Sparkles, metal: metals.cobalt, shape: "circle", earned: "12 Mar 2024", points: 100 },
-    { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.emerald, shape: "hex", earned: "2 Sep 2024", points: 300 },
-    { id: "streak", name: "On Fire", about: "Checked in with your teller 30 days running.", icon: Flame, metal: metals.copper, shape: "shield", earned: "18 Oct 2026", points: 150 },
-    { id: "travel", name: "Globetrotter", about: "Paid in three countries without a single fee.", icon: Plane, metal: metals.ice, shape: "circle", earned: "24 Oct 2026", points: 200 },
+    { id: "first", name: "Day One", about: "Opened your account and made your first payment.", icon: Rocket, metal: metals.cobalt, earned: "12 Mar 2024", points: 100 },
+    { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.emerald, earned: "2 Sep 2024", points: 300 },
+    { id: "streak", name: "On Fire", about: "Checked in with your teller 30 days running.", icon: Flame, metal: metals.copper, earned: "18 Oct 2026", points: 150 },
+    { id: "travel", name: "Globetrotter", about: "Paid in three countries without a single fee.", icon: Earth, metal: metals.ice, earned: "24 Oct 2026", points: 200 },
     {
       id: "tidy",
       name: "Clean Sweep",
       about: "Cancelled a subscription you'd forgotten about.",
-      icon: Leaf,
-      metal: metals.emerald,
-      shape: "shield",
+      icon: Scissors,
+      metal: metals.teal,
+     
       earned: cancelled.length ? today : undefined,
       progress: { have: cancelled.length ? 1 : 0, need: 1, how: "Ask Bella about forgotten subscriptions", href: "/" },
       points: 150,
@@ -72,9 +71,9 @@ function useBadges(): Badge[] {
       id: "split",
       name: "Fair Share",
       about: "Split a bill with a friend.",
-      icon: Users,
+      icon: Handshake,
       metal: metals.rose,
-      shape: "hex",
+     
       earned: requested ? today : undefined,
       progress: { have: requested ? 1 : 0, need: 1, how: "Request money from a friend", href: "/receive" },
       points: 100,
@@ -83,9 +82,9 @@ function useBadges(): Badge[] {
       id: "diverse",
       name: "Diversifier",
       about: "Held four different funds at the same time.",
-      icon: ChartNoAxesCombined,
+      icon: ChartPie,
       metal: metals.violet,
-      shape: "circle",
+     
       earned: funds >= 4 ? today : undefined,
       progress: { have: Math.min(funds, 4), need: 4, unit: "funds", how: "Add a fund on Invest", href: "/invest" },
       points: 250,
@@ -94,9 +93,9 @@ function useBadges(): Badge[] {
       id: "steady",
       name: "Steady Hands",
       about: "Stayed the course when the market wobbled.",
-      icon: Hand,
-      metal: metals.gold,
-      shape: "shield",
+      icon: Anchor,
+      metal: metals.indigo,
+     
       earned: stayed ? today : undefined,
       progress: { have: stayed ? 1 : 0, need: 1, how: "Ask Michael how your portfolio is doing", href: "/" },
       points: 200,
@@ -170,7 +169,7 @@ function TierHero() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
           <div {...handlers} className="relative cursor-grab touch-pan-y select-none active:cursor-grabbing" aria-label="Gold tier badge, drag to spin">
-            <CrownBadge3D size={190} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
+            <Badge3D metal={metals.gold} icon={Crown} size={180} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
           </div>
           <motion.div
             aria-hidden
@@ -249,7 +248,6 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
         <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 3.2 + (index % 3) * 0.3, repeat: Infinity, ease: "easeInOut", delay: index * 0.2 }}>
           <Badge3D
             metal={badge.metal}
-            shape={badge.shape}
             icon={badge.icon}
             size={96}
             locked={locked}
@@ -282,32 +280,33 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
 function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => void }) {
   return (
     <Dialog.Root open={!!badge} onOpenChange={(o) => !o && onClose()}>
-      <AnimatePresence>
-        {badge && (
-          <Dialog.Portal forceMount>
-            <Dialog.Overlay asChild forceMount>
-              <motion.div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+      {/* No exit animation on purpose: an interrupted fade-out could leave a dim ghost of the
+          dialog over the page on iOS Safari. Closing is instant; opening still animates in. */}
+      {badge && (
+        <Dialog.Portal>
+            <Dialog.Overlay asChild>
+              <motion.div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
             </Dialog.Overlay>
-            <Dialog.Content asChild forceMount aria-describedby={undefined}>
+            <Dialog.Content asChild aria-describedby={undefined} key={badge.id}>
               <motion.div
                 className="fixed inset-0 z-50 grid place-items-center p-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
                 onClick={onClose}
               >
                 <motion.div
                   onClick={(e) => e.stopPropagation()}
                   initial={{ y: 30, scale: 0.96 }}
                   animate={{ y: 0, scale: 1 }}
-                  exit={{ y: 20, scale: 0.97 }}
                   transition={{ duration: 0.45, ease }}
                   className="glass-strong relative w-full max-w-[400px] overflow-hidden rounded-[28px] px-6 pt-8 pb-6 text-center"
                 >
                   <div aria-hidden className="absolute inset-x-0 top-0 h-64" style={{ background: `radial-gradient(60% 70% at 50% 35%, ${badge.metal[1]}55, transparent 70%)` }} />
                   <Dialog.Close
                     aria-label="Close"
-                    className="focus-ring absolute top-4 right-4 z-10 grid size-9 cursor-pointer place-items-center rounded-full bg-white/[0.08] text-fog hover:text-white"
+                    onClick={onClose}
+                    className="focus-ring absolute top-3 right-3 z-20 grid size-11 cursor-pointer touch-manipulation place-items-center rounded-full bg-white/[0.08] text-fog hover:text-white"
                   >
                     <X className="size-4" />
                   </Dialog.Close>
@@ -348,8 +347,7 @@ function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => v
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>
-        )}
-      </AnimatePresence>
+      )}
     </Dialog.Root>
   );
 }
@@ -361,7 +359,6 @@ function BigBadge({ badge }: { badge: Badge }) {
       <div {...handlers} className="relative cursor-grab touch-none select-none active:cursor-grabbing">
         <Badge3D
           metal={badge.metal}
-          shape={badge.shape}
           icon={badge.icon}
           size={200}
           locked={!badge.earned}

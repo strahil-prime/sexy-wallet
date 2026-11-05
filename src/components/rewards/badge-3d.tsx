@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import {
   animate,
   motion,
-  useMotionTemplate,
   useMotionValue,
   useSpring,
   useTransform,
@@ -13,96 +12,191 @@ import {
 import { Lock, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Four stops from highlight to deep shadow: the whole metal look comes from these. */
+/**
+ * Enamel colour, four stops from highlight to deep shadow. The rim and the embossed icon are
+ * always gold; this only colours the enamel field.
+ */
 export type Metal = [string, string, string, string];
 
 export const metals = {
-  gold: ["#fff3c8", "#f5c76a", "#b4832b", "#5e3f0c"],
-  emerald: ["#dbffef", "#3ee39a", "#139162", "#073f2a"],
-  violet: ["#f1e9ff", "#a98bff", "#6844de", "#26145f"],
-  copper: ["#ffe4cf", "#ff9a5b", "#c2541f", "#521d06"],
-  ice: ["#e9feff", "#6ef2ff", "#1b9fb8", "#083c48"],
-  rose: ["#ffe6ee", "#ff92b2", "#c84b72", "#4d1428"],
-  platinum: ["#ffffff", "#d3dbe1", "#8796a1", "#2f3a43"],
-  cobalt: ["#dfeaff", "#5b9dff", "#1452c4", "#08214f"],
+  gold: ["#fff0bf", "#efc25e", "#b17c24", "#5c3c0b"],
+  emerald: ["#9cf5cf", "#22c47e", "#0b7a4c", "#043823"],
+  violet: ["#d7c6ff", "#8a5cff", "#5126d1", "#220c63"],
+  copper: ["#ffc2a3", "#ff6a3d", "#c43418", "#5a1206"],
+  ice: ["#b8f8ff", "#22c6e0", "#0a7f9c", "#053a4a"],
+  rose: ["#ffc2d6", "#f2447e", "#b3184f", "#520823"],
+  cobalt: ["#bcd6ff", "#2f7bff", "#1449c4", "#071f5c"],
+  teal: ["#b2fff0", "#1bc7a8", "#0b8371", "#043b33"],
+  indigo: ["#c9ccff", "#5560f0", "#2c33b8", "#10145a"],
 } satisfies Record<string, Metal>;
 
-export type Shape = "circle" | "hex" | "shield";
-
-const clips: Record<Shape, string> = {
-  circle: "circle(50% at 50% 50%)",
-  hex: "polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%)",
-  shield: "polygon(50% 0%, 96% 14%, 92% 58%, 50% 100%, 8% 58%, 4% 14%)",
-};
+const LOCKED: Metal = ["#9aa6ae", "#56636c", "#323d45", "#141b20"];
 
 const LAYERS = 9;
 
-type FaceProps = {
-  metal: Metal;
-  shape: Shape;
-  icon: LucideIcon;
-  locked?: boolean;
-  /** -1..1, how far the light has moved across the face */
-  light: MotionValue<number>;
-};
+/* ── The hexagon ─────────────────────────────────────── */
 
-function shapeStyle(shape: Shape): React.CSSProperties {
-  // Circles use a radius: Chrome can drop a circle() clip on layers it promotes for 3D.
-  return shape === "circle" ? { borderRadius: "50%", overflow: "hidden" } : { clipPath: clips[shape] };
+/** A pointy-top hexagon with softly rounded corners, centred in a 100×100 box. */
+function hexPath(R: number, round = 0.16) {
+  const v = Array.from({ length: 6 }, (_, i) => {
+    const a = ((-90 + 60 * i) * Math.PI) / 180;
+    return [50 + R * Math.cos(a), 50 + R * Math.sin(a)];
+  });
+  const lerp = (p: number[], q: number[], t: number) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const f = (n: number) => n.toFixed(2);
+  let d = "";
+  for (let i = 0; i < 6; i++) {
+    const cur = v[i];
+    const prev = v[(i + 5) % 6];
+    const next = v[(i + 1) % 6];
+    const a = lerp(cur, prev, round);
+    const b = lerp(cur, next, round);
+    d += `${i ? "L" : "M"}${f(a[0])} ${f(a[1])} Q${f(cur[0])} ${f(cur[1])} ${f(b[0])} ${f(b[1])} `;
+  }
+  return `${d}Z`;
 }
 
-function Face({ metal: [hi, mid, lo, deep], shape, icon: Icon, locked, light }: FaceProps) {
-  const sheenX = useTransform(light, [-1, 1], ["-30%", "130%"]);
-  const glare = useMotionTemplate`linear-gradient(115deg, transparent 20%, rgb(255 255 255 / 0.0) ${useTransform(light, [-1, 1], [10, 70])}%, rgb(255 255 255 / 0.75) ${useTransform(light, [-1, 1], [25, 85])}%, transparent ${useTransform(light, [-1, 1], [40, 100])}%)`;
-  const holo = useTransform(light, [-1, 1], [0, 220]);
-  const holoBg = useMotionTemplate`conic-gradient(from ${holo}deg at 50% 50%, #ff7ad9, #7af0ff, #b0ff7a, #ffe27a, #ff7ad9)`;
+const RIM = hexPath(48);
+const GROOVE = hexPath(44.4);
+const ENAMEL = hexPath(43.2);
+
+/** CSS clip for the HTML layers that sit on the badge (matches the outer rim). */
+const RIM_CLIP = `path("${RIM}")`;
+
+function useIds() {
+  const base = useId().replace(/:/g, "");
+  return { rim: `${base}r`, gold: `${base}g`, enamel: `${base}e`, clip: `${base}c`, gloss: `${base}s`, glare: `${base}l`, outer: `${base}o` };
+}
+
+function GoldDefs({ ids }: { ids: ReturnType<typeof useIds> }) {
   return (
-    <div className="absolute inset-0" style={shapeStyle(shape)}>
-      {/* Brushed metal */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(120% 90% at 30% 18%, ${hi} 0%, transparent 46%), conic-gradient(from 200deg, ${mid}, ${hi}, ${lo}, ${mid}, ${hi}, ${lo}, ${mid})`,
-        }}
-      />
-      {/* Bevel: an inner plate cut slightly lower than the rim */}
-      <div
-        className="absolute inset-[11%]"
-        style={{
-          ...shapeStyle(shape),
-          background: `radial-gradient(100% 100% at 70% 85%, ${hi} 0%, transparent 40%), linear-gradient(160deg, ${lo}, ${mid} 45%, ${lo} 75%, ${deep})`,
-          boxShadow: `inset 0 2px 6px ${deep}, inset 0 -2px 4px ${hi}`,
-        }}
-      />
-      <div className="absolute inset-[15%]" style={{ ...shapeStyle(shape), background: `radial-gradient(90% 80% at 35% 25%, ${hi}, ${mid} 40%, ${lo} 85%)` }} />
-      {/* Embossed symbol */}
+    <>
+      <linearGradient id={ids.rim} gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="90" y2="100">
+        <stop offset="0" stopColor="#fff2c4" />
+        <stop offset="0.22" stopColor="#d9a845" />
+        <stop offset="0.45" stopColor="#7d5414" />
+        <stop offset="0.62" stopColor="#e7bf62" />
+        <stop offset="0.82" stopColor="#8c5f18" />
+        <stop offset="1" stopColor="#f3d27f" />
+      </linearGradient>
+      <linearGradient id={ids.gold} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#fff3c9" />
+        <stop offset="0.35" stopColor="#e2b453" />
+        <stop offset="0.7" stopColor="#a8741f" />
+        <stop offset="1" stopColor="#f0cd78" />
+      </linearGradient>
+    </>
+  );
+}
+
+/* ── Faces ───────────────────────────────────────────── */
+
+function Face({ enamel: [hi, mid, lo, deep], icon: Icon, size, light, dim }: { enamel: Metal; icon: LucideIcon; size: number; light: MotionValue<number>; dim: boolean }) {
+  const ids = useIds();
+  const glareX = useTransform(light, [-1, 1], [-70, 70]);
+  const px = size / 100; // one unit of the 100-box in pixels
+  const stroke = Math.max(1.5, Math.min(1.9, 160 / size));
+  return (
+    <div className="absolute inset-0">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
+        <defs>
+          <GoldDefs ids={ids} />
+          <radialGradient id={ids.enamel} cx="0.36" cy="0.26" r="0.86">
+            <stop offset="0" stopColor={hi} />
+            <stop offset="0.38" stopColor={mid} />
+            <stop offset="0.8" stopColor={lo} />
+            <stop offset="1" stopColor={deep} />
+          </radialGradient>
+          <linearGradient id={ids.gloss} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.32" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={ids.glare} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#fff" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <clipPath id={ids.clip}>
+            <path d={ENAMEL} />
+          </clipPath>
+          <clipPath id={ids.outer}>
+            <path d={RIM} />
+          </clipPath>
+        </defs>
+
+        {/* Gold rim, with a bright top edge and a dark groove where it meets the enamel */}
+        <path d={RIM} fill={`url(#${ids.rim})`} />
+        <path d={RIM} fill="none" stroke="#fff6d6" strokeOpacity="0.55" strokeWidth="0.5" />
+        <path d={GROOVE} fill="#2b1a04" opacity="0.85" />
+
+        {/* Glossy enamel */}
+        <path d={ENAMEL} fill={`url(#${ids.enamel})`} />
+        <g clipPath={`url(#${ids.clip})`}>
+          <path d={ENAMEL} fill="none" stroke="#000" strokeOpacity="0.38" strokeWidth="4" style={{ filter: "blur(1.2px)" }} transform="translate(0 1)" />
+          <ellipse cx="44" cy="22" rx="34" ry="17" fill={`url(#${ids.gloss})`} />
+        </g>
+
+        {/* A glint that slides across as the badge turns */}
+        <g clipPath={`url(#${ids.outer})`} style={{ mixBlendMode: "overlay" }}>
+          <motion.g style={{ x: glareX }}>
+            <rect x="30" y="-10" width="28" height="120" fill={`url(#${ids.glare})`} transform="rotate(20 44 50)" />
+          </motion.g>
+        </g>
+      </svg>
+
+      {/* Embossed gold line icon: drop shadow, dark base, polished body, specular edge */}
       <div className="absolute inset-0 grid place-items-center">
-        {locked ? (
-          <Lock className="size-[30%]" style={{ color: deep, filter: `drop-shadow(0 1px 0 ${hi}) drop-shadow(0 -1px 0 rgb(0 0 0 / 0.35))` }} strokeWidth={2.2} />
-        ) : (
-          <Icon className="size-[38%]" style={{ color: deep, filter: `drop-shadow(0 1.5px 0 ${hi}) drop-shadow(0 -1px 0 rgb(0 0 0 / 0.4))` }} strokeWidth={2.1} />
-        )}
+        <div className="relative" style={{ width: size * 0.4, height: size * 0.4 }}>
+          <Icon
+            className="absolute inset-0 size-full"
+            color="rgb(0 0 0 / 0.5)"
+            strokeWidth={stroke + 0.6}
+            style={{ transform: `translateY(${px * 1.6}px)`, filter: `blur(${px * 0.9}px)` }}
+          />
+          <Icon className="absolute inset-0 size-full" color="#5c3a0a" strokeWidth={stroke + 0.55} />
+          <Icon className="absolute inset-0 size-full" color={`url(#${ids.gold})`} strokeWidth={stroke} style={dim ? { opacity: 0.75 } : undefined} />
+          <Icon
+            className="absolute inset-0 size-full"
+            color="rgb(255 250 228 / 0.8)"
+            strokeWidth={stroke * 0.28}
+            style={{ transform: `translate(${-px * 0.35}px, ${-px * 0.45}px)` }}
+          />
+        </div>
       </div>
-      {/* Holographic film and a moving glare */}
-      <motion.div className="absolute inset-0 opacity-[0.18] mix-blend-color-dodge" style={{ background: holoBg }} />
-      <motion.div className="absolute inset-0 mix-blend-overlay" style={{ background: glare }} />
-      <motion.div
-        className="absolute inset-y-0 w-[45%] -skew-x-12 bg-[linear-gradient(90deg,transparent,rgb(255_255_255/0.55),transparent)] mix-blend-soft-light"
-        style={{ left: sheenX }}
-      />
+      {dim && (
+        <span
+          className="absolute grid place-items-center rounded-full bg-ink-900 ring-1 ring-[#c99640]/70"
+          style={{ right: "17%", bottom: "13%", width: size * 0.22, height: size * 0.22 }}
+        >
+          <Lock style={{ width: size * 0.11, height: size * 0.11 }} color="#e2b453" strokeWidth={2.2} />
+        </span>
+      )}
     </div>
   );
 }
 
-function Back({ metal: [hi, mid, lo, deep], shape, caption }: { metal: Metal; shape: Shape; caption: string }) {
+function Back({ enamel: [, mid, lo, deep], caption, size }: { enamel: Metal; caption: string; size: number }) {
+  const ids = useIds();
   return (
-    <div className="absolute inset-0" style={shapeStyle(shape)}>
-      <div className="absolute inset-0" style={{ background: `conic-gradient(from 20deg, ${mid}, ${lo}, ${hi}, ${mid}, ${lo}, ${hi}, ${mid})` }} />
-      <div className="absolute inset-[12%]" style={{ ...shapeStyle(shape), background: `linear-gradient(200deg, ${hi}, ${mid} 50%, ${lo})` }} />
-      <div className="absolute inset-0 grid place-items-center px-[22%] text-center">
+    <div className="absolute inset-0">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
+        <defs>
+          <GoldDefs ids={ids} />
+          <radialGradient id={ids.enamel} cx="0.62" cy="0.3" r="0.9">
+            <stop offset="0" stopColor={mid} />
+            <stop offset="0.65" stopColor={lo} />
+            <stop offset="1" stopColor={deep} />
+          </radialGradient>
+        </defs>
+        <path d={RIM} fill={`url(#${ids.rim})`} />
+        <path d={GROOVE} fill="#2b1a04" opacity="0.85" />
+        <path d={ENAMEL} fill={`url(#${ids.enamel})`} />
+        <path d={hexPath(36)} fill="none" stroke={`url(#${ids.gold})`} strokeWidth="0.9" opacity="0.9" />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center px-[24%] text-center">
         <span
-          className="text-[clamp(7px,0.075em,14px)] leading-tight font-bold tracking-[0.18em] uppercase"
-          style={{ color: deep, textShadow: `0 1px 0 ${hi}` }}
+          className="leading-tight font-bold tracking-[0.16em] uppercase"
+          style={{ fontSize: Math.max(7, Math.min(14, size * 0.072)), color: "#f6d98d", textShadow: "0 1px 0 rgb(0 0 0 / 0.45), 0 -0.5px 0 rgb(255 245 210 / 0.5)" }}
         >
           {caption}
         </span>
@@ -112,12 +206,11 @@ function Back({ metal: [hi, mid, lo, deep], shape, caption }: { metal: Metal; sh
 }
 
 /**
- * A metal badge with real thickness: a front face, a back face and a stack of rim slices
- * between them, all in one preserve-3d group. Light and holo film follow the rotation.
+ * A hexagonal enamel badge with a raised gold rim and an embossed gold icon, built in real 3D:
+ * front face, back face and a stack of rim slices between them in one preserve-3d group.
  */
 export function Badge3D({
   metal,
-  shape = "circle",
   icon,
   size,
   locked = false,
@@ -127,7 +220,6 @@ export function Badge3D({
   className,
 }: {
   metal: Metal;
-  shape?: Shape;
   icon: LucideIcon;
   size: number;
   locked?: boolean;
@@ -136,12 +228,11 @@ export function Badge3D({
   rotateY: MotionValue<number>;
   className?: string;
 }) {
-  const m: Metal = locked ? ["#7b8790", "#4a565f", "#2a333a", "#11181d"] : metal;
-  const thick = Math.max(6, size * 0.075);
+  const enamel = locked ? LOCKED : metal;
+  const thick = Math.max(5, size * 0.06);
   const light = useTransform(rotateY, (v) => Math.sin((v * Math.PI) / 180));
-  // the em size lets the back caption scale with the badge
   return (
-    <div className={cn("relative", className)} style={{ width: size, height: size, perspective: size * 5, fontSize: size }}>
+    <div className={cn("relative", className)} style={{ width: size, height: size, perspective: size * 5 }}>
       <motion.div className="absolute inset-0" style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
         {Array.from({ length: LAYERS }, (_, i) => {
           const z = -thick / 2 + (thick * (i + 0.5)) / LAYERS;
@@ -150,18 +241,21 @@ export function Badge3D({
               key={i}
               className="absolute inset-0"
               style={{
-                ...shapeStyle(shape),
-                transform: `translateZ(${z}px)`,
-                background: `linear-gradient(160deg, ${m[2]}, ${m[3]} 60%, ${m[2]})`,
+                clipPath: RIM_CLIP,
+                transform: `translateZ(${z}px) scale(${size / 100})`,
+                transformOrigin: "0 0",
+                width: 100,
+                height: 100,
+                background: ["#6f4710", "#8b5c17", "#a8742a", "#8b5c17", "#5e3c0c"][i % 5],
               }}
             />
           );
         })}
         <div className="absolute inset-0" style={{ transform: `translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Face metal={m} shape={shape} icon={icon} locked={locked} light={light} />
+          <Face enamel={enamel} icon={icon} size={size} light={light} dim={locked} />
         </div>
         <div className="absolute inset-0" style={{ transform: `rotateY(180deg) translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Back metal={m} shape={shape} caption={caption} />
+          <Back enamel={enamel} caption={caption} size={size} />
         </div>
       </motion.div>
     </div>
@@ -217,7 +311,17 @@ export function useSpinBadge({ intro = true, idle = true }: { intro?: boolean; i
     if (intro) {
       anim.current = animate(rotateY, 0, { type: "spring", stiffness: 30, damping: 9, mass: 1.1 });
     }
-    if (!idle) return;
+    // Safety net: if a gesture ended without telling us (it happens on iOS), let go after a
+    // quiet second and settle face-forward.
+    const watchdog = setInterval(() => {
+      const d = drag.current;
+      if (d && performance.now() - d.t > 1200) {
+        drag.current = null;
+        rotateX.set(0);
+        settle(0);
+      }
+    }, 500);
+    if (!idle) return () => clearInterval(watchdog);
     // Every few seconds, a lazy full turn so it never looks static.
     const id = setInterval(() => {
       if (drag.current) return;
@@ -227,13 +331,27 @@ export function useSpinBadge({ intro = true, idle = true }: { intro?: boolean; i
     }, 7000);
     return () => {
       clearInterval(id);
+      clearInterval(watchdog);
       anim.current?.stop();
     };
+    // settle only reads refs and motion values
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [intro, idle, rotateY]);
+
+  // Ends a drag however it ends (lifted finger, cancelled gesture, lost capture) and always
+  // settles face-forward, so the badge can never be left stuck edge-on.
+  const release = (velocity: number) => {
+    if (!drag.current) return;
+    drag.current = null;
+    rotateX.set(0);
+    settle(velocity);
+  };
 
   const handlers = {
     onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
-      e.currentTarget.setPointerCapture(e.pointerId);
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {}
       anim.current?.stop();
       drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), v: 0, last: e.clientX };
     },
@@ -249,17 +367,9 @@ export function useSpinBadge({ intro = true, idle = true }: { intro?: boolean; i
       d.t = now;
       d.last = e.clientX;
     },
-    onPointerUp: () => {
-      const d = drag.current;
-      drag.current = null;
-      rotateX.set(0);
-      settle(d?.v ?? 0);
-    },
-    onPointerCancel: () => {
-      drag.current = null;
-      rotateX.set(0);
-      settle(0);
-    },
+    onPointerUp: () => release(drag.current?.v ?? 0),
+    onPointerCancel: () => release(0),
+    onLostPointerCapture: () => release(drag.current?.v ?? 0),
   };
 
   return { rotateX, rotateY, handlers, spin: () => settle(1400) };

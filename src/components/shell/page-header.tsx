@@ -63,9 +63,11 @@ export function PageHeader({
 export function Ambient() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute -top-40 left-[10%] size-[620px] rounded-full bg-electric/15 blur-[140px]" />
-      <div className="absolute top-[30%] -right-40 size-[520px] rounded-full bg-cyan/10 blur-[140px]" />
-      <div className="absolute -bottom-60 left-[30%] size-[560px] rounded-full bg-violet/10 blur-[160px]" />
+      {/* Soft pools of light drawn as gradients, not blurred shapes: blur filters this large are
+          very slow to repaint on iPhones. */}
+      <div className="absolute -top-[380px] left-[calc(10%-280px)] size-[1180px] rounded-full bg-[radial-gradient(closest-side,rgb(31_123_255/0.15),rgb(31_123_255/0.05)_45%,transparent)]" />
+      <div className="absolute top-[calc(30%-240px)] -right-[420px] size-[1000px] rounded-full bg-[radial-gradient(closest-side,rgb(42_209_230/0.1),rgb(42_209_230/0.035)_45%,transparent)]" />
+      <div className="absolute -bottom-[560px] left-[calc(30%-300px)] size-[1160px] rounded-full bg-[radial-gradient(closest-side,rgb(124_92_255/0.1),rgb(124_92_255/0.035)_45%,transparent)]" />
     </div>
   );
 }

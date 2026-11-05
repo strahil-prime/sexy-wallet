@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
-import * as Dialog from "@radix-ui/react-dialog";
+import { createPortal } from "react-dom";
 import {
   Anchor,
   ChartPie,
@@ -164,7 +164,7 @@ function TierHero() {
         <div className="relative shrink-0">
           <motion.div
             aria-hidden
-            className="absolute inset-[-18%] rounded-full bg-[radial-gradient(circle,rgb(245_199_106/0.45),transparent_65%)] blur-xl"
+            className="absolute inset-[-30%] rounded-full bg-[radial-gradient(closest-side,rgb(245_199_106/0.4),rgb(245_199_106/0.12)_50%,transparent)]"
             animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -238,8 +238,8 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
         {!locked && (
           <span
             aria-hidden
-            className="absolute top-6 left-1/2 size-24 -translate-x-1/2 rounded-full opacity-40 blur-2xl transition-opacity group-hover:opacity-70"
-            style={{ background: badge.metal[1] }}
+            className="absolute top-0 left-1/2 size-36 -translate-x-1/2 rounded-full opacity-40 transition-opacity group-hover:opacity-70"
+            style={{ background: `radial-gradient(closest-side, ${badge.metal[1]}, transparent)` }}
           />
         )}
         {/* Still on purpose: the grid stays light so a tap opens the badge straight away */}
@@ -271,40 +271,38 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
 }
 
 function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => void }) {
-  return (
-    <Dialog.Root open={!!badge} onOpenChange={(o) => !o && onClose()}>
-      {/* No exit animation on purpose: an interrupted fade-out could leave a dim ghost of the
-          dialog over the page on iOS Safari. Closing is instant; opening still animates in. */}
-      {badge && (
-        <Dialog.Portal>
-            <Dialog.Overlay asChild>
-              <motion.div className="fixed inset-0 z-50 bg-black/80" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} />
-            </Dialog.Overlay>
-            <Dialog.Content asChild aria-describedby={undefined} key={badge.id}>
-              <motion.div
-                className="fixed inset-0 z-50 grid place-items-center p-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.25 }}
-                onClick={onClose}
-              >
-                <motion.div
+  // Deliberately plain: no dialog library, scroll lock, focus trap, backdrop blur or exit
+  // animation. Each of those cost noticeable time on iPhones when the window opened.
+  useEffect(() => {
+    if (!badge) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [badge, onClose]);
+  if (!badge || typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="badge-title"
+      className="fixed inset-0 z-50 grid touch-none place-items-center bg-black/80 p-4"
+      onClick={onClose}
+    >
+                <div
                   onClick={(e) => e.stopPropagation()}
-                  initial={{ y: 30, scale: 0.96 }}
-                  animate={{ y: 0, scale: 1 }}
-                  transition={{ duration: 0.45, ease }}
-                  className="glass-strong relative w-full max-w-[400px] overflow-hidden rounded-[28px] px-6 pt-8 pb-6 text-center"
+                  className="badge-pop relative w-full max-w-[400px] touch-auto overflow-hidden rounded-[28px] border border-hairline bg-ink-850 px-6 pt-8 pb-6 text-center shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)]"
                 >
                   <div aria-hidden className="absolute inset-x-0 top-0 h-64" style={{ background: `radial-gradient(60% 70% at 50% 35%, ${badge.metal[1]}55, transparent 70%)` }} />
-                  <Dialog.Close
+                  <button
+                    type="button"
                     aria-label="Close"
                     onClick={onClose}
                     className="focus-ring absolute top-3 right-3 z-20 grid size-11 cursor-pointer touch-manipulation place-items-center rounded-full bg-white/[0.08] text-fog hover:text-white"
                   >
                     <X className="size-4" />
-                  </Dialog.Close>
+                  </button>
                   <BigBadge badge={badge} />
-                  <Dialog.Title className="relative mt-5 text-[24px] font-semibold tracking-tight text-white">{badge.name}</Dialog.Title>
+                  <h2 id="badge-title" className="relative mt-5 text-[24px] font-semibold tracking-tight text-white">{badge.name}</h2>
                   <p className="relative mx-auto mt-1.5 max-w-[300px] text-[14.5px] text-mist">{badge.about}</p>
                   {badge.earned ? (
                     <div className="relative mt-5 inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-4 py-2 text-[13px] text-fog ring-1 ring-white/[0.08]">
@@ -336,24 +334,17 @@ function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => v
                     )
                   )}
                   <p className="relative mt-5 text-[12px] text-mist">Drag to spin</p>
-                </motion.div>
-              </motion.div>
-            </Dialog.Content>
-          </Dialog.Portal>
-      )}
-    </Dialog.Root>
+                </div>
+    </div>,
+    document.body,
   );
 }
 
 function BigBadge({ badge }: { badge: Badge }) {
-  const { rotateX, rotateY, handlers } = useSpinBadge({ intro: false, idle: true });
-  // Open with the light flat badge so the window appears the instant you tap, then swap in the
-  // spinnable 3D one a moment later (or straight away if you start dragging). They look identical.
+  const { rotateX, rotateY, handlers } = useSpinBadge({ intro: false, idle: false });
+  // The window opens with the flat badge, which is quick to draw. The spinnable 3D badge (they
+  // look identical face-on) is only built once you start dragging.
   const [live, setLive] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setLive(true), 450);
-    return () => clearTimeout(t);
-  }, []);
   return (
     <div className="relative mx-auto w-fit">
       <div

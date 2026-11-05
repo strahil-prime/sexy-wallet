@@ -276,7 +276,7 @@ export function Badge3D({
 }
 
 /* The Gold tier art is drawn so its outline is a hexagon of radius 48 with these corners. */
-const ART_ROUND = 0.17;
+const ART_ROUND = 0.16;
 const ART_RIM = hexPath(48, ART_ROUND);
 
 function ArtFace({ src }: { src: string }) {

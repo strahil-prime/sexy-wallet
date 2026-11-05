@@ -72,6 +72,23 @@ export const initialActivity: Activity[] = [
   { id: "a9", title: "Airbnb", at: daysAgo(12, 11, 47), amount: -312, category: "Travel", brand: "airbnb", card: true },
 ];
 
+/** Earlier history, only listed on the Activity page so the dashboard's numbers stay as they are. */
+export const olderActivity: Activity[] = [
+  { id: "o1", title: "Starbucks", at: daysAgo(13, 8, 12), amount: -5.9, category: "Coffee", brand: "starbucks", card: true },
+  { id: "o2", title: "IKEA", at: daysAgo(14, 15, 36), amount: -164.5, category: "Home", brand: "ikea", card: true },
+  { id: "o3", title: "Transfer from Janet", at: daysAgo(15, 19, 4), amount: 60, category: "Concert tickets", peer: { name: "Janet", direction: "in" } },
+  { id: "o4", title: "Lidl", at: daysAgo(16, 18, 51), amount: -38.62, category: "Groceries", brand: "lidl", card: true },
+  { id: "o5", title: "Uber", at: daysAgo(17, 1, 18), amount: -22.7, category: "Transport", brand: "uber", card: true },
+  { id: "o6", title: "Salary", at: daysAgo(18, 9, 0), amount: 4250, category: "Income", peer: { name: "Brightline Studio", direction: "in" } },
+  { id: "o7", title: "Transfer to Luka", at: daysAgo(19, 12, 40), amount: -45, category: "Football", peer: { name: "Luka", direction: "out" } },
+  { id: "o8", title: "PlayStation Store", at: daysAgo(20, 21, 15), amount: -8.99, category: "Subscriptions", brand: "playstation", card: true },
+  { id: "o9", title: "Trattoria Da Enzo", at: daysAgo(21, 20, 30), amount: -54.2, category: "Dining", brand: "dining", card: true },
+  { id: "o10", title: "Starbucks", at: daysAgo(22, 7, 58), amount: -6.2, category: "Coffee", brand: "starbucks", card: true },
+  { id: "o11", title: "Zara", at: daysAgo(24, 13, 22), amount: -59.95, category: "Shopping", brand: "zara", card: true },
+  { id: "o12", title: "Lidl", at: daysAgo(26, 17, 45), amount: -51.3, category: "Groceries", brand: "lidl", card: true },
+  { id: "o13", title: "HBO Max", at: daysAgo(28, 9, 0), amount: -9.99, category: "Entertainment", brand: "hbo", card: true },
+];
+
 export const contacts: Contact[] = [
   { id: "janet", name: "Janet Moreau", handle: "@janet", iban: "FR76 3000 6000 0112 3456 7890 189", hue: ["#ff8a5b", "#ff4f8b"], favourite: true, photo: "/contacts/janet.jpg" },
   { id: "alex", name: "Alex Novak", handle: "@alexn", iban: "DE89 3704 0044 0532 0130 00", hue: ["#2ad1e6", "#1f7bff"], favourite: true, photo: "/contacts/alex.jpg" },

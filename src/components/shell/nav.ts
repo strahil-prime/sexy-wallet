@@ -6,9 +6,9 @@ export const navItems: NavItem[] = [
   { label: "Home", href: "/", icon: House, live: true },
   { label: "Card", href: "/card", icon: CreditCard, live: true },
   { label: "Send", href: "/send", icon: ArrowUpRight, live: true },
-  { label: "Receive", href: "/receive", icon: ArrowDownToLine, live: false },
-  { label: "Activity", href: "/activity", icon: Clock3, live: false },
-  { label: "Rewards", href: "/rewards", icon: Gift, live: false },
+  { label: "Receive", href: "/receive", icon: ArrowDownToLine, live: true },
+  { label: "Activity", href: "/activity", icon: Clock3, live: true },
+  { label: "Rewards", href: "/rewards", icon: Gift, live: true },
   { label: "Invest", href: "/invest", icon: ChartNoAxesCombined, live: true },
 ];
 

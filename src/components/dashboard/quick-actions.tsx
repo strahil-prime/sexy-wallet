@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 
 const actions = [
   { label: "Send", icon: ArrowUpRight, href: "/send", primary: true },
-  { label: "Receive", icon: ArrowDownLeft },
-  { label: "QR", icon: QrCode },
+  { label: "Receive", icon: ArrowDownLeft, href: "/receive" },
+  { label: "QR", icon: QrCode, href: "/receive?mode=qr" },
   { label: "More", icon: Ellipsis },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
@@ -183,6 +184,7 @@ export function Overview({ onAsk, part = "all" }: { onAsk: () => void; part?: "a
   const months = useMonths();
   const { persona } = usePersona();
   const { budgets, setBudget, billReminders, cancelled } = useWallet();
+  const router = useRouter();
   const budgetSet = budgets.dining === 220;
   const total = spendingCategories.reduce((s, c) => s + c.value, 0);
   const lastMonth = months[months.length - 1];
@@ -285,7 +287,7 @@ export function Overview({ onAsk, part = "all" }: { onAsk: () => void; part?: "a
           </Card>
 
           <Card delay={0.2}>
-            <CardTitle onMore={() => comingSoon("Rewards")}>Rewards</CardTitle>
+            <CardTitle onMore={() => router.push("/rewards")}>Rewards</CardTitle>
             <div className="mt-3 flex items-center gap-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

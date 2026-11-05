@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Panel } from "@/components/ui/panel";
-import { comingSoon } from "@/components/shell/coming-soon";
 import type { Activity } from "@/lib/data";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
@@ -43,13 +43,9 @@ export function ActivityList({ className, limit = 4 }: { className?: string; lim
     <Panel className={cn("px-7 pt-6 pb-3", className)}>
       <div className="relative mb-1 flex items-center justify-between">
         <span className="text-[17px] font-medium text-white">Recent activity</span>
-        <button
-          type="button"
-          onClick={() => comingSoon("Activity")}
-          className="group focus-ring flex cursor-pointer items-center gap-1 rounded-md text-[13px] text-fog hover:text-white"
-        >
+        <Link href="/activity" className="group focus-ring flex cursor-pointer items-center gap-1 rounded-md text-[13px] text-fog hover:text-white">
           See all <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        </button>
+        </Link>
       </div>
       <ul className="relative">
         <AnimatePresence initial={true}>

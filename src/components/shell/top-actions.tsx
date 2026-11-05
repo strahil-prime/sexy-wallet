@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
@@ -27,17 +28,16 @@ export function SearchField({ className }: { className?: string }) {
   );
 }
 
-/** The signed-in user's photo. Profile itself is not live in v1. */
+/** The signed-in user's photo; opens Profile. */
 export function ProfileAvatar({ size = 52, className }: { size?: number; className?: string }) {
   return (
-    <button
-      type="button"
-      onClick={() => comingSoon("Profile")}
+    <Link
+      href="/profile"
       aria-label="Your profile"
       className={cn("focus-ring relative shrink-0 cursor-pointer rounded-full transition-transform hover:scale-[1.04]", className)}
     >
       <Image
-        src="/profile/strahil.jpg"
+        src="/profile/eddie.jpg"
         alt=""
         width={size}
         height={size}
@@ -45,7 +45,7 @@ export function ProfileAvatar({ size = 52, className }: { size?: number; classNa
         className="rounded-full object-cover ring-1 ring-white/15"
       />
       <span className="absolute right-0 bottom-0 size-3 rounded-full bg-positive ring-2 ring-ink-900" />
-    </button>
+    </Link>
   );
 }
 

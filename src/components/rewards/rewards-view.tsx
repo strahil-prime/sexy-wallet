@@ -25,7 +25,7 @@ import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { Panel } from "@/components/ui/panel";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR } from "@/lib/utils";
-import { Badge3D, metals, useSpinBadge, useTiltBadge, type Metal } from "./badge-3d";
+import { Badge3D, BadgeStatic, metals, useSpinBadge, type Metal } from "./badge-3d";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -219,7 +219,6 @@ function TierHero() {
 /* ───────────────────────── Badge tiles ───────────────────────── */
 
 function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOpen: () => void }) {
-  const { rotateX, rotateY, onPointerMove, onPointerLeave } = useTiltBadge(index);
   const locked = !badge.earned;
   const p = badge.progress;
   return (
@@ -231,10 +230,8 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
       <button
         type="button"
         onClick={onOpen}
-        onPointerMove={onPointerMove}
-        onPointerLeave={onPointerLeave}
         className={cn(
-          "group focus-ring relative flex w-full cursor-pointer flex-col items-center rounded-[20px] px-3 pt-5 pb-4 text-center ring-1 transition-colors",
+          "group focus-ring relative flex w-full cursor-pointer touch-manipulation flex-col items-center rounded-[20px] px-3 pt-5 pb-4 text-center ring-1 transition-colors",
           locked ? "bg-white/[0.02] ring-white/[0.05] hover:bg-white/[0.04]" : "bg-white/[0.04] ring-white/[0.07] hover:bg-white/[0.07]",
         )}
       >
@@ -245,18 +242,14 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
             style={{ background: badge.metal[1] }}
           />
         )}
-        <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 3.2 + (index % 3) * 0.3, repeat: Infinity, ease: "easeInOut", delay: index * 0.2 }}>
-          <Badge3D
-            metal={badge.metal}
-            icon={badge.icon}
-            size={96}
-            locked={locked}
-            caption={badge.earned ?? ""}
-            rotateX={rotateX}
-            rotateY={rotateY}
-            className={cn(locked && "opacity-80")}
-          />
-        </motion.div>
+        {/* Still on purpose: the grid stays light so a tap opens the badge straight away */}
+        <BadgeStatic
+          metal={badge.metal}
+          icon={badge.icon}
+          size={96}
+          locked={locked}
+          className="transition-transform duration-300 group-hover:scale-105 group-active:scale-95"
+        />
         <span aria-hidden className="mt-3 h-2 w-14 rounded-[50%] bg-black/50 blur-[5px]" />
         <span className={cn("mt-2 text-[14.5px] font-medium", locked ? "text-fog" : "text-white")}>{badge.name}</span>
         {locked && p ? (
@@ -285,7 +278,7 @@ function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => v
       {badge && (
         <Dialog.Portal>
             <Dialog.Overlay asChild>
-              <motion.div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
+              <motion.div className="fixed inset-0 z-50 bg-black/80" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} />
             </Dialog.Overlay>
             <Dialog.Content asChild aria-describedby={undefined} key={badge.id}>
               <motion.div

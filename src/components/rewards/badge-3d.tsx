@@ -56,34 +56,41 @@ function hexPath(R: number, round = 0.16) {
   return `${d}Z`;
 }
 
-const RIM = hexPath(48);
-const GROOVE = hexPath(44.4);
-const ENAMEL = hexPath(43.2);
+const RIM = hexPath(48, 0.07);
+const RIM_IN = hexPath(45.6, 0.07);
+const GROOVE = hexPath(44.6, 0.07);
+const ENAMEL = hexPath(44, 0.07);
 
-/** CSS clip for the HTML layers that sit on the badge (matches the outer rim). */
+/** CSS clip for the rim slices (matches the outer rim). */
 const RIM_CLIP = `path("${RIM}")`;
 
 function useIds() {
   const base = useId().replace(/:/g, "");
-  return { rim: `${base}r`, gold: `${base}g`, enamel: `${base}e`, clip: `${base}c`, gloss: `${base}s`, glare: `${base}l`, outer: `${base}o` };
+  return { rim: `${base}r`, rimIn: `${base}i`, gold: `${base}g`, enamel: `${base}e`, shade: `${base}s`, clip: `${base}c` };
 }
 
+/** Brushed brass gold with hard stops, so edges read crisp rather than soft. */
 function GoldDefs({ ids }: { ids: ReturnType<typeof useIds> }) {
   return (
     <>
-      <linearGradient id={ids.rim} gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="90" y2="100">
-        <stop offset="0" stopColor="#fff2c4" />
-        <stop offset="0.22" stopColor="#d9a845" />
-        <stop offset="0.45" stopColor="#7d5414" />
-        <stop offset="0.62" stopColor="#e7bf62" />
-        <stop offset="0.82" stopColor="#8c5f18" />
-        <stop offset="1" stopColor="#f3d27f" />
+      <linearGradient id={ids.rim} gradientUnits="userSpaceOnUse" x1="14" y1="4" x2="86" y2="96">
+        <stop offset="0" stopColor="#fbf0c2" />
+        <stop offset="0.3" stopColor="#d8bd6c" />
+        <stop offset="0.3" stopColor="#b8984a" />
+        <stop offset="0.62" stopColor="#8a6d2c" />
+        <stop offset="0.62" stopColor="#c7a957" />
+        <stop offset="1" stopColor="#6e5420" />
+      </linearGradient>
+      <linearGradient id={ids.rimIn} gradientUnits="userSpaceOnUse" x1="86" y1="96" x2="14" y2="4">
+        <stop offset="0" stopColor="#f4e2a0" />
+        <stop offset="0.5" stopColor="#a8893f" />
+        <stop offset="1" stopColor="#5e4718" />
       </linearGradient>
       <linearGradient id={ids.gold} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#fff3c9" />
-        <stop offset="0.35" stopColor="#e2b453" />
-        <stop offset="0.7" stopColor="#a8741f" />
-        <stop offset="1" stopColor="#f0cd78" />
+        <stop offset="0" stopColor="#f6e7ad" />
+        <stop offset="0.45" stopColor="#d2b462" />
+        <stop offset="0.45" stopColor="#b8984a" />
+        <stop offset="1" stopColor="#8c6f2e" />
       </linearGradient>
     </>
   );
@@ -91,86 +98,81 @@ function GoldDefs({ ids }: { ids: ReturnType<typeof useIds> }) {
 
 /* ── Faces ───────────────────────────────────────────── */
 
-function Face({ enamel: [hi, mid, lo, deep], icon: Icon, size, light, dim }: { enamel: Metal; icon: LucideIcon; size: number; light: MotionValue<number>; dim: boolean }) {
+/**
+ * The front: crisp brass rim with a bevelled inner edge, matte enamel lit softly from the top,
+ * and a gold line icon raised off the enamel. No gloss, no blur, so it stays cheap to draw.
+ */
+export function Face({ enamel: [hi, mid, lo, deep], icon: Icon, size, dim }: { enamel: Metal; icon: LucideIcon; size: number; dim?: boolean }) {
   const ids = useIds();
-  const glareX = useTransform(light, [-1, 1], [-70, 70]);
   const px = size / 100; // one unit of the 100-box in pixels
   const stroke = Math.max(1.5, Math.min(1.9, 160 / size));
+  const iconProps = { strokeLinecap: "square" as const, strokeLinejoin: "miter" as const, className: "absolute inset-0 size-full" };
   return (
     <div className="absolute inset-0">
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
         <defs>
           <GoldDefs ids={ids} />
-          <radialGradient id={ids.enamel} cx="0.36" cy="0.26" r="0.86">
-            <stop offset="0" stopColor={hi} />
-            <stop offset="0.38" stopColor={mid} />
-            <stop offset="0.8" stopColor={lo} />
-            <stop offset="1" stopColor={deep} />
-          </radialGradient>
-          <linearGradient id={ids.gloss} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#fff" stopOpacity="0.32" />
-            <stop offset="1" stopColor="#fff" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id={ids.glare} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#fff" stopOpacity="0" />
-            <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          {/* Matte enamel: an even field, a touch lighter at the top, never shiny */}
+          <linearGradient id={ids.enamel} x1="0.3" y1="0" x2="0.7" y2="1">
+            <stop offset="0" stopColor={mix(hi, mid)} />
+            <stop offset="0.45" stopColor={mid} />
+            <stop offset="1" stopColor={mix(mid, lo)} />
           </linearGradient>
           <clipPath id={ids.clip}>
             <path d={ENAMEL} />
           </clipPath>
-          <clipPath id={ids.outer}>
-            <path d={RIM} />
-          </clipPath>
         </defs>
 
-        {/* Gold rim, with a bright top edge and a dark groove where it meets the enamel */}
+        {/* Rim: outer gold band, a hard bevel line, then a thin dark seat for the enamel */}
         <path d={RIM} fill={`url(#${ids.rim})`} />
-        <path d={RIM} fill="none" stroke="#fff6d6" strokeOpacity="0.55" strokeWidth="0.5" />
-        <path d={GROOVE} fill="#2b1a04" opacity="0.85" />
-
-        {/* Glossy enamel */}
+        <path d={RIM_IN} fill={`url(#${ids.rimIn})`} />
+        <path d={GROOVE} fill={deep} />
         <path d={ENAMEL} fill={`url(#${ids.enamel})`} />
+        {/* Soft shade where the enamel meets the rim, like the reference's gentle edge falloff */}
         <g clipPath={`url(#${ids.clip})`}>
-          <path d={ENAMEL} fill="none" stroke="#000" strokeOpacity="0.38" strokeWidth="4" style={{ filter: "blur(1.2px)" }} transform="translate(0 1)" />
-          <ellipse cx="44" cy="22" rx="34" ry="17" fill={`url(#${ids.gloss})`} />
-        </g>
-
-        {/* A glint that slides across as the badge turns */}
-        <g clipPath={`url(#${ids.outer})`} style={{ mixBlendMode: "overlay" }}>
-          <motion.g style={{ x: glareX }}>
-            <rect x="30" y="-10" width="28" height="120" fill={`url(#${ids.glare})`} transform="rotate(20 44 50)" />
-          </motion.g>
+          <path d={ENAMEL} fill="none" stroke={deep} strokeOpacity="0.35" strokeWidth="5" />
+          <path d={ENAMEL} fill="none" stroke={deep} strokeOpacity="0.25" strokeWidth="2.2" transform="translate(0 0.8)" />
         </g>
       </svg>
 
-      {/* Embossed gold line icon: drop shadow, dark base, polished body, specular edge */}
+      {/* Raised gold line icon: hard shadow, dark base, gold body, crisp top edge */}
       <div className="absolute inset-0 grid place-items-center">
-        <div className="relative" style={{ width: size * 0.4, height: size * 0.4 }}>
+        <div className="relative" style={{ width: size * 0.42, height: size * 0.42, opacity: dim ? 0.8 : 1 }}>
+          <Icon {...iconProps} color={deep} strokeOpacity={0.7} strokeWidth={stroke + 0.5} style={{ transform: `translate(${px * 0.5}px, ${px * 1.1}px)` }} />
+          <Icon {...iconProps} color="#4f3a10" strokeWidth={stroke + 0.45} />
+          <Icon {...iconProps} color={`url(#${ids.gold})`} strokeWidth={stroke} />
           <Icon
-            className="absolute inset-0 size-full"
-            color="rgb(0 0 0 / 0.5)"
-            strokeWidth={stroke + 0.6}
-            style={{ transform: `translateY(${px * 1.6}px)`, filter: `blur(${px * 0.9}px)` }}
-          />
-          <Icon className="absolute inset-0 size-full" color="#5c3a0a" strokeWidth={stroke + 0.55} />
-          <Icon className="absolute inset-0 size-full" color={`url(#${ids.gold})`} strokeWidth={stroke} style={dim ? { opacity: 0.75 } : undefined} />
-          <Icon
-            className="absolute inset-0 size-full"
-            color="rgb(255 250 228 / 0.8)"
-            strokeWidth={stroke * 0.28}
-            style={{ transform: `translate(${-px * 0.35}px, ${-px * 0.45}px)` }}
+            {...iconProps}
+            color="rgb(255 246 214 / 0.7)"
+            strokeWidth={stroke * 0.22}
+            style={{ transform: `translate(${-px * 0.3}px, ${-px * 0.4}px)` }}
           />
         </div>
       </div>
       {dim && (
         <span
-          className="absolute grid place-items-center rounded-full bg-ink-900 ring-1 ring-[#c99640]/70"
+          className="absolute grid place-items-center rounded-full bg-ink-900 ring-1 ring-[#b8984a]/80"
           style={{ right: "17%", bottom: "13%", width: size * 0.22, height: size * 0.22 }}
         >
-          <Lock style={{ width: size * 0.11, height: size * 0.11 }} color="#e2b453" strokeWidth={2.2} />
+          <Lock style={{ width: size * 0.11, height: size * 0.11 }} color="#d2b462" strokeWidth={2.2} />
         </span>
       )}
+    </div>
+  );
+}
+
+/** Average of two hex colours, for gentle steps in the enamel. */
+function mix(a: string, b: string) {
+  const n = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [n(a), n(b)];
+  return `#${x.map((v, i) => Math.round((v + y[i]) / 2).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** A still, flat badge for grids: same look as the 3D one, a fraction of the work to draw. */
+export function BadgeStatic({ metal, icon, size, locked = false, className }: { metal: Metal; icon: LucideIcon; size: number; locked?: boolean; className?: string }) {
+  return (
+    <div className={cn("relative", className)} style={{ width: size, height: size, filter: "drop-shadow(0 6px 8px rgb(0 0 0 / 0.45))" }}>
+      <Face enamel={locked ? LOCKED : metal} icon={icon} size={size} dim={locked} />
     </div>
   );
 }
@@ -182,16 +184,16 @@ function Back({ enamel: [, mid, lo, deep], caption, size }: { enamel: Metal; cap
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
         <defs>
           <GoldDefs ids={ids} />
-          <radialGradient id={ids.enamel} cx="0.62" cy="0.3" r="0.9">
-            <stop offset="0" stopColor={mid} />
-            <stop offset="0.65" stopColor={lo} />
-            <stop offset="1" stopColor={deep} />
-          </radialGradient>
+          <linearGradient id={ids.enamel} x1="0.7" y1="0" x2="0.3" y2="1">
+            <stop offset="0" stopColor={mix(mid, lo)} />
+            <stop offset="1" stopColor={lo} />
+          </linearGradient>
         </defs>
         <path d={RIM} fill={`url(#${ids.rim})`} />
-        <path d={GROOVE} fill="#2b1a04" opacity="0.85" />
+        <path d={RIM_IN} fill={`url(#${ids.rimIn})`} />
+        <path d={GROOVE} fill={deep} />
         <path d={ENAMEL} fill={`url(#${ids.enamel})`} />
-        <path d={hexPath(36)} fill="none" stroke={`url(#${ids.gold})`} strokeWidth="0.9" opacity="0.9" />
+        <path d={hexPath(36, 0.07)} fill="none" stroke={`url(#${ids.gold})`} strokeWidth="0.9" opacity="0.9" />
       </svg>
       <div className="absolute inset-0 grid place-items-center px-[24%] text-center">
         <span
@@ -230,7 +232,6 @@ export function Badge3D({
 }) {
   const enamel = locked ? LOCKED : metal;
   const thick = Math.max(5, size * 0.06);
-  const light = useTransform(rotateY, (v) => Math.sin((v * Math.PI) / 180));
   return (
     <div className={cn("relative", className)} style={{ width: size, height: size, perspective: size * 5 }}>
       <motion.div className="absolute inset-0" style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
@@ -252,7 +253,7 @@ export function Badge3D({
           );
         })}
         <div className="absolute inset-0" style={{ transform: `translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Face enamel={enamel} icon={icon} size={size} light={light} dim={locked} />
+          <Face enamel={enamel} icon={icon} size={size} dim={locked} />
         </div>
         <div className="absolute inset-0" style={{ transform: `rotateY(180deg) translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
           <Back enamel={enamel} caption={caption} size={size} />

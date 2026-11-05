@@ -28,11 +28,12 @@ export const metals = {
   cobalt: ["#bcd6ff", "#2f7bff", "#1449c4", "#071f5c"],
   teal: ["#b2fff0", "#1bc7a8", "#0b8371", "#043b33"],
   indigo: ["#c9ccff", "#5560f0", "#2c33b8", "#10145a"],
+  onyx: ["#4a4a4a", "#2c2c2c", "#1a1a1a", "#0b0b0b"],
 } satisfies Record<string, Metal>;
 
 const LOCKED: Metal = ["#9aa6ae", "#56636c", "#323d45", "#141b20"];
 
-const LAYERS = 9;
+const LAYERS = 6;
 
 /* ── The hexagon ─────────────────────────────────────── */
 
@@ -61,8 +62,6 @@ const RIM_IN = hexPath(45.6, 0.07);
 const GROOVE = hexPath(44.6, 0.07);
 const ENAMEL = hexPath(44, 0.07);
 
-/** CSS clip for the rim slices (matches the outer rim). */
-const RIM_CLIP = `path("${RIM}")`;
 
 function useIds() {
   const base = useId().replace(/:/g, "");
@@ -169,16 +168,31 @@ function mix(a: string, b: string) {
 }
 
 /** A still, flat badge for grids: same look as the 3D one, a fraction of the work to draw. */
-export function BadgeStatic({ metal, icon, size, locked = false, className }: { metal: Metal; icon: LucideIcon; size: number; locked?: boolean; className?: string }) {
+export function BadgeStatic({
+  metal,
+  icon,
+  size,
+  locked = false,
+  shadow = true,
+  className,
+}: {
+  metal: Metal;
+  icon: LucideIcon;
+  size: number;
+  locked?: boolean;
+  shadow?: boolean;
+  className?: string;
+}) {
   return (
-    <div className={cn("relative", className)} style={{ width: size, height: size, filter: "drop-shadow(0 6px 8px rgb(0 0 0 / 0.45))" }}>
+    <div className={cn("relative", className)} style={{ width: size, height: size, filter: shadow ? "drop-shadow(0 6px 8px rgb(0 0 0 / 0.45))" : undefined }}>
       <Face enamel={locked ? LOCKED : metal} icon={icon} size={size} dim={locked} />
     </div>
   );
 }
 
-function Back({ enamel: [, mid, lo, deep], caption, size }: { enamel: Metal; caption: string; size: number }) {
+function Back({ enamel: [, mid, lo, deep], caption, size, round = 0.07 }: { enamel: Metal; caption: string; size: number; round?: number }) {
   const ids = useIds();
+  const [rim, rimIn, groove, field, inner] = [48, 45.6, 44.6, 44, 36].map((r) => hexPath(r, round));
   return (
     <div className="absolute inset-0">
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
@@ -189,11 +203,11 @@ function Back({ enamel: [, mid, lo, deep], caption, size }: { enamel: Metal; cap
             <stop offset="1" stopColor={lo} />
           </linearGradient>
         </defs>
-        <path d={RIM} fill={`url(#${ids.rim})`} />
-        <path d={RIM_IN} fill={`url(#${ids.rimIn})`} />
-        <path d={GROOVE} fill={deep} />
-        <path d={ENAMEL} fill={`url(#${ids.enamel})`} />
-        <path d={hexPath(36, 0.07)} fill="none" stroke={`url(#${ids.gold})`} strokeWidth="0.9" opacity="0.9" />
+        <path d={rim} fill={`url(#${ids.rim})`} />
+        <path d={rimIn} fill={`url(#${ids.rimIn})`} />
+        <path d={groove} fill={deep} />
+        <path d={field} fill={`url(#${ids.enamel})`} />
+        <path d={inner} fill="none" stroke={`url(#${ids.gold})`} strokeWidth="0.9" opacity="0.9" />
       </svg>
       <div className="absolute inset-0 grid place-items-center px-[24%] text-center">
         <span
@@ -217,6 +231,7 @@ export function Badge3D({
   size,
   locked = false,
   caption = "",
+  art,
   rotateX,
   rotateY,
   className,
@@ -226,40 +241,55 @@ export function Badge3D({
   size: number;
   locked?: boolean;
   caption?: string;
+  /** A finished front face image (fills the 100-box, rounded hex outline); replaces the drawn face. */
+  art?: string;
   rotateX: MotionValue<number>;
   rotateY: MotionValue<number>;
   className?: string;
 }) {
   const enamel = locked ? LOCKED : metal;
   const thick = Math.max(5, size * 0.06);
+  const round = art ? ART_ROUND : 0.07;
+  const outline = art ? ART_RIM : RIM;
   return (
     <div className={cn("relative", className)} style={{ width: size, height: size, perspective: size * 5 }}>
       <motion.div className="absolute inset-0" style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
+        {/* Rim slices are plain filled SVGs: WebKit is far quicker with these than with
+            clip-path masks on 3D layers. */}
         {Array.from({ length: LAYERS }, (_, i) => {
           const z = -thick / 2 + (thick * (i + 0.5)) / LAYERS;
           return (
-            <div
-              key={i}
-              className="absolute inset-0"
-              style={{
-                clipPath: RIM_CLIP,
-                transform: `translateZ(${z}px) scale(${size / 100})`,
-                transformOrigin: "0 0",
-                width: 100,
-                height: 100,
-                background: ["#6f4710", "#8b5c17", "#a8742a", "#8b5c17", "#5e3c0c"][i % 5],
-              }}
-            />
+            <svg key={i} viewBox="0 0 100 100" className="absolute inset-0 size-full" style={{ transform: `translateZ(${z}px)` }} aria-hidden>
+              <path d={outline} fill={["#6f4710", "#8b5c17", "#a8742a", "#8b5c17", "#5e3c0c", "#7a5013"][i % 6]} />
+            </svg>
           );
         })}
         <div className="absolute inset-0" style={{ transform: `translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Face enamel={enamel} icon={icon} size={size} dim={locked} />
+          {art ? <ArtFace src={art} /> : <Face enamel={enamel} icon={icon} size={size} dim={locked} />}
         </div>
         <div className="absolute inset-0" style={{ transform: `rotateY(180deg) translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Back enamel={enamel} caption={caption} size={size} />
+          <Back enamel={enamel} caption={caption} size={size} round={round} />
         </div>
       </motion.div>
     </div>
+  );
+}
+
+/* The Gold tier art is drawn so its outline is a hexagon of radius 48 with these corners. */
+const ART_ROUND = 0.17;
+const ART_RIM = hexPath(48, ART_ROUND);
+
+function ArtFace({ src }: { src: string }) {
+  const ids = useIds();
+  return (
+    <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
+      <defs>
+        <clipPath id={ids.clip}>
+          <path d={ART_RIM} />
+        </clipPath>
+      </defs>
+      <image href={src} x="0" y="0" width="100" height="100" clipPath={`url(#${ids.clip})`} preserveAspectRatio="none" />
+    </svg>
   );
 }
 

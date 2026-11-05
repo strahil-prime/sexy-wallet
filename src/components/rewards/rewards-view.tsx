@@ -169,7 +169,7 @@ function TierHero() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
           <div {...handlers} className="relative cursor-grab touch-pan-y select-none active:cursor-grabbing" aria-label="Gold tier badge, drag to spin">
-            <Badge3D metal={metals.gold} icon={Crown} size={180} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
+            <Badge3D metal={metals.onyx} art="/rewards/gold-tier.jpg" icon={Crown} size={190} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
           </div>
           <motion.div
             aria-hidden
@@ -346,19 +346,37 @@ function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => v
 }
 
 function BigBadge({ badge }: { badge: Badge }) {
-  const { rotateX, rotateY, handlers } = useSpinBadge({ idle: true });
+  const { rotateX, rotateY, handlers } = useSpinBadge({ intro: false, idle: true });
+  // Open with the light flat badge so the window appears the instant you tap, then swap in the
+  // spinnable 3D one a moment later (or straight away if you start dragging). They look identical.
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setLive(true), 450);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <div className="relative mx-auto w-fit">
-      <div {...handlers} className="relative cursor-grab touch-none select-none active:cursor-grabbing">
-        <Badge3D
-          metal={badge.metal}
-          icon={badge.icon}
-          size={200}
-          locked={!badge.earned}
-          caption={badge.earned ? `${badge.name} · ${badge.earned}` : "Not yet earned"}
-          rotateX={rotateX}
-          rotateY={rotateY}
-        />
+      <div
+        {...handlers}
+        onPointerDown={(e) => {
+          setLive(true);
+          handlers.onPointerDown(e);
+        }}
+        className="relative cursor-grab touch-none select-none active:cursor-grabbing"
+      >
+        {live ? (
+          <Badge3D
+            metal={badge.metal}
+            icon={badge.icon}
+            size={200}
+            locked={!badge.earned}
+            caption={badge.earned ? `${badge.name} · ${badge.earned}` : "Not yet earned"}
+            rotateX={rotateX}
+            rotateY={rotateY}
+          />
+        ) : (
+          <BadgeStatic metal={badge.metal} icon={badge.icon} size={200} locked={!badge.earned} shadow={false} />
+        )}
       </div>
       <div aria-hidden className="mx-auto mt-4 h-3 w-32 rounded-[50%] bg-black/60 blur-md" />
     </div>

@@ -26,16 +26,25 @@ export function registerPrimer(fn: (() => void) | null) {
   primer = fn;
 }
 
-async function soundAllowed() {
+/**
+ * Whether the browser will let a video speak without a tap. Never throws and never hangs: some
+ * browsers leave the test play() pending forever, which used to freeze the preloader on its bar.
+ */
+async function soundAllowed(): Promise<boolean> {
   type Policy = (type: "mediaelement") => "allowed" | "allowed-muted" | "disallowed";
-  const policy = (navigator as Navigator & { getAutoplayPolicy?: Policy }).getAutoplayPolicy;
-  if (policy) return policy.call(navigator, "mediaelement") === "allowed";
   try {
-    await new Audio(SILENCE).play();
-    return true;
-  } catch {
-    return false;
-  }
+    const policy = (navigator as Navigator & { getAutoplayPolicy?: Policy }).getAutoplayPolicy;
+    if (policy) return policy.call(navigator, "mediaelement") === "allowed";
+  } catch {}
+  const audio = new Audio(SILENCE);
+  const test = audio
+    .play()
+    .then(() => true)
+    .catch(() => false);
+  const timeout = new Promise<boolean>((r) => setTimeout(() => r(false), 900));
+  const allowed = await Promise.race([test, timeout]);
+  audio.pause();
+  return allowed;
 }
 
 type Phase = "loading" | "gate" | "leaving" | "done";
@@ -66,13 +75,17 @@ export function Preloader({ children }: { children: React.ReactNode }) {
 
     Promise.race([Promise.all([minTime, loaded, fonts]), cap])
       .then(async () => tapped.current || (await soundAllowed()))
+      .catch(() => false)
       .then((allowed) => {
         if (cancelled) return;
         if (allowed) enter();
         else setPhase("gate");
       });
+    // Belt and braces: whatever happens above, the visitor is never left on the bar.
+    const failsafe = setTimeout(() => !cancelled && setPhase((p) => (p === "loading" ? "gate" : p)), 8000);
     return () => {
       cancelled = true;
+      clearTimeout(failsafe);
       window.removeEventListener("pointerdown", markTap, { capture: true });
     };
   }, [reduced, enter]);

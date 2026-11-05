@@ -230,7 +230,7 @@ const STAR_AT = WRITE_AT + WRITE_FOR - 0.25;
 
 function MarkIntro() {
   return (
-    <div className="relative w-[104px]">
+    <div className="relative -top-[3px] w-[104px]">
       <svg viewBox="0 0 217 123" className="relative block w-full overflow-visible drop-shadow-[0_0_16px_rgb(94_240_255/0.35)]">
         <defs>
           <mask id="pl-pen" maskUnits="userSpaceOnUse" x="-20" y="-20" width="257" height="180">

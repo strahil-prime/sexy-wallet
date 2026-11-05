@@ -342,16 +342,37 @@ function RequestMode() {
         </div>
       </div>
 
+      <div className="mt-6 flex gap-2.5 lg:justify-end">
+      <button
+        type="button"
+        onClick={() => {
+          setRaw("");
+          setPicked([]);
+          setSplit(true);
+          setNote("");
+        }}
+        className="focus-ring h-14 shrink-0 cursor-pointer rounded-full bg-white/[0.06] px-6 text-[15px] font-medium text-white ring-1 ring-white/10 transition-colors hover:bg-white/10 lg:px-8"
+      >
+        Cancel
+      </button>
       <motion.button
         type="button"
         disabled={!ready}
         onClick={submit}
         whileTap={ready ? { scale: 0.98 } : undefined}
-        className="focus-ring mt-6 flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[radial-gradient(circle_at_30%_0%,#4c97ff,#1f7bff_60%,#1660d6)] text-[15.5px] font-medium text-white shadow-[0_14px_34px_-12px_rgb(31_123_255/0.9),inset_0_1px_0_rgb(255_255_255/0.3)] transition-opacity disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+        className="focus-ring flex h-14 min-w-0 flex-1 cursor-pointer items-center lg:min-w-[260px] lg:flex-none lg:px-8 justify-center gap-2 rounded-full bg-[radial-gradient(circle_at_30%_0%,#4c97ff,#1f7bff_60%,#1660d6)] text-[15.5px] font-medium text-white shadow-[0_14px_34px_-12px_rgb(31_123_255/0.9),inset_0_1px_0_rgb(255_255_255/0.3)] transition-opacity disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
       >
-        <ArrowDownLeft className="size-[18px]" strokeWidth={2.2} />
-        {ready ? `Request ${formatEUR(total)} from ${who}` : amount > 0 ? "Pick who pays" : "Enter an amount"}
+        <ArrowDownLeft className="size-[18px] shrink-0" strokeWidth={2.2} />
+        <span className="truncate">
+          {ready ? (
+            <>
+              Request {formatEUR(total)}
+              <span className="max-sm:hidden"> from {who}</span>
+            </>
+          ) : amount > 0 ? "Pick who pays" : "Enter an amount"}
+        </span>
       </motion.button>
+      </div>
     </div>
   );
 }

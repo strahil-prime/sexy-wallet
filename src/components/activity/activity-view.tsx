@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
@@ -294,7 +294,7 @@ function MonthSummary({ all }: { all: Activity[] }) {
   const { days, money, out } = useMemo(() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const days = Array.from({ length: 30 }, (_, i) => ({ t: start - (29 - i) * 864e5, spent: 0 }));
+    const days = Array.from({ length: 30 }, (_, i) => ({ t: start - (29 - i) * 864e5, spent: 0, items: [] as Activity[] }));
     let money = 0;
     let out = 0;
     for (const a of all) {
@@ -307,12 +307,22 @@ function MonthSummary({ all }: { all: Activity[] }) {
       else if (!a.invest) {
         out += -a.amount;
         slot.spent += -a.amount;
+        slot.items.push(a);
       }
     }
     return { days, money, out };
   }, [all]);
 
   const [hover, setHover] = useState<number | null>(null);
+  const chart = useRef<HTMLDivElement>(null);
+  // On touch there is no hover: a tap pins the tooltip until the next tap outside the chart.
+  useEffect(() => {
+    const off = (e: PointerEvent) => {
+      if (!chart.current?.contains(e.target as Node)) setHover(null);
+    };
+    document.addEventListener("pointerdown", off);
+    return () => document.removeEventListener("pointerdown", off);
+  }, []);
   const max = Math.max(...days.map((d) => d.spent), 1);
   const h = hover ?? days.length - 1;
   const hd = days[h];
@@ -347,7 +357,16 @@ function MonthSummary({ all }: { all: Activity[] }) {
         </div>
       </div>
 
-      <div className="mt-5 flex h-20 items-end gap-[3px] sm:gap-1" onPointerLeave={() => setHover(null)}>
+      <div
+        ref={chart}
+        className="relative mt-5 flex h-20 items-end gap-[3px] sm:gap-1"
+        onPointerLeave={(e) => e.pointerType === "mouse" && setHover(null)}
+      >
+        <AnimatePresence>
+          {hover !== null && (
+            <DayTooltip key="tip" index={hover} count={days.length} day={days[hover]} lift={Math.max(6, (days[hover].spent / max) * 100)} />
+          )}
+        </AnimatePresence>
         {days.map((d, i) => (
           <div
             key={d.t}
@@ -365,6 +384,66 @@ function MonthSummary({ all }: { all: Activity[] }) {
         ))}
       </div>
     </Panel>
+  );
+}
+
+function DayTooltip({
+  index,
+  count,
+  day,
+  lift,
+}: {
+  index: number;
+  count: number;
+  day: { t: number; spent: number; items: Activity[] };
+  lift: number;
+}) {
+  const centre = ((index + 0.5) / count) * 100;
+  // Keep the tooltip inside the card near the edges.
+  const align = index < 4 ? "left" : index > count - 5 ? "right" : "centre";
+  const items = [...day.items].sort((a, b) => +new Date(a.at) - +new Date(b.at));
+  const shown = items.slice(0, 5);
+
+  return (
+    <motion.div
+      role="tooltip"
+      className="pointer-events-none absolute z-20 w-[236px]"
+      style={{
+        bottom: `calc(${lift}% + 10px)`,
+        left: align === "right" ? undefined : align === "left" ? 0 : `${centre}%`,
+        right: align === "right" ? 0 : undefined,
+        x: align === "centre" ? "-50%" : 0,
+      }}
+      initial={{ opacity: 0, y: 6, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 4, scale: 0.98, transition: { duration: 0.12 } }}
+      transition={{ duration: 0.18, ease }}
+    >
+      <div className="rounded-2xl bg-ink-850/95 p-3 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.8)] ring-1 ring-white/10 backdrop-blur-xl">
+        <div className="flex items-baseline justify-between gap-3 px-0.5" suppressHydrationWarning>
+          <span className="text-[11.5px] text-mist">
+            {new Date(day.t).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+          </span>
+          <span className="text-[12.5px] font-medium text-white tabular">{day.spent ? formatEUR(day.spent) : "€0.00"}</span>
+        </div>
+        {shown.length ? (
+          <ul className="mt-2 space-y-1.5 border-t border-hairline pt-2">
+            {shown.map((a) => (
+              <li key={a.id} className="flex items-center gap-2.5">
+                <BrandMark activity={a} className="size-7 shrink-0 rounded-lg [&_svg]:size-3.5" />
+                <span className="min-w-0 flex-1 truncate text-[13px] text-fog">{a.title}</span>
+                <span className="text-[13px] text-white tabular">{formatEUR(-a.amount)}</span>
+              </li>
+            ))}
+            {items.length > shown.length && (
+              <li className="pl-[38px] text-[12px] text-mist">+{items.length - shown.length} more</li>
+            )}
+          </ul>
+        ) : (
+          <p className="mt-1.5 px-0.5 text-[12.5px] text-mist">No purchases this day</p>
+        )}
+      </div>
+    </motion.div>
   );
 }
 

@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { comingSoon } from "./coming-soon";
 import { isActive, navItems } from "./nav";
 
-const tabs = ["/", "/card", "/send", "/activity", "/invest"];
+// Activity is reached from the dashboard's Recent activity "See all" on phones.
+const tabs = ["/", "/card", "/send", "/rewards", "/invest"];
 
 export function MobileNav() {
   const pathname = usePathname();

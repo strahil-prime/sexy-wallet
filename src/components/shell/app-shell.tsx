@@ -6,7 +6,7 @@ import { ProfileAvatar } from "./top-actions";
 import { usePathname } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { Toaster } from "sonner";
-import { NudgeLogo } from "@/components/brand/nudge";
+import { LogoLockup } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { WalletProvider } from "@/lib/wallet-store";
 import { PersonaProvider, usePersona } from "@/components/teller/persona";
@@ -62,8 +62,8 @@ function MobileTopBar({ home }: { home: boolean }) {
       className={cn("sticky top-0 z-30 h-16 items-center justify-between border-b border-hairline px-5 lg:hidden", home ? "flex" : "hidden")}
       style={{ background: persona.edgeColor }}
     >
-      <Link href="/" aria-label="Nudge, home" className="text-white">
-        <NudgeLogo mono className="h-[23.4px]" label="Nudge" />
+      <Link href="/" aria-label="Neville, home" className="text-white">
+        <LogoLockup mono className="h-[23.4px]" label="Neville" />
       </Link>
       <ProfileAvatar size={36} />
     </header>

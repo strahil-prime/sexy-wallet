@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import QRCode from "qrcode";
-import { N_LEGS, N_STAR } from "@/components/brand/nudge-paths";
+import { N_LEGS, N_STAR } from "@/components/brand/logo-paths";
 
 const FINDER = 7;
 

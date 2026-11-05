@@ -41,7 +41,7 @@ function dayLabel(d: Date) {
 function reference(id: string) {
   let h = 2166136261;
   for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  return `NDG-${(h >>> 0).toString(36).toUpperCase().padStart(7, "0").slice(0, 7)}`;
+  return `NVL-${(h >>> 0).toString(36).toUpperCase().padStart(7, "0").slice(0, 7)}`;
 }
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -356,7 +356,7 @@ function MonthSummary({ all }: { all: Activity[] }) {
             onPointerDown={() => setHover(i)}
           >
             <motion.div
-              className={cn("w-full rounded-full", i === h ? "bg-gradient-to-t from-electric to-cyan shadow-[0_0_12px_rgb(42_209_230/0.6)]" : "bg-white/[0.12]")}
+              className={cn("w-full rounded-t-md rounded-b-sm transition-colors", hover === i ? "bg-aqua" : i === h ? "bg-electric" : "bg-white/15")}
               initial={{ height: 0 }}
               animate={{ height: `${Math.max(6, (d.spent / max) * 100)}%` }}
               transition={{ delay: 0.2 + i * 0.012, duration: 0.6, ease }}

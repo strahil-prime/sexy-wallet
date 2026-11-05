@@ -105,17 +105,10 @@ function Identity() {
           animate={{ x: ["-60%", "60%"] }}
           transition={{ duration: 5, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
         />
-        <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(rgb(255_255_255)_1px,transparent_1px)] [background-size:12px_12px]" />
       </div>
 
       <div className="relative -mt-14 flex flex-col items-center px-6 pb-6 text-center">
         <div className="relative">
-          <motion.span
-            aria-hidden
-            className="absolute -inset-[4px] rounded-full bg-[conic-gradient(from_0deg,#2ad1e6,#1f7bff,#7c5cff,#e7f0ff,#2ad1e6)]"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          />
           <Image
             src={account.portrait}
             alt={account.fullName}

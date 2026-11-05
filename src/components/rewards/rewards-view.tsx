@@ -52,7 +52,7 @@ function useBadges(): Badge[] {
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return [
-    { id: "first", name: "First Nudge", about: "Opened your account and made your first payment.", icon: Sparkles, metal: metals.cobalt, shape: "circle", earned: "12 Mar 2024", points: 100 },
+    { id: "first", name: "Day One", about: "Opened your account and made your first payment.", icon: Sparkles, metal: metals.cobalt, shape: "circle", earned: "12 Mar 2024", points: 100 },
     { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.emerald, shape: "hex", earned: "2 Sep 2024", points: 300 },
     { id: "streak", name: "On Fire", about: "Checked in with your teller 30 days running.", icon: Flame, metal: metals.copper, shape: "shield", earned: "18 Oct 2026", points: 150 },
     { id: "travel", name: "Globetrotter", about: "Paid in three countries without a single fee.", icon: Plane, metal: metals.ice, shape: "circle", earned: "24 Oct 2026", points: 200 },
@@ -191,7 +191,7 @@ function TierHero() {
           </div>
           <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/[0.07]">
             <motion.div
-              className="relative h-full rounded-full bg-[linear-gradient(90deg,#b4832b,#f5c76a,#fff3c8)]"
+              className="relative h-full overflow-hidden rounded-full bg-[linear-gradient(90deg,#b4832b,#f5c76a,#fff3c8)]"
               initial={{ width: 0 }}
               animate={{ width: `${(POINTS / NEXT_TIER) * 100}%` }}
               transition={{ delay: 0.4, duration: 1.2, ease }}

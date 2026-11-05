@@ -3,8 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Volume2 } from "lucide-react";
-import { NUDGE_BLUE, NudgeLogotype } from "@/components/brand/nudge";
-import { NW_LEGS, NW_STAR } from "@/components/brand/nudge-paths";
+import { BRAND_BLUE, Logotype } from "@/components/brand/logo";
+import { NW_LEGS, NW_STAR } from "@/components/brand/logo-paths";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -98,7 +98,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
           <motion.div
             key="preloader"
             role="status"
-            aria-label="Loading Nudge"
+            aria-label="Loading Neville"
             onClick={phase === "gate" ? enter : undefined}
             exit={{ opacity: 0, transition: { duration: 0.8, ease, delay: 0.15 } }}
             className="fixed inset-0 z-[100] grid cursor-default place-items-center overflow-hidden bg-ink-950 select-none data-[gate=true]:cursor-pointer"
@@ -119,36 +119,25 @@ export function Preloader({ children }: { children: React.ReactNode }) {
                 className="relative grid size-40 place-items-center"
                 exit={{ scale: 9, opacity: 0, filter: "blur(10px)", transition: { duration: 0.9, ease: [0.7, 0, 0.84, 0] } }}
               >
-                {/* Orbit */}
-                <motion.svg
-                  viewBox="0 0 100 100"
-                  className="absolute inset-0 size-full"
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 270 }}
-                  transition={{ opacity: { delay: 0.5, duration: 0.6 }, rotate: { duration: 3.2, ease: "linear", repeat: Infinity } }}
-                >
-                  <defs>
-                    <linearGradient id="pl-orbit" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#5ef0ff" stopOpacity="0" />
-                      <stop offset="100%" stopColor="#5ef0ff" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="50" cy="50" r="47" fill="none" stroke="rgb(255 255 255 / 0.06)" strokeWidth="0.6" />
-                  <motion.circle
-                    cx="50"
-                    cy="50"
-                    r="47"
-                    fill="none"
-                    stroke="url(#pl-orbit)"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 0.32 }}
-                    transition={{ delay: 0.5, duration: 1.2, ease }}
-                  />
-                </motion.svg>
+                {/* Orbit: a faint ring with a soft sheen gliding round it, fading in and out at both ends */}
+                <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" aria-hidden>
+                  <circle cx="50" cy="50" r="47" fill="none" stroke="rgb(255 255 255 / 0.07)" strokeWidth="0.6" />
+                </svg>
+                <motion.div
+                  aria-hidden
+                  className="absolute inset-[3%] rounded-full"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, rgb(160 225 255 / 0) 0deg, rgb(160 225 255 / 0) 150deg, rgb(160 225 255 / 0.12) 215deg, rgb(205 240 255 / 0.42) 270deg, rgb(160 225 255 / 0.1) 320deg, rgb(160 225 255 / 0) 360deg)",
+                    mask: "radial-gradient(farthest-side, transparent calc(100% - 1.6px), #000 calc(100% - 1.1px), #000 calc(100% - 0.2px), transparent 100%)",
+                    WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 1.6px), #000 calc(100% - 1.1px), #000 calc(100% - 0.2px), transparent 100%)",
+                  }}
+                  initial={{ opacity: 0, rotate: 0 }}
+                  animate={{ opacity: 1, rotate: 360 }}
+                  transition={{ opacity: { delay: 0.5, duration: 1.2 }, rotate: { duration: 9, ease: "linear", repeat: Infinity } }}
+                />
 
-                <NudgeIntro />
+                <MarkIntro />
               </motion.div>
 
               {/* Logotype */}
@@ -159,7 +148,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
                 exit={{ opacity: 0, y: 8, transition: { duration: 0.35 } }}
                 transition={{ delay: 1.15, duration: 0.8, ease }}
               >
-                <NudgeLogotype className="h-[30px]" />
+                <Logotype className="h-[30px]" />
               </motion.div>
 
               {/* Progress hairline, then the tap prompt if the browser needs one for sound */}
@@ -201,7 +190,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
                         animate={{ scale: [1, 1.18], opacity: [0.7, 0] }}
                         transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
                       />
-                      <Volume2 className="size-4" style={{ color: NUDGE_BLUE }} strokeWidth={2.2} />
+                      <Volume2 className="size-4" style={{ color: BRAND_BLUE }} strokeWidth={2.2} />
                       Tap to enter
                     </motion.button>
                   )}
@@ -226,7 +215,7 @@ const WRITE_AT = 0.3;
 const WRITE_FOR = 1.25;
 const STAR_AT = WRITE_AT + WRITE_FOR - 0.25;
 
-function NudgeIntro() {
+function MarkIntro() {
   return (
     <div className="relative w-[104px]">
       <svg viewBox="0 0 217 123" className="relative block w-full overflow-visible drop-shadow-[0_0_16px_rgb(94_240_255/0.35)]">

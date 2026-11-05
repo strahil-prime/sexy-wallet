@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { NudgeLogo } from "@/components/brand/nudge";
+import { LogoLockup } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { comingSoon } from "./coming-soon";
 import { isActive, navItems } from "./nav";
@@ -19,7 +19,7 @@ export function Sidebar() {
           transition={{ type: "spring", stiffness: 300, damping: 18 }}
           className="inline-flex"
         >
-          <NudgeLogo mono className="h-[22.5px]" />
+          <LogoLockup mono className="h-[22.5px]" />
         </motion.span>
       </Link>
 

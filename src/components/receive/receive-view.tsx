@@ -133,7 +133,6 @@ function PayMeCard() {
         animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.9, 0.6] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div className="absolute inset-0 -z-10 opacity-[0.08] [background-image:radial-gradient(rgb(255_255_255)_1px,transparent_1px)] [background-size:14px_14px] [mask-image:linear-gradient(90deg,transparent,#000)]" />
 
       <div className="flex items-center gap-4">
         <span className="relative">

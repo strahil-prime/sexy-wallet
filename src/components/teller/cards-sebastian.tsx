@@ -41,7 +41,6 @@ function useWeek() {
 export function BillsAnswer({ reply, onClose }: CardProps) {
   const week = useWeek();
   const due = bills.reduce((s, b) => s + b.amount, 0);
-  const available = due + LEFT_AFTER_BILLS;
   const { billReminders: reminded, setBillReminders } = useWallet();
   const dayOf = (weekday: number) => week.find((d) => d.date.getDay() === weekday)!.date;
 
@@ -58,43 +57,13 @@ export function BillsAnswer({ reply, onClose }: CardProps) {
         transition={{ delay: 0.6, duration: 0.6, ease }}
         className={panel}
       >
-        <div className="grid grid-cols-7 gap-1">
-          {week.map((d, i) => {
-            const bill = d.bills[0];
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.75 + i * 0.05, duration: 0.4 }}
-                className={cn(
-                  "flex flex-col items-center gap-1 rounded-xl py-2",
-                  d.today ? "bg-white/[0.07] ring-1 ring-white/10" : bill ? "bg-white/[0.03]" : "",
-                )}
-                suppressHydrationWarning
-              >
-                <span className={cn("text-[10.5px] uppercase", d.today ? "text-white" : "text-mist")} suppressHydrationWarning>
-                  {d.date.toLocaleDateString("en-GB", { weekday: "narrow" })}
-                </span>
-                <span className="text-[13px] font-medium text-white tabular" suppressHydrationWarning>
-                  {d.date.getDate()}
-                </span>
-                <span
-                  className="size-1.5 rounded-full"
-                  style={{ background: bill ? bill.color : "transparent", boxShadow: bill ? `0 0 8px ${bill.color}` : undefined }}
-                />
-              </motion.div>
-            );
-          })}
-        </div>
-
-        <ul className="mt-3 space-y-1.5">
-          {bills.map((b, i) => (
+        <ul className="space-y-1.5">
+          {[...bills].sort((x, y) => dayOf(x.weekday).getTime() - dayOf(y.weekday).getTime()).map((b, i) => (
             <motion.li
               key={b.id}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1 + i * 0.08, duration: 0.4 }}
+              transition={{ delay: 0.75 + i * 0.08, duration: 0.4 }}
               className="flex items-center gap-3"
             >
               {b.icon ? (
@@ -110,7 +79,7 @@ export function BillsAnswer({ reply, onClose }: CardProps) {
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] text-white">{b.name}</span>
                 <span className="block text-[12px] text-mist" suppressHydrationWarning>
-                  {dayOf(b.weekday).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}
+                  {dayOf(b.weekday).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
                 </span>
               </span>
               <span className="text-[14px] text-white tabular">{formatEUR(b.amount)}</span>
@@ -118,36 +87,15 @@ export function BillsAnswer({ reply, onClose }: CardProps) {
           ))}
         </ul>
 
-        {/* What the bills take out of the balance, and what is left */}
-        <div className="mt-3.5 border-t border-hairline pt-3">
-          <div className="flex items-baseline justify-between">
-            <span className={caption}>After bills</span>
-            <span className="text-[12px] text-mist tabular">of {formatEUR(available)}</span>
-          </div>
-          <div className="mt-2.5 flex h-2.5 gap-[2px] overflow-hidden rounded-full bg-white/5">
-            {[
-              ...bills.map((b) => ({ id: b.id, value: b.amount, color: b.color })),
-              { id: "left", value: LEFT_AFTER_BILLS, color: "var(--color-positive)" },
-            ].map((s, i) => (
-              <motion.span
-                key={s.id}
-                initial={{ width: 0 }}
-                animate={{ width: `${(s.value / available) * 100}%` }}
-                transition={{ delay: 1.35 + i * 0.1, duration: 0.8, ease }}
-                className="h-full min-w-[3px] first:rounded-l-full last:rounded-r-full"
-                style={{ background: s.color }}
-              />
-            ))}
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <span className="text-[13px] text-mist">
-              <span className="text-white tabular">{formatEUR(due)}</span> in bills
-            </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-positive/12 px-2.5 py-1 text-[12.5px] font-medium text-positive ring-1 ring-positive/25">
-              <ShieldCheck className="size-3.5" strokeWidth={2.2} />
-              {formatEUR(LEFT_AFTER_BILLS)} left
-            </span>
-          </div>
+        {/* What the bills take out, and what is left */}
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-hairline pt-3">
+          <span className="text-[13px] text-mist">
+            <span className="text-white tabular">{formatEUR(due)}</span> in bills this week
+          </span>
+          <span className="flex items-center gap-1.5 rounded-full bg-positive/12 px-2.5 py-1 text-[12.5px] font-medium text-positive ring-1 ring-positive/25">
+            <ShieldCheck className="size-3.5" strokeWidth={2.2} />
+            {formatEUR(LEFT_AFTER_BILLS)} left
+          </span>
         </div>
       </motion.div>
 
@@ -176,15 +124,6 @@ const DUPLICATE_CHARGE = "a5b";
 export function DoubleChargeAnswer({ reply, onClose }: CardProps) {
   const { refunds, flagRefund } = useWallet();
   const flagged = refunds.includes(DUPLICATE_CHARGE);
-  // Six months of Spotify charges, the current one doubled.
-  const months = useMemo(() => {
-    const now = new Date();
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
-      return { label: d.toLocaleDateString("en-GB", { month: "short" }), value: i === 5 ? SPOTIFY * 2 : SPOTIFY, odd: i === 5 };
-    });
-  }, []);
-  const max = SPOTIFY * 2;
 
   return (
     <>
@@ -234,55 +173,6 @@ export function DoubleChargeAnswer({ reply, onClose }: CardProps) {
               </span>
               <span className="text-[14px] text-white tabular">− {formatEUR(SPOTIFY)}</span>
             </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Spotify normally charges once a month: this month stands out */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1, duration: 0.6, ease }}
-        className={panel}
-      >
-        <div className="flex items-baseline justify-between">
-          <span className={caption}>Spotify per month</span>
-          <span className="text-[12px] text-mist">Usually {formatEUR(SPOTIFY)}</span>
-        </div>
-        <div className="mt-2 flex h-[76px] items-end gap-2">
-          {months.map((m, i) => (
-            <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-              {m.odd && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.9 }}
-                  className="text-[11px] font-medium text-[#ffb547] tabular"
-                >
-                  {formatEUR(m.value)}
-                </motion.span>
-              )}
-              <motion.span
-                initial={{ height: 0 }}
-                animate={{ height: (m.value / max) * 56 }}
-                transition={{ delay: 1.25 + i * 0.07, duration: 0.7, ease }}
-                className={cn(
-                  "w-full max-w-7 rounded-md",
-                  m.odd ? "bg-[#ffb547] shadow-[0_0_14px_rgb(255_181_71/0.5)]" : "bg-[#1ed760]/45",
-                )}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-1.5 flex gap-2">
-          {months.map((m, i) => (
-            <span
-              key={i}
-              className={cn("flex-1 text-center text-[10.5px]", m.odd ? "text-[#ffcf85]" : "text-mist")}
-              suppressHydrationWarning
-            >
-              {m.label}
-            </span>
           ))}
         </div>
       </motion.div>

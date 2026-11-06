@@ -25,7 +25,18 @@ import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { Panel } from "@/components/ui/panel";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR } from "@/lib/utils";
-import { Badge3D, BadgeStatic, metals, useSpinBadge, type Metal } from "./badge-3d";
+import { Badge3D, BadgeStatic, metals, useSpinBadge, type BadgeArt, type Metal } from "./badge-3d";
+
+const GOLD_INK = "#f6d98d";
+const SILVER_INK = "#e4ebf2";
+const art = {
+  gold: { slug: "gold", ink: GOLD_INK, box: "24%" },
+  first: { slug: "day-one", ink: SILVER_INK, box: "20% 21%" },
+  saver: { slug: "super-saver", ink: GOLD_INK, box: "20% 21%" },
+  streak: { slug: "on-fire", ink: GOLD_INK, box: "40% 22% 12%" },
+  travel: { slug: "globetrotter", ink: SILVER_INK, box: "21%" },
+  locked: { slug: "locked", ink: SILVER_INK, box: "21%" },
+} satisfies Record<string, BadgeArt>;
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -39,6 +50,10 @@ type Badge = {
   icon: LucideIcon;
   metal: Metal;
   earned?: string;
+  /** Artwork for the earned badge; badges without it use the drawn style. */
+  art?: BadgeArt;
+  /** What the back of the badge says. */
+  back?: string;
   progress?: { have: number; need: number; unit?: string; how: string; href?: string };
   points: number;
 };
@@ -52,10 +67,10 @@ function useBadges(): Badge[] {
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return [
-    { id: "first", name: "Day One", about: "Opened your account and made your first payment.", icon: Rocket, metal: metals.cobalt, earned: "12 Mar 2024", points: 100 },
-    { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.emerald, earned: "2 Sep 2024", points: 300 },
-    { id: "streak", name: "On Fire", about: "Checked in with your teller 30 days running.", icon: Flame, metal: metals.copper, earned: "18 Oct 2026", points: 150 },
-    { id: "travel", name: "Globetrotter", about: "Paid in three countries without a single fee.", icon: Earth, metal: metals.ice, earned: "24 Oct 2026", points: 200 },
+    { id: "first", name: "Day One", about: "Opened your account and made your first payment.", icon: Rocket, metal: metals.cobalt, earned: "12 Mar 2024", points: 100, art: art.first, back: "Day One badge. Welcome to the club" },
+    { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.emerald, earned: "2 Sep 2024", points: 300, art: art.saver, back: "Keep stacking them racks, big saver ;)" },
+    { id: "streak", name: "On Fire", about: "Checked in with your teller 30 days running.", icon: Flame, metal: metals.copper, earned: "18 Oct 2026", points: 150, art: art.streak, back: "You are on fire today! 30 days in a row." },
+    { id: "travel", name: "Globetrotter", about: "Paid in three countries without a single fee.", icon: Earth, metal: metals.ice, earned: "24 Oct 2026", points: 200, art: art.travel, back: "Paid in three countries without a single fee." },
     {
       id: "tidy",
       name: "Clean Sweep",
@@ -169,7 +184,7 @@ function TierHero() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
           <div {...handlers} className="relative cursor-grab touch-pan-y select-none active:cursor-grabbing" aria-label="Gold tier badge, drag to spin">
-            <Badge3D metal={metals.onyx} art="/rewards/gold-tier-v3.webp" icon={Crown} size={190} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
+            <Badge3D metal={metals.onyx} art={art.gold} icon={Crown} size={190} caption="Gold member since 2026" rotateX={rotateX} rotateY={rotateY} />
           </div>
           <motion.div
             aria-hidden
@@ -248,6 +263,7 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
           icon={badge.icon}
           size={96}
           locked={locked}
+          art={badgeArt(badge)}
           className="transition-transform duration-300 group-hover:scale-105 group-active:scale-95"
         />
         <span aria-hidden className="mt-3 h-2 w-14 rounded-[50%] bg-black/50 blur-[5px]" />
@@ -340,6 +356,11 @@ function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => v
   );
 }
 
+/** Locked badges all show the padlock art; earned ones their own art, if they have any. */
+function badgeArt(badge: Badge): BadgeArt | undefined {
+  return badge.earned ? badge.art : art.locked;
+}
+
 function BigBadge({ badge }: { badge: Badge }) {
   const { rotateX, rotateY, handlers } = useSpinBadge({ intro: false, idle: false });
   // The window opens with the flat badge, which is quick to draw. The spinnable 3D badge (they
@@ -361,12 +382,13 @@ function BigBadge({ badge }: { badge: Badge }) {
             icon={badge.icon}
             size={200}
             locked={!badge.earned}
-            caption={badge.earned ? `${badge.name} · ${badge.earned}` : "Not yet earned"}
+            art={badgeArt(badge)}
+            caption={badge.earned ? (badge.back ?? `${badge.name} · ${badge.earned}`) : "Not earned yet"}
             rotateX={rotateX}
             rotateY={rotateY}
           />
         ) : (
-          <BadgeStatic metal={badge.metal} icon={badge.icon} size={200} locked={!badge.earned} shadow={false} />
+          <BadgeStatic metal={badge.metal} icon={badge.icon} size={200} locked={!badge.earned} art={badgeArt(badge)} shadow={false} />
         )}
       </div>
       <div aria-hidden className="mx-auto mt-4 h-3 w-32 rounded-[50%] bg-black/60 blur-md" />

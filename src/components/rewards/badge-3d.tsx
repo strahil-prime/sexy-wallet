@@ -180,6 +180,7 @@ export function BadgeStatic({
   size,
   locked = false,
   shadow = true,
+  art,
   className,
 }: {
   metal: Metal;
@@ -187,11 +188,13 @@ export function BadgeStatic({
   size: number;
   locked?: boolean;
   shadow?: boolean;
+  /** Finished badge artwork; replaces the drawn face. */
+  art?: BadgeArt;
   className?: string;
 }) {
   return (
     <div className={cn("relative", className)} style={{ width: size, height: size, filter: shadow ? "drop-shadow(0 6px 8px rgb(0 0 0 / 0.45))" : undefined }}>
-      <Face enamel={locked ? LOCKED : metal} icon={icon} size={size} dim={locked} />
+      {art ? <ArtImg src={artSrc(art)} /> : <Face enamel={locked ? LOCKED : metal} icon={icon} size={size} dim={locked} />}
     </div>
   );
 }
@@ -247,16 +250,14 @@ export function Badge3D({
   size: number;
   locked?: boolean;
   caption?: string;
-  /** A finished front face image (the Gold tier art, a rounded diamond); replaces the drawn face. */
-  art?: string;
+  /** Finished badge artwork (front, back plate and edge silhouettes); replaces the drawn badge. */
+  art?: BadgeArt;
   rotateX: MotionValue<number>;
   rotateY: MotionValue<number>;
   className?: string;
 }) {
   const enamel = locked ? LOCKED : metal;
   const thick = Math.max(5, size * 0.06);
-  const round = art ? ART_ROUND : 0.07;
-  const outline = art ? ART_RIM : RIM;
   return (
     <div className={cn("relative", className)} style={{ width: size, height: size, perspective: size * 5 }}>
       <motion.div className="absolute inset-0" style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
@@ -264,37 +265,60 @@ export function Badge3D({
             clip-path masks on 3D layers. */}
         {Array.from({ length: LAYERS }, (_, i) => {
           const z = -thick / 2 + (thick * (i + 0.5)) / LAYERS;
-          return (
+          return art ? (
+            <div key={i} className="absolute inset-0" style={{ transform: `translateZ(${z}px)` }} aria-hidden>
+              <ArtImg src={artSrc(art, `-edge${i % 2}`)} />
+            </div>
+          ) : (
             <svg key={i} viewBox="0 0 100 100" className="absolute inset-0 size-full" style={{ transform: `translateZ(${z}px)` }} aria-hidden>
-              <path d={outline} fill={["#6f4710", "#8b5c17", "#a8742a", "#8b5c17", "#5e3c0c", "#7a5013"][i % 6]} />
+              <path d={RIM} fill={["#6f4710", "#8b5c17", "#a8742a", "#8b5c17", "#5e3c0c", "#7a5013"][i % 6]} />
             </svg>
           );
         })}
         <div className="absolute inset-0" style={{ transform: `translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          {art ? <ArtFace src={art} /> : <Face enamel={enamel} icon={icon} size={size} dim={locked} />}
+          {art ? <ArtImg src={artSrc(art)} /> : <Face enamel={enamel} icon={icon} size={size} dim={locked} />}
         </div>
         <div className="absolute inset-0" style={{ transform: `rotateY(180deg) translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Back enamel={enamel} caption={caption} size={size} round={round} shape={art ? diamondPath : hexPath} />
+          {art ? <ArtBack art={art} caption={caption} size={size} /> : <Back enamel={enamel} caption={caption} size={size} />}
         </div>
       </motion.div>
     </div>
   );
 }
 
-/* The Gold tier art (a transparent cut-out) is a rounded diamond: 538px from centre to corner in
-   the 1312×1199 source, centred at (690, 578). The N breaks out past the left edge, so the image
-   is drawn unclipped and placed so the diamond's outline is a radius-48 diamond in the 100-box. */
-const ART_ROUND = 0.2;
-const diamondPath: ShapeFn = (R, round) => polyPath(4, R, round);
-const ART_RIM = diamondPath(48, ART_ROUND);
-const ART_SCALE = 48 / 538;
-const ART_BOX = { x: 50 - 690 * ART_SCALE, y: 50 - 578 * ART_SCALE, w: 1312 * ART_SCALE, h: 1199 * ART_SCALE };
+/* ── Artwork badges ──────────────────────────────────────
+   Each piece of art ships as a transparent cut-out plus a back plate and two edge silhouettes in
+   the same shape (made from the cut-out), all 600px squares in /rewards/badges. Plain images are
+   the cheapest thing for iOS to draw, on the flat grid and in 3D. */
 
-function ArtFace({ src }: { src: string }) {
+export type BadgeArt = {
+  slug: string;
+  /** Caption colour on the back plate. */
+  ink: string;
+  /** Where the caption sits on the back, as CSS insets (the shapes differ). */
+  box?: string;
+};
+
+const artSrc = (art: BadgeArt, suffix = "") => `/rewards/badges/${art.slug}${suffix}.webp`;
+
+function ArtImg({ src }: { src: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" draggable={false} decoding="async" className="pointer-events-none absolute inset-0 size-full select-none" />;
+}
+
+function ArtBack({ art, caption, size }: { art: BadgeArt; caption: string; size: number }) {
   return (
-    <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
-      <image href={src} x={ART_BOX.x} y={ART_BOX.y} width={ART_BOX.w} height={ART_BOX.h} preserveAspectRatio="none" />
-    </svg>
+    <div className="absolute inset-0">
+      <ArtImg src={artSrc(art, "-back")} />
+      <div className="absolute grid place-items-center text-center" style={{ inset: art.box ?? "22%" }}>
+        <span
+          className="leading-[1.25] font-bold tracking-[0.12em] uppercase"
+          style={{ fontSize: Math.max(7, Math.min(13, size * 0.056)), color: art.ink, textShadow: "0 1px 0 rgb(0 0 0 / 0.55)" }}
+        >
+          {caption}
+        </span>
+      </div>
+    </div>
   );
 }
 

@@ -229,7 +229,7 @@ export function DoubleChargeAnswer({ reply, onClose }: CardProps) {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] text-white">Spotify Premium</span>
                 <span className={cn("block truncate text-[12px]", i ? "text-[#ffcf85]" : "text-mist")}>
-                  {i ? `Charged again · ${time}` : `Aurora card · ${time}`}
+                  {i ? `Charged again · ${time}` : `Virtual card · ${time}`}
                 </span>
               </span>
               <span className="text-[14px] text-white tabular">− {formatEUR(SPOTIFY)}</span>

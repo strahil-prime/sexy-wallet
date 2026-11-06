@@ -525,7 +525,7 @@ function SplitAnswer({ onClose }: { onClose: () => void }) {
             <div className="truncate text-[14.5px] text-white">{dinner.title}</div>
             <div className="text-[12px] text-mist" suppressHydrationWarning>
               {formatWhen(new Date(dinner.at))}
-              <span className="hidden sm:inline"> · Aurora card</span>
+              <span className="hidden sm:inline"> · Virtual card</span>
             </div>
           </div>
           <div className="text-[15px] font-medium text-white tabular">{formatEUR(total)}</div>

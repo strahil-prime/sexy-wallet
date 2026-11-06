@@ -26,7 +26,7 @@ export function CardPreview({ className }: { className?: string }) {
             transition={{ delay: 0.45, duration: 1, ease: [0.16, 1, 0.3, 1] }}
             className="w-[86%] shrink-0 translate-y-[10px] [perspective:1000px]"
           >
-            <Link href="/card" aria-label="Open your Aurora card" className="focus-ring block rounded-[18px]">
+            <Link href="/card" aria-label="Open your virtual card" className="focus-ring block rounded-[18px]">
               <PaymentCard card={main} frozen={cards[main.id]?.frozen} />
             </Link>
           </motion.div>

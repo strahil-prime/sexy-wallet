@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "motion/react";
-import { Snowflake, Wifi } from "lucide-react";
+import { Snowflake } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { VisaMark } from "@/components/brand/visa";
 import type { WalletCard } from "@/lib/data";
@@ -10,9 +10,24 @@ import { cn } from "@/lib/utils";
 const finishes: Record<WalletCard["finish"], string> = {
   aurora:
     "bg-[linear-gradient(118deg,#0b1922_0%,#0d2230_34%,#0f5d7a_52%,#1f7bff_63%,#53c6ff_70%,#7c5cff_82%,#2a1f5c_100%)]",
+  // Brushed chrome: a soft bright crease running corner to corner over cool silver.
   obsidian:
-    "bg-[linear-gradient(135deg,#1a1d22_0%,#0b0d10_45%,#20242b_60%,#0a0b0d_100%)]",
+    "bg-[linear-gradient(122deg,transparent_34%,rgb(255_255_255/0.55)_47%,rgb(255_255_255/0.15)_52%,transparent_62%),conic-gradient(from_200deg_at_58%_42%,#e4e7eb,#a3aab2_18%,#eceff2_34%,#b4bac1_52%,#d8dce0_68%,#979ea6_84%,#e4e7eb)]",
 };
+
+/** Film grain, drawn once as an SVG noise tile. */
+const GRAIN =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 1.6 -0.3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")";
+
+function Grain({ metal }: { metal: boolean }) {
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 mix-blend-overlay"
+      style={{ backgroundImage: GRAIN, backgroundSize: "220px 220px", opacity: metal ? 0.9 : 0.8 }}
+    />
+  );
+}
 
 export function Chip({ className }: { className?: string }) {
   return (
@@ -57,6 +72,7 @@ export function PaymentCard({ card, frozen, flipped, interactive = true, classNa
   const sheenX = useTransform(mx, (v) => `${v * 100}%`);
   const sheenY = useTransform(my, (v) => `${v * 100}%`);
   const sheen = useMotionTemplate`radial-gradient(circle at ${sheenX} ${sheenY}, rgb(255 255 255 / 0.28), transparent 45%)`;
+  const metal = card.finish === "obsidian";
   const holo = useMotionTemplate`linear-gradient(${useTransform(mx, [0, 1], [100, 160])}deg, transparent 20%, rgb(94 240 255 / 0.18) 40%, rgb(124 92 255 / 0.2) 50%, rgb(255 120 200 / 0.12) 58%, transparent 75%)`;
 
   return (
@@ -87,27 +103,38 @@ export function PaymentCard({ card, frozen, flipped, interactive = true, classNa
               finishes[card.finish],
             )}
           >
-            {card.finish === "obsidian" && (
-              <div className="absolute inset-0 opacity-40 [background:repeating-linear-gradient(90deg,transparent_0_2px,rgb(255_255_255/0.025)_2px_3px)]" />
+            {metal && (
+              <div className="absolute inset-0 opacity-50 [background:repeating-linear-gradient(90deg,transparent_0_1px,rgb(255_255_255/0.08)_1px_2px,transparent_2px_3px,rgb(0_0_0/0.04)_3px_4px)]" />
             )}
-            <motion.div className="absolute inset-0 mix-blend-color-dodge" style={{ background: holo }} />
+            <Grain metal={metal} />
+            {!metal && <motion.div className="absolute inset-0 mix-blend-color-dodge" style={{ background: holo }} />}
             <motion.div className="absolute inset-0" style={{ background: sheen }} />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(255_255_255/0.08),transparent_40%)]" />
 
             <div className="relative flex h-full flex-col justify-between p-[7%]">
               <div className="flex items-start justify-between">
-                <span className="text-[11px] font-medium tracking-[0.18em] text-white/70 uppercase">{card.name}</span>
-                <LogoMark mono className="mt-0.5 h-auto w-[17%] text-ink-950/90 drop-shadow-[0_1px_0_rgb(255_255_255/0.25)]" />
+                <span className={cn("text-[clamp(11px,3.2cqw,14px)] font-semibold tracking-[0.22em] uppercase", metal ? "text-ink-950/70 drop-shadow-[0_1px_0_rgb(255_255_255/0.5)]" : "text-white/75")}>
+                  {card.kind}
+                </span>
+                <LogoMark
+                  mono
+                  className={cn(
+                    "h-auto w-[26%]",
+                    metal ? "text-ink-950/80 drop-shadow-[0_1px_0_rgb(255_255_255/0.6)]" : "text-ink-950/90 drop-shadow-[0_1px_0_rgb(255_255_255/0.25)]",
+                  )}
+                />
               </div>
-              <div className="flex items-center gap-3">
-                <Chip className="h-auto w-[15%]" />
-                <Wifi className="size-5 rotate-90 text-white/60" strokeWidth={1.6} />
-              </div>
+              {metal && <Chip className="h-auto w-[15%]" />}
               <div className="flex items-end justify-between">
-                <span className="font-mono text-[clamp(13px,4.5cqw,19px)] tracking-[0.12em] text-white/90 tabular">
+                <span className={cn("font-mono text-[clamp(13px,4.5cqw,19px)] tracking-[0.12em] tabular", metal ? "text-ink-950/80 drop-shadow-[0_1px_0_rgb(255_255_255/0.5)]" : "text-white/90")}>
                   •• •• {card.last4}
                 </span>
-                <VisaMark className="h-[clamp(14px,4.2cqw,22px)] text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.4)]" />
+                <VisaMark
+                  className={cn(
+                    "h-[clamp(28px,8.4cqw,44px)]",
+                    metal ? "text-ink-950/85 drop-shadow-[0_1px_0_rgb(255_255_255/0.5)]" : "text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.4)]",
+                  )}
+                />
               </div>
             </div>
           </div>
@@ -119,7 +146,8 @@ export function PaymentCard({ card, frozen, flipped, interactive = true, classNa
               finishes[card.finish],
             )}
           >
-            <div className="absolute inset-0 bg-ink-950/45" />
+            <Grain metal={metal} />
+            <div className={cn("absolute inset-0", metal ? "bg-ink-950/60" : "bg-ink-950/45")} />
             <div className="absolute inset-x-0 top-[13%] h-[17%] bg-black/85" />
             <div className="relative flex h-full flex-col justify-end p-[7%]">{backSlot}</div>
           </div>

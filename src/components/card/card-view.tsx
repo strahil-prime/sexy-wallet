@@ -168,7 +168,7 @@ function CardTabs({ index, onSelect }: { index: number; onSelect: (i: number) =>
             />
           )}
           <span className="relative">
-            {c.name} <span className="text-mist">· {c.kind}</span>
+            {c.name}
           </span>
         </button>
       ))}

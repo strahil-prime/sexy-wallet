@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { ArrowDown, Ellipsis, Plus, TrendingUp } from "lucide-react";
+import { QuickActions, type QuickAction } from "@/components/dashboard/quick-actions";
 import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { usePersona } from "@/components/teller/persona";
 import type { Ticker } from "@/lib/invest";
@@ -13,6 +15,13 @@ import { PortfolioHero } from "./portfolio-hero";
 import { QuickInvest } from "./quick-invest";
 
 const ease = [0.16, 1, 0.3, 1] as const;
+
+const investActions: QuickAction[] = [
+  { label: "Trade", icon: TrendingUp, href: "/invest/trade", primary: true },
+  { label: "Add money", icon: Plus },
+  { label: "Withdraw", icon: ArrowDown },
+  { label: "More", icon: Ellipsis },
+];
 
 function Rise({ delay, children }: { delay: number; children: React.ReactNode }) {
   return (
@@ -46,6 +55,9 @@ export function InvestView() {
         <div className="flex min-w-0 flex-col gap-5">
           <Rise delay={0}>
             <PortfolioHero onAskMichael={askMichael} />
+          </Rise>
+          <Rise delay={0.04}>
+            <QuickActions actions={investActions} />
           </Rise>
           <Rise delay={0.08}>
             <Holdings onBuyMore={buyMore} />

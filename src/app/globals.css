@@ -163,3 +163,13 @@ number-flow-react {
 .badge-pop {
   animation: badge-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@keyframes sheet-pop {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+.sheet-pop {
+  animation: sheet-pop 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}

@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Ellipsis, QrCode } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Ellipsis, QrCode, type LucideIcon } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import { comingSoon } from "@/components/shell/coming-soon";
 import { cn } from "@/lib/utils";
 
-const actions = [
+export type QuickAction = { label: string; icon: LucideIcon; href?: string; primary?: boolean };
+
+const homeActions: QuickAction[] = [
   { label: "Send", icon: ArrowUpRight, href: "/send", primary: true },
   { label: "Receive", icon: ArrowDownLeft, href: "/receive" },
   { label: "QR", icon: QrCode, href: "/receive?mode=qr" },
   { label: "More", icon: Ellipsis },
 ];
 
-export function QuickActions({ className }: { className?: string }) {
+/** Round action buttons. Ones without an href say "coming soon". */
+export function QuickActions({ className, actions = homeActions }: { className?: string; actions?: QuickAction[] }) {
   return (
     <Panel className={cn("px-4 py-6 sm:px-6", className)}>
       <div className="relative grid grid-cols-4 gap-2">

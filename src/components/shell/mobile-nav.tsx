@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { comingSoon } from "./coming-soon";
 import { isActive, navItems } from "./nav";
 
-// Activity is reached from the dashboard's Recent activity "See all" on phones.
-const tabs = ["/", "/card", "/send", "/rewards", "/invest"];
+// Send is on the Home quick buttons; Activity is reached from the dashboard's Recent activity "See all" on phones.
+const tabs = ["/", "/card", "/crypto", "/rewards", "/invest"];
 
 export function MobileNav() {
   const pathname = usePathname();

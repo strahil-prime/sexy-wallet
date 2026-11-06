@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { comingSoon } from "./coming-soon";
 import { isActive, navItems } from "./nav";
@@ -32,18 +31,6 @@ export function MobileNav() {
       <div className="glass-strong flex h-[65px] items-center justify-around rounded-[24px] px-2">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
-          if (item.href === "/send") {
-            return (
-              <Link key={item.href} href="/send" aria-label="Send" className="focus-ring -mt-7 rounded-full">
-                <motion.span
-                  whileTap={{ scale: 0.9 }}
-                  className="grid size-14 place-items-center rounded-full bg-electric text-white shadow-[0_10px_30px_-6px_rgb(31_123_255/0.8)] ring-4 ring-ink-950"
-                >
-                  <ArrowUpRight className="size-6" strokeWidth={2} />
-                </motion.span>
-              </Link>
-            );
-          }
           const inner = (
             <>
               {active && (

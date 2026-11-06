@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
-import { ArrowRight, Check, ChevronRight, MessageCircleMore, Sparkles, X } from "lucide-react";
+import { ArrowRight, AudioLines, Check, Mic, Plus, Sparkles, X } from "lucide-react";
 import { BrandLogo, BrandMark } from "@/components/brand/brand-mark";
 import { ContactAvatar } from "@/components/ui/avatar";
 import { contacts, initialActivity, lastDinnerId, subscriptions, type Contact, type Subscription } from "@/lib/data";
@@ -96,11 +96,9 @@ export function AskBar({ className }: { className?: string }) {
     >
       <label
         onPointerDown={nudge}
-        className="glass group flex h-[60px] cursor-pointer items-center gap-3 rounded-[20px] pr-4 pl-2.5 transition-colors hover:border-hairline-strong sm:h-[68px] sm:gap-3.5 sm:pr-5 sm:pl-3"
+        className="glass group flex h-[60px] cursor-pointer items-center gap-3 rounded-full pr-1.5 pl-4 transition-colors hover:border-hairline-strong sm:h-[68px] sm:gap-4 sm:pr-2 sm:pl-5"
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-white/[0.06] ring-1 ring-white/[0.06] sm:size-11">
-          <MessageCircleMore className="size-5 text-fog" strokeWidth={1.6} />
-        </span>
+        <Plus className="size-6 shrink-0 text-white" strokeWidth={1.6} aria-hidden />
         <span className="relative min-w-0 flex-1">
           <input
             readOnly
@@ -137,16 +135,18 @@ export function AskBar({ className }: { className?: string }) {
                 exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
                 className="block"
               >
-                <span className="block truncate text-[15px] sm:text-[17px]">
-                  <span className="font-medium text-white">Ask me anything</span>
-                  <span className="mx-2 text-white/25">·</span>
-                  <span className="text-[13.5px] text-mist sm:text-[15px]">Payments, insights, rewards...</span>
-                </span>
+                <span className="block truncate text-[16px] text-white/50 sm:text-[18px]">Ask me anything</span>
               </motion.span>
             )}
           </AnimatePresence>
         </span>
-        <ChevronRight className="size-5 shrink-0 text-fog transition-transform duration-300 group-hover:translate-x-1" />
+        <Mic className="size-[22px] shrink-0 text-white" strokeWidth={1.7} aria-hidden />
+        <span
+          aria-hidden
+          className="grid size-12 shrink-0 place-items-center rounded-full bg-[#1f4fd1] shadow-[0_6px_20px_-6px_rgb(31_79_209/0.8)] transition-colors group-hover:bg-[#2a5ce0] sm:size-[54px]"
+        >
+          <AudioLines className="size-5 text-white" strokeWidth={1.8} />
+        </span>
       </label>
     </motion.div>
   );

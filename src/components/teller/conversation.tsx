@@ -143,7 +143,7 @@ export function AskBar({ className }: { className?: string }) {
         <Mic className="size-[22px] shrink-0 text-white" strokeWidth={1.7} aria-hidden />
         <span
           aria-hidden
-          className="grid size-12 shrink-0 place-items-center rounded-full bg-[#1f4fd1] shadow-[0_6px_20px_-6px_rgb(31_79_209/0.8)] transition-colors group-hover:bg-[#2a5ce0] sm:size-[54px]"
+          className="grid size-12 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle_at_30%_25%,#4c97ff,#1f7bff_55%,#1660d6)] shadow-[0_8px_22px_-8px_rgb(31_123_255/0.9),inset_0_1px_0_rgb(255_255_255/0.35)] transition-[filter] group-hover:brightness-110 sm:size-[54px]"
         >
           <AudioLines className="size-5 text-white" strokeWidth={1.8} />
         </span>

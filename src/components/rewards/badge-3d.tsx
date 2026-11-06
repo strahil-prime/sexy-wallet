@@ -37,25 +37,31 @@ const LAYERS = 6;
 
 /* ── The hexagon ─────────────────────────────────────── */
 
-/** A pointy-top hexagon with softly rounded corners, centred in a 100×100 box. */
-function hexPath(R: number, round = 0.16) {
-  const v = Array.from({ length: 6 }, (_, i) => {
-    const a = ((-90 + 60 * i) * Math.PI) / 180;
+/** A pointy-top regular polygon (6 = hexagon, 4 = diamond) with softly rounded corners, centred in a 100×100 box. */
+function polyPath(n: number, R: number, round = 0.16) {
+  const v = Array.from({ length: n }, (_, i) => {
+    const a = ((-90 + (360 / n) * i) * Math.PI) / 180;
     return [50 + R * Math.cos(a), 50 + R * Math.sin(a)];
   });
   const lerp = (p: number[], q: number[], t: number) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
   const f = (n: number) => n.toFixed(2);
   let d = "";
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < n; i++) {
     const cur = v[i];
-    const prev = v[(i + 5) % 6];
-    const next = v[(i + 1) % 6];
+    const prev = v[(i + n - 1) % n];
+    const next = v[(i + 1) % n];
     const a = lerp(cur, prev, round);
     const b = lerp(cur, next, round);
     d += `${i ? "L" : "M"}${f(a[0])} ${f(a[1])} Q${f(cur[0])} ${f(cur[1])} ${f(b[0])} ${f(b[1])} `;
   }
   return `${d}Z`;
 }
+
+function hexPath(R: number, round = 0.16) {
+  return polyPath(6, R, round);
+}
+
+type ShapeFn = (R: number, round: number) => string;
 
 const RIM = hexPath(48, 0.07);
 const RIM_IN = hexPath(45.6, 0.07);
@@ -190,9 +196,9 @@ export function BadgeStatic({
   );
 }
 
-function Back({ enamel: [, mid, lo, deep], caption, size, round = 0.07 }: { enamel: Metal; caption: string; size: number; round?: number }) {
+function Back({ enamel: [, mid, lo, deep], caption, size, round = 0.07, shape = hexPath }: { enamel: Metal; caption: string; size: number; round?: number; shape?: ShapeFn }) {
   const ids = useIds();
-  const [rim, rimIn, groove, field, inner] = [48, 45.6, 44.6, 44, 36].map((r) => hexPath(r, round));
+  const [rim, rimIn, groove, field, inner] = [48, 45.6, 44.6, 44, 36].map((r) => shape(r, round));
   return (
     <div className="absolute inset-0">
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
@@ -241,7 +247,7 @@ export function Badge3D({
   size: number;
   locked?: boolean;
   caption?: string;
-  /** A finished front face image (fills the 100-box, rounded hex outline); replaces the drawn face. */
+  /** A finished front face image (the Gold tier art, a rounded diamond); replaces the drawn face. */
   art?: string;
   rotateX: MotionValue<number>;
   rotateY: MotionValue<number>;
@@ -268,27 +274,26 @@ export function Badge3D({
           {art ? <ArtFace src={art} /> : <Face enamel={enamel} icon={icon} size={size} dim={locked} />}
         </div>
         <div className="absolute inset-0" style={{ transform: `rotateY(180deg) translateZ(${thick / 2}px)`, backfaceVisibility: "hidden" }}>
-          <Back enamel={enamel} caption={caption} size={size} round={round} />
+          <Back enamel={enamel} caption={caption} size={size} round={round} shape={art ? diamondPath : hexPath} />
         </div>
       </motion.div>
     </div>
   );
 }
 
-/* The Gold tier art is drawn so its outline is a hexagon of radius 48 with these corners. */
-const ART_ROUND = 0.16;
-const ART_RIM = hexPath(48, ART_ROUND);
+/* The Gold tier art (a transparent cut-out) is a rounded diamond: 538px from centre to corner in
+   the 1312×1199 source, centred at (690, 578). The N breaks out past the left edge, so the image
+   is drawn unclipped and placed so the diamond's outline is a radius-48 diamond in the 100-box. */
+const ART_ROUND = 0.2;
+const diamondPath: ShapeFn = (R, round) => polyPath(4, R, round);
+const ART_RIM = diamondPath(48, ART_ROUND);
+const ART_SCALE = 48 / 538;
+const ART_BOX = { x: 50 - 690 * ART_SCALE, y: 50 - 578 * ART_SCALE, w: 1312 * ART_SCALE, h: 1199 * ART_SCALE };
 
 function ArtFace({ src }: { src: string }) {
-  const ids = useIds();
   return (
     <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
-      <defs>
-        <clipPath id={ids.clip}>
-          <path d={ART_RIM} />
-        </clipPath>
-      </defs>
-      <image href={src} x="0" y="0" width="100" height="100" clipPath={`url(#${ids.clip})`} preserveAspectRatio="none" />
+      <image href={src} x={ART_BOX.x} y={ART_BOX.y} width={ART_BOX.w} height={ART_BOX.h} preserveAspectRatio="none" />
     </svg>
   );
 }

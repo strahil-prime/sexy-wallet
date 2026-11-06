@@ -169,7 +169,7 @@ function TierHero() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
           <div {...handlers} className="relative cursor-grab touch-pan-y select-none active:cursor-grabbing" aria-label="Gold tier badge, drag to spin">
-            <Badge3D metal={metals.onyx} art="/rewards/gold-tier.jpg" icon={Crown} size={190} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
+            <Badge3D metal={metals.onyx} art="/rewards/gold-tier-v3.webp" icon={Crown} size={190} caption="Gold member since 2024" rotateX={rotateX} rotateY={rotateY} />
           </div>
           <motion.div
             aria-hidden

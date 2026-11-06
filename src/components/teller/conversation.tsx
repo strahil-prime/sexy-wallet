@@ -17,6 +17,8 @@ import { InvestAnswer, PortfolioAnswer, RetirementAnswer } from "./cards-michael
 import { cn, formatEUR, formatWhen } from "@/lib/utils";
 import type { Intent, TellerState } from "./machine";
 
+const ASK_NUDGE = "nobby:ask-nudge";
+
 export function QuestionChips({
   persona,
   state,
@@ -30,13 +32,26 @@ export function QuestionChips({
 }) {
   const busy = state.status === "thinking";
   const activeIntent = state.status === "thinking" || state.status === "talking" ? state.intent : null;
+  const [chipsScope, animateChips] = useAnimate();
+  // When the ask bar is tapped, the chips zoom one after another to point at them instead.
+  useEffect(() => {
+    const onNudge = () => {
+      persona.questions.forEach((_, i) => {
+        const el = chipsScope.current?.querySelector(`[data-chip="${i}"]`);
+        if (el) animateChips(el, { scale: [1, 1.08, 1] }, { delay: 0.1 + i * 0.12, duration: 0.36, ease: "easeOut" });
+      });
+    };
+    window.addEventListener(ASK_NUDGE, onNudge);
+    return () => window.removeEventListener(ASK_NUDGE, onNudge);
+  }, [persona, chipsScope, animateChips]);
   return (
-    <div className={cn("no-scrollbar -mx-1.5 flex gap-2 overflow-x-auto px-1.5 py-1.5 [mask-image:linear-gradient(90deg,#000_92%,transparent)] lg:flex-wrap lg:overflow-visible lg:[mask-image:none]", className)}>
+    <div ref={chipsScope} className={cn("no-scrollbar -mx-1.5 flex gap-2 overflow-x-auto px-1.5 py-1.5 [mask-image:linear-gradient(90deg,#000_92%,transparent)] lg:flex-wrap lg:overflow-visible lg:[mask-image:none]", className)}>
       {persona.questions.map((q, i) => {
         const active = activeIntent === q.id;
         return (
           <motion.button
             key={q.id}
+            data-chip={i}
             type="button"
             disabled={busy}
             onClick={() => onAsk(q.id)}
@@ -78,12 +93,17 @@ export function AskBar({ className }: { className?: string }) {
   const [soon, setSoon] = useState(false);
   const [scope, animate] = useAnimate();
   const timer = useRef<number>(undefined);
+  const lastNudge = useRef(0);
 
   const nudge = () => {
     setSoon(true);
     // One toast at a time: focus and pointerdown can both fire for a single tap.
     toast("Try out the buttons above instead", { id: "ask-soon", description: "The prompt input text field is still in progress" });
     animate(scope.current, { x: [0, -7, 6, -4, 3, 0] }, { duration: 0.45 });
+    // Pointerdown then focus arrive together for one tap; zoom the chips once.
+    const now = Date.now();
+    if (now - lastNudge.current > 800) window.dispatchEvent(new Event(ASK_NUDGE));
+    lastNudge.current = now;
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setSoon(false), 2400);
   };

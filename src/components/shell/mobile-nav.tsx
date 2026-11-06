@@ -34,13 +34,19 @@ export function MobileNav() {
           const inner = (
             <>
               {active && (
-                <motion.span layoutId="mnav-dot" className="absolute -top-1 h-1 w-6 rounded-full bg-cyan shadow-[0_0_12px_#2ad1e6]" />
+                // Same marker as the Assistant / Dashboard tabs, laid on the card's top outline.
+                <motion.span
+                  layoutId="mnav-dot"
+                  aria-hidden
+                  className="absolute inset-x-3 -top-px h-px bg-cyan-300 shadow-[0_0_8px_rgb(103_232_249/0.45)]"
+                  transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                />
               )}
               <item.icon className={cn("size-[22px]", active ? "text-white" : "text-mist")} strokeWidth={1.7} />
               <span className={cn("text-[10.5px]", active ? "text-white" : "text-mist")}>{item.label}</span>
             </>
           );
-          const cls = "focus-ring relative flex w-14 flex-col items-center gap-1 rounded-xl py-1";
+          const cls = "focus-ring relative flex h-full w-14 flex-col items-center justify-center gap-1 rounded-xl";
           return item.live ? (
             <Link key={item.href} href={item.href} className={cls}>
               {inner}

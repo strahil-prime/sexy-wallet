@@ -81,6 +81,8 @@ export function AskBar({ className }: { className?: string }) {
 
   const nudge = () => {
     setSoon(true);
+    // One toast at a time: focus and pointerdown can both fire for a single tap.
+    toast("Try out the buttons above instead", { id: "ask-soon", description: "The prompt input text field is still in progress" });
     animate(scope.current, { x: [0, -7, 6, -4, 3, 0] }, { duration: 0.45 });
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setSoon(false), 2400);

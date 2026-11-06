@@ -13,7 +13,7 @@ export const account = {
   iban: "IE64 NVLE 9900 1734 2286 51",
   bic: "NVLEIE2D",
   /** short link anyone can pay through */
-  payLink: "neville.me/eddie",
+  payLink: "nobby.me/eddie",
 };
 
 export const payUrl = (amount?: number) => `https://${account.payLink}${amount ? `/${amount}` : ""}`;

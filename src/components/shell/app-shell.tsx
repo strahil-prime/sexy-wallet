@@ -62,8 +62,8 @@ function MobileTopBar({ home }: { home: boolean }) {
       className={cn("sticky top-0 z-30 h-16 items-center justify-between border-b border-hairline px-5 lg:hidden", home ? "flex" : "hidden")}
       style={{ background: persona.edgeColor }}
     >
-      <Link href="/" aria-label="Neville, home" className="text-white">
-        <LogoLockup mono className="h-[23.4px]" label="Neville" />
+      <Link href="/" aria-label="Nobby, home" className="text-white">
+        <LogoLockup mono className="h-[23.4px]" label="Nobby" />
       </Link>
       <ProfileAvatar size={36} />
     </header>

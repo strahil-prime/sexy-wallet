@@ -35,11 +35,11 @@ export function LogoMark({ className, mono = false }: { className?: string; mono
   );
 }
 
-/** N with the "Neville" wordmark beside it. The wordmark takes the current text colour; `mono` paints the N in it too. */
-export function LogoLockup({ className, label = "Neville", mono = false }: { className?: string; label?: string; mono?: boolean }) {
+/** N with the "Nobby" wordmark beside it. The wordmark takes the current text colour; `mono` paints the N in it too. */
+export function LogoLockup({ className, label = "Nobby", mono = false }: { className?: string; label?: string; mono?: boolean }) {
   const id = useId();
   return (
-    <svg viewBox="0 0 585 142" className={cn("h-7 w-auto", className)} role="img" aria-label={label}>
+    <svg viewBox="0 0 616 142" className={cn("h-7 w-auto", className)} role="img" aria-label={label}>
       <MarkPaths mono={mono} gradId={`nl${id}`} />
       {H_WORD.map((d, i) => (
         <path key={i} d={d} fill="currentColor" />
@@ -48,10 +48,10 @@ export function LogoLockup({ className, label = "Neville", mono = false }: { cla
   );
 }
 
-/** "Neville" wordmark only, in the current text colour. */
+/** "Nobby" wordmark only, in the current text colour. */
 export function Logotype({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 128" className={cn("h-6 w-auto", className)} aria-hidden>
+    <svg viewBox="0 0 329 98" className={cn("h-6 w-auto", className)} aria-hidden>
       {LOGOTYPE.map((d, i) => (
         <path key={i} d={d} fill="currentColor" />
       ))}

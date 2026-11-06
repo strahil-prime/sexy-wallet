@@ -111,7 +111,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
           <motion.div
             key="preloader"
             role="status"
-            aria-label="Loading Neville"
+            aria-label="Loading Nobby"
             onClick={phase === "gate" ? enter : undefined}
             exit={{ opacity: 0, transition: { duration: 0.8, ease, delay: 0.15 } }}
             className="fixed inset-0 z-[100] grid cursor-default place-items-center overflow-hidden bg-ink-950 select-none data-[gate=true]:cursor-pointer"
@@ -161,7 +161,7 @@ export function Preloader({ children }: { children: React.ReactNode }) {
                 exit={{ opacity: 0, y: 8, transition: { duration: 0.35 } }}
                 transition={{ delay: 1.15, duration: 0.8, ease }}
               >
-                <Logotype className="h-[30px]" />
+                <Logotype className="h-[23px]" />
               </motion.div>
 
               {/* Progress hairline, then the tap prompt if the browser needs one for sound */}

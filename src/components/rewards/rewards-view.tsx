@@ -176,7 +176,7 @@ function TierHero() {
 
   return (
     <Panel spotlight={false} className="relative overflow-hidden p-5 sm:p-8">
-      <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(70%_90%_at_18%_40%,rgb(245_199_106/0.22),transparent_70%),radial-gradient(60%_80%_at_100%_0%,rgb(31_123_255/0.18),transparent_70%)]" />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(80%_70%_at_50%_20%,rgb(22_52_110/0.55),transparent_75%),linear-gradient(180deg,#0a1830,#040a17)]" />
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-10">
         {/* On phones the badge sits a little lower, so the gap above it matches the gap below. */}
         <div className="relative shrink-0 max-sm:mt-[19px]">

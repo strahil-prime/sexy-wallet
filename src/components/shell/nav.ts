@@ -8,10 +8,10 @@ export const navItems: NavItem[] = [
   { label: "Card", href: "/card", icon: CreditCard, live: true },
   { label: "Send", href: "/send", icon: ArrowUpRight, live: true },
   { label: "Receive", href: "/receive", icon: ArrowDownToLine, live: true },
+  { label: "Crypto", href: "/crypto", icon: BitcoinUpright, live: true },
+  { label: "Invest", href: "/invest", icon: ChartNoAxesCombined, live: true },
   { label: "Activity", href: "/activity", icon: Clock3, live: true },
   { label: "Rewards", href: "/rewards", icon: Gift, live: true },
-  { label: "Invest", href: "/invest", icon: ChartNoAxesCombined, live: true },
-  { label: "Crypto", href: "/crypto", icon: BitcoinUpright, live: true },
 ];
 
 export function isActive(pathname: string, href: string) {

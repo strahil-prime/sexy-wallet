@@ -35,7 +35,7 @@ const art = {
   saver: { slug: "super-saver", ink: GOLD_INK, box: "20% 21%" },
   streak: { slug: "on-fire", ink: GOLD_INK, box: "40% 22% 12%" },
   // Silver back, so the caption is dark for contrast.
-  travel: { slug: "globetrotter", ink: "#151b22", box: "21%" },
+  travel: { slug: "globetrotter", ink: "#151b22", box: "21%", shadow: "0 1px 0 rgb(255 255 255 / 0.35)" },
   locked: { slug: "locked", ink: SILVER_INK, box: "21%" },
 } satisfies Record<string, BadgeArt>;
 

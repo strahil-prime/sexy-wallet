@@ -297,6 +297,8 @@ export type BadgeArt = {
   ink: string;
   /** Where the caption sits on the back, as CSS insets (the shapes differ). */
   box?: string;
+  /** Caption shadow; a dark one by default, a light one suits dark ink on a pale plate. */
+  shadow?: string;
 };
 
 const artSrc = (art: BadgeArt, suffix = "") => `/rewards/badges/${art.slug}${suffix}.webp`;
@@ -313,7 +315,7 @@ function ArtBack({ art, caption, size }: { art: BadgeArt; caption: string; size:
       <div className="absolute grid place-items-center text-center" style={{ inset: art.box ?? "22%" }}>
         <span
           className="leading-[1.25] font-bold tracking-[0.12em] uppercase"
-          style={{ fontSize: Math.max(7, Math.min(13, size * 0.056)), color: art.ink, textShadow: "0 1px 0 rgb(0 0 0 / 0.55)" }}
+          style={{ fontSize: Math.max(7, Math.min(13, size * 0.056)), color: art.ink, textShadow: art.shadow ?? "0 1px 0 rgb(0 0 0 / 0.55)" }}
         >
           {caption}
         </span>

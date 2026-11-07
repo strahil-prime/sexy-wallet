@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { playTransferSounds } from "@/lib/sfx";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 /**
@@ -96,7 +97,11 @@ export function TransferVeil({
           lift: 3800,
           done: 5000,
         };
+    // A rising swell into the flood, then a cha-ching as Money sent is revealed.
+    let finished = false;
+    const stopSound = playTransferSounds(t.flood, t.lift + 80);
     const timers = [
+      setTimeout(() => (finished = true), t.lift + 80),
       setTimeout(() => setLabel(1), t.l1),
       setTimeout(() => setLabel(2), t.l2),
       setTimeout(() => setPhase("flood"), t.flood),
@@ -104,7 +109,11 @@ export function TransferVeil({
       setTimeout(() => setPhase("lift"), t.lift),
       setTimeout(() => cbs.current.onDone(), t.done),
     ];
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      timers.forEach(clearTimeout);
+      // Leaving mid-transfer cuts the sound; after the cha-ching it rings out.
+      if (!finished) stopSound();
+    };
   }, [reduce]);
 
   const lifting = phase === "lift";

@@ -200,8 +200,31 @@ export function AreaChart({
 }
 
 /** A light bottom sheet on phones and a centred card on desktop. No scroll lock or blur, so it opens instantly. */
+/**
+ * The part of the screen the viewer can actually see. On phones the on-screen keyboard covers the
+ * bottom of the page without resizing it, so a bottom sheet pinned to the visual viewport rides
+ * up above the keyboard instead of hiding behind it.
+ */
+function useVisibleArea(active: boolean) {
+  const [area, setArea] = useState<{ top: number; height: number } | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!active || !vv) return;
+    const update = () => setArea({ top: vv.offsetTop, height: vv.height });
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [active]);
+  return area;
+}
+
 export function Sheet({ open, onClose, label, children }: { open: boolean; onClose: () => void; label: string; children: React.ReactNode }) {
   const panel = useRef<HTMLDivElement>(null);
+  const area = useVisibleArea(open);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -210,11 +233,18 @@ export function Sheet({ open, onClose, label, children }: { open: boolean; onClo
   }, [open, onClose]);
   if (!open || typeof document === "undefined") return null;
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4" onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+      className="fixed inset-x-0 top-0 z-50 flex h-dvh items-end justify-center bg-black/70 sm:items-center sm:p-4"
+      style={area ? { top: area.top, height: area.height } : undefined}
+      onClick={onClose}
+    >
       <div
         ref={panel}
         onClick={(e) => e.stopPropagation()}
-        className="sheet-pop relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] border border-hairline bg-ink-850 px-5 pt-6 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_-20px_rgb(0_0_0/0.8)] sm:max-w-[440px] sm:rounded-[28px] sm:px-6"
+        className="sheet-pop relative max-h-[calc(100%-12px)] w-full overflow-y-auto overscroll-contain rounded-t-[28px] border border-hairline bg-ink-850 px-5 pt-6 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_-20px_rgb(0_0_0/0.8)] sm:max-w-[440px] sm:rounded-[28px] sm:px-6"
       >
         <button
           type="button"

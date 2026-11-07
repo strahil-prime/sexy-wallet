@@ -177,8 +177,9 @@ function TierHero() {
   return (
     <Panel spotlight={false} className="relative overflow-hidden p-5 sm:p-8">
       <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(70%_90%_at_18%_40%,rgb(245_199_106/0.22),transparent_70%),radial-gradient(60%_80%_at_100%_0%,rgb(31_123_255/0.18),transparent_70%)]" />
-      <div className="flex flex-col items-center gap-6 sm:flex-row sm:gap-10">
-        <div className="relative shrink-0">
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-10">
+        {/* On phones the badge sits a little lower, so the gap above it matches the gap below. */}
+        <div className="relative shrink-0 max-sm:mt-[19px]">
           <motion.div
             aria-hidden
             className="absolute inset-[-30%] rounded-full bg-[radial-gradient(closest-side,rgb(245_199_106/0.4),rgb(245_199_106/0.12)_50%,transparent)]"
@@ -252,13 +253,6 @@ function BadgeTile({ badge, index, onOpen }: { badge: Badge; index: number; onOp
           locked ? "bg-white/[0.02] ring-white/[0.05] hover:bg-white/[0.04]" : "bg-white/[0.04] ring-white/[0.07] hover:bg-white/[0.07]",
         )}
       >
-        {!locked && (
-          <span
-            aria-hidden
-            className="absolute top-0 left-1/2 size-36 -translate-x-1/2 rounded-full opacity-40 transition-opacity group-hover:opacity-70"
-            style={{ background: `radial-gradient(closest-side, ${badge.metal[1]}, transparent)` }}
-          />
-        )}
         {/* Still on purpose: the grid stays light so a tap opens the badge straight away */}
         <BadgeStatic
           metal={badge.metal}
@@ -310,7 +304,6 @@ function BadgeDialog({ badge, onClose }: { badge: Badge | null; onClose: () => v
                   onClick={(e) => e.stopPropagation()}
                   className="badge-pop relative w-full max-w-[400px] touch-auto overflow-hidden rounded-[28px] border border-hairline bg-ink-850 px-6 pt-8 pb-6 text-center shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)]"
                 >
-                  <div aria-hidden className="absolute inset-x-0 top-0 h-64" style={{ background: `radial-gradient(60% 70% at 50% 35%, ${badge.metal[1]}55, transparent 70%)` }} />
                   <button
                     type="button"
                     aria-label="Close"

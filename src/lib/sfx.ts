@@ -18,22 +18,57 @@ function soundOn() {
   }
 }
 
+let stale = false;
+let born = 0;
+
+/**
+ * Called on every tap. iOS Safari parks the context ("suspended" or its own "interrupted") when
+ * the page goes to the background, and a parked context often won't come back with resume()
+ * outside a tap. So on a tap, any context that isn't running is replaced with a fresh one, which
+ * a tap is allowed to start, and a silent sample is played to fully wake the audio session.
+ */
 function unlock() {
   try {
-    if (!ctx) ctx = new AudioContext();
-    if (ctx.state === "suspended") void ctx.resume();
+    if (ctx && ctx.state === "running" && !stale) return;
+    // pointerdown and touchend of one tap: the context made a moment ago just needs its resume.
+    if (ctx && !stale && ctx.state === "suspended" && performance.now() - born < 1000) {
+      void ctx.resume().catch(() => {});
+      return;
+    }
+    if (ctx) {
+      const old = ctx;
+      void old.close().catch(() => {});
+    }
+    ctx = new AudioContext();
+    born = performance.now();
+    stale = false;
+    void ctx.resume().catch(() => {});
+    const blip = ctx.createBufferSource();
+    blip.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    blip.connect(ctx.destination);
+    blip.start();
   } catch {}
 }
 
 if (typeof window !== "undefined") {
   window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+  window.addEventListener("touchend", unlock, { capture: true, passive: true });
   window.addEventListener("keydown", unlock, { capture: true, passive: true });
+  // Back from the background: the next tap brings up a fresh context.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") stale = true;
+  });
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted) stale = true;
+  });
 }
 
 /** The live context, or null when sound is off or the browser has not allowed audio yet. */
 function live(): AudioContext | null {
   if (!soundOn()) return null;
-  unlock();
+  if (!ctx || ctx.state === "closed") unlock();
+  // Not a tap here, but a recent one (the hold on Hold to send) usually lets resume() through.
+  if (ctx && ctx.state !== "running") void ctx.resume().catch(() => {});
   return ctx && ctx.state !== "closed" ? ctx : null;
 }
 
@@ -47,9 +82,10 @@ function noiseBuffer(ac: BaseAudioContext, seconds: number) {
 /**
  * A warm, rising swell for the transfer animation: a soft major-9 pad that opens up, an
  * ascending shimmer of little plucks and a gentle airy whoosh that peaks as the colours flood.
- * `peak` is when (in seconds) it should be fullest; it then fades out over `tail` seconds.
+ * `peak` is when (in seconds) it should be fullest; it then eases off and fades out over `tail`
+ * seconds, so it carries on under the cha-ching and dies away after it.
  */
-export function scheduleSwell(ac: BaseAudioContext, out: AudioNode, t0: number, peak: number, tail = 0.9) {
+export function scheduleSwell(ac: BaseAudioContext, out: AudioNode, t0: number, peak: number, tail = 3.9) {
   const end = t0 + peak + tail;
   const bus = ac.createGain();
   // Audible from the first moment, then building: a quick fade in, a long climb to full.
@@ -57,7 +93,9 @@ export function scheduleSwell(ac: BaseAudioContext, out: AudioNode, t0: number, 
   bus.gain.exponentialRampToValueAtTime(0.22, t0 + 0.35);
   bus.gain.exponentialRampToValueAtTime(1, t0 + peak * 0.85);
   bus.gain.setValueAtTime(1, t0 + peak);
-  bus.gain.exponentialRampToValueAtTime(0.0001, end);
+  bus.gain.linearRampToValueAtTime(0.7, t0 + peak + tail * 0.3);
+  // A long, even fade (an exponential one sounds over in a second).
+  bus.gain.linearRampToValueAtTime(0, end);
   bus.connect(out);
 
   // Pad: C major 9, two slightly detuned voices per note, through an opening low-pass.
@@ -66,6 +104,7 @@ export function scheduleSwell(ac: BaseAudioContext, out: AudioNode, t0: number, 
   lp.Q.value = 0.7;
   lp.frequency.setValueAtTime(350, t0);
   lp.frequency.exponentialRampToValueAtTime(2600, t0 + peak);
+  lp.frequency.exponentialRampToValueAtTime(900, end);
   const pad = ac.createGain();
   pad.gain.value = 0.05;
   lp.connect(pad).connect(bus);
@@ -193,7 +232,8 @@ export function playTransferSounds(peakMs: number, chingMs: number) {
   if (!ac) return () => {};
   const out = master(ac);
   const t0 = ac.currentTime + 0.02;
-  scheduleSwell(ac, out, t0, peakMs / 1000);
+  // The pad holds through the cha-ching and fades out over the next few seconds.
+  scheduleSwell(ac, out, t0, peakMs / 1000, (chingMs - peakMs) / 1000 + 2.8);
   scheduleChaChing(ac, out, t0 + chingMs / 1000);
   return () => {
     const now = ac.currentTime;

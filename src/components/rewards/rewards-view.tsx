@@ -68,7 +68,7 @@ function useBadges(): Badge[] {
 
   const list: Badge[] = [
     { id: "first", name: "Day One", about: "Opened your account and made your first payment.", icon: Rocket, metal: metals.cobalt, earned: "12 Mar 2024", points: 100, art: art.first, back: "Welcome to the club" },
-    { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.emerald, earned: "2 Sep 2024", points: 300, art: art.saver, back: "Keep stacking them racks, big saver" },
+    { id: "saver", name: "Super Saver", about: "Saved money six months in a row.", icon: PiggyBank, metal: metals.gold, earned: "2 Sep 2024", points: 300, art: art.saver, back: "Keep stacking them racks, big saver" },
     { id: "streak", name: "On Fire", about: "Checked in with your teller 30 days running.", icon: Flame, metal: metals.copper, earned: "18 Oct 2026", points: 150, art: art.streak, back: "You are on fire today" },
     { id: "travel", name: "Globetrotter", about: "Paid in three countries without a single fee.", icon: Earth, metal: metals.ice, earned: "24 Oct 2026", points: 200, art: art.travel, back: "Think global, act local" },
     {

@@ -176,16 +176,9 @@ function TierHero() {
 
   return (
     <Panel spotlight={false} className="relative overflow-hidden p-5 sm:p-8">
-      <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(80%_70%_at_50%_20%,rgb(22_52_110/0.55),transparent_75%),linear-gradient(180deg,#0a1830,#040a17)]" />
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-10">
         {/* On phones the badge sits a little lower, so the gap above it matches the gap below. */}
         <div className="relative shrink-0 max-sm:mt-[19px]">
-          <motion.div
-            aria-hidden
-            className="absolute inset-[-30%] rounded-full bg-[radial-gradient(closest-side,rgb(245_199_106/0.4),rgb(245_199_106/0.12)_50%,transparent)]"
-            animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          />
           <div {...handlers} className="relative cursor-grab touch-pan-y select-none active:cursor-grabbing" aria-label="Gold tier badge, drag to spin">
             <Badge3D metal={metals.onyx} art={art.gold} icon={Crown} size={190} caption="Gold member since 2026" rotateX={rotateX} rotateY={rotateY} />
           </div>

@@ -3,11 +3,12 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
-import { Check, Fingerprint, ShieldCheck } from "lucide-react";
+import { Check, Fingerprint, ShieldCheck, Sprout } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
-import { buyable, funds, type Ticker } from "@/lib/invest";
+import { buyable, funds, insights, type Ticker } from "@/lib/invest";
 import { useWallet } from "@/lib/wallet-store";
 import { cn, formatEUR, formatEUR0 } from "@/lib/utils";
+import { FundInsight } from "./fund-insight";
 
 const HOLD_MS = 750;
 const presets = [100, 250, 500, 1000];
@@ -77,12 +78,10 @@ export const QuickInvest = forwardRef<HTMLDivElement, { fund: Ticker; onFund: (t
           );
         })}
       </div>
-      <p className="mt-2.5 text-[12.5px] text-mist">
-        {f.name} · {f.kind} · {f.ter.toFixed(2)}% fee
-      </p>
+      <FundInsight fund={fund} />
 
       {/* Amount */}
-      <label className="mt-4 flex items-baseline gap-1 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/[0.06] focus-within:ring-[#8b6dff]/60">
+      <label className="mt-5 flex items-baseline gap-1 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/[0.06] focus-within:ring-[#8b6dff]/60">
         <span className="text-[28px] font-semibold text-mist">€</span>
         <input
           inputMode="numeric"
@@ -109,6 +108,17 @@ export const QuickInvest = forwardRef<HTMLDivElement, { fund: Ticker; onFund: (t
           </button>
         ))}
       </div>
+
+      {amount > 0 && (
+        <div className="mt-3 flex items-start gap-2 rounded-2xl px-3 py-2.5 text-[13px] leading-snug" style={{ background: `${f.color}14` }}>
+          <Sprout className="mt-px size-4 shrink-0" style={{ color: f.color }} strokeWidth={2} />
+          <span className="text-fog">
+            Left alone for 10 years, {formatEUR0(amount)} could grow to about{" "}
+            <span className="font-semibold text-white tabular">{formatEUR0(amount * Math.pow(1 + insights[fund].outlook, 10))}</span>.{" "}
+            <span className="text-mist">A rough guide at {(insights[fund].outlook * 100).toFixed(1)}% a year, not a promise.</span>
+          </span>
+        </div>
+      )}
 
       <div className="mt-3 flex min-h-5 items-center gap-1.5 text-[12.5px]">
         {problem ? (

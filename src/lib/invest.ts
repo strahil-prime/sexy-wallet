@@ -180,3 +180,105 @@ export function thin(points: Point[], max = 140) {
   out.push(points[points.length - 1]);
   return out;
 }
+
+/**
+ * Context for each top pick, so the choice is an informed one. Figures are rounded and
+ * illustrative (around late 2025), not live data. Risk is the EU 1–7 scale funds publish.
+ */
+export type FundInsight = {
+  /** one line on why it made the list */
+  why: string;
+  risk: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  /** average yearly return over the last five years, in percent */
+  fiveYear: number;
+  holdings: string;
+  /** where the money goes, in percent, adding up to 100 */
+  regions: { label: string; pct: number }[];
+  top: { name: string; pct: number }[];
+  goodFor: string;
+  keepInMind: string;
+  /** a cautious long-run yearly growth to sketch what an amount could become */
+  outlook: number;
+};
+
+export const insights: Record<Ticker, FundInsight> = {
+  VWCE: {
+    why: "The whole world's stock market in one fund. The classic one-fund starter.",
+    risk: 4,
+    fiveYear: 11.2,
+    holdings: "3,700",
+    regions: [
+      { label: "US", pct: 63 },
+      { label: "Europe", pct: 15 },
+      { label: "Emerging", pct: 11 },
+      { label: "Japan", pct: 5 },
+      { label: "Other", pct: 6 },
+    ],
+    top: [
+      { name: "NVIDIA", pct: 4.9 },
+      { name: "Apple", pct: 4.2 },
+      { name: "Microsoft", pct: 3.9 },
+    ],
+    goodFor: "A set-and-forget core you can hold for decades.",
+    keepInMind: "Almost two thirds sits in US companies.",
+    outlook: 0.065,
+  },
+  IWDA: {
+    why: "Big, established companies in rich countries, at one of the lowest fees.",
+    risk: 4,
+    fiveYear: 12.1,
+    holdings: "1,400",
+    regions: [
+      { label: "US", pct: 72 },
+      { label: "Europe", pct: 16 },
+      { label: "Japan", pct: 6 },
+      { label: "Other", pct: 6 },
+    ],
+    top: [
+      { name: "NVIDIA", pct: 5.6 },
+      { name: "Apple", pct: 4.8 },
+      { name: "Microsoft", pct: 4.5 },
+    ],
+    goodFor: "A low-cost core if you don't need emerging markets.",
+    keepInMind: "Skips China, India and other emerging markets.",
+    outlook: 0.065,
+  },
+  EQQQ: {
+    why: "The tech giants behind AI, cloud and your phone. Higher growth, bigger swings.",
+    risk: 5,
+    fiveYear: 16.4,
+    holdings: "100",
+    regions: [
+      { label: "US", pct: 97 },
+      { label: "Other", pct: 3 },
+    ],
+    top: [
+      { name: "NVIDIA", pct: 9.7 },
+      { name: "Microsoft", pct: 8.4 },
+      { name: "Apple", pct: 7.9 },
+    ],
+    goodFor: "A growth booster next to a global fund.",
+    keepInMind: "Can drop 30% or more in a bad year.",
+    outlook: 0.075,
+  },
+  AGGH: {
+    why: "Government and company bonds from around the world. The calm part of a portfolio.",
+    risk: 2,
+    fiveYear: -0.4,
+    holdings: "28,000+",
+    regions: [
+      { label: "US", pct: 40 },
+      { label: "Europe", pct: 26 },
+      { label: "Japan", pct: 10 },
+      { label: "Other", pct: 24 },
+    ],
+    top: [
+      { name: "US Treasuries", pct: 38 },
+      { name: "Euro govt bonds", pct: 22 },
+      { name: "Japan govt bonds", pct: 9 },
+    ],
+    goodFor: "Softening the falls when stock markets drop.",
+    keepInMind: "Grows slowly; rising rates can dent it for a while.",
+    outlook: 0.03,
+  },
+};

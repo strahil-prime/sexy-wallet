@@ -186,6 +186,8 @@ export function thin(points: Point[], max = 140) {
  * illustrative (around late 2025), not live data. Risk is the EU 1–7 scale funds publish.
  */
 export type FundInsight = {
+  /** what kind of investment it is, shown as a tag next to the name */
+  type: "ETF" | "Bond ETF" | "Stock";
   /** one line on why it made the list */
   why: string;
   risk: 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -203,6 +205,7 @@ export type FundInsight = {
 
 export const insights: Record<Ticker, FundInsight> = {
   VWCE: {
+    type: "ETF",
     why: "The whole world's stock market in one fund. The classic one-fund starter.",
     risk: 4,
     fiveYear: 11.2,
@@ -224,6 +227,7 @@ export const insights: Record<Ticker, FundInsight> = {
     outlook: 0.065,
   },
   IWDA: {
+    type: "ETF",
     why: "Big, established companies in rich countries, at one of the lowest fees.",
     risk: 4,
     fiveYear: 12.1,
@@ -244,6 +248,7 @@ export const insights: Record<Ticker, FundInsight> = {
     outlook: 0.065,
   },
   EQQQ: {
+    type: "ETF",
     why: "The tech giants behind AI, cloud and your phone. Higher growth, bigger swings.",
     risk: 5,
     fiveYear: 16.4,
@@ -262,6 +267,7 @@ export const insights: Record<Ticker, FundInsight> = {
     outlook: 0.075,
   },
   AGGH: {
+    type: "Bond ETF",
     why: "Government and company bonds from around the world. The calm part of a portfolio.",
     risk: 2,
     fiveYear: -0.4,

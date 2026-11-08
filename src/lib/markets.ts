@@ -110,3 +110,90 @@ export function money(v: number, currency: "€" | "$" = "€") {
   const s = v.toLocaleString("en-IE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   return `${currency}${s}`;
 }
+
+/**
+ * Context for the crypto Top picks. Facts are rounded; the worst falls are peak-to-low in
+ * US dollars during the named crash. Swings use a simple 1–7 scale (crypto starts high).
+ */
+export type CoinFacts = {
+  category: string;
+  why: string;
+  /** 1–7, how wild the price moves */
+  swings: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  /** a typical day's move, in percent either way */
+  typicalDay: number;
+  launched: number;
+  supply: string;
+  supplySub: string;
+  worstFall: number;
+  worstWhen: string;
+  usedFor: string;
+  securedBy: string;
+  goodFor: string;
+  keepInMind: string;
+};
+
+export const cryptoPicks = ["BTC", "ETH", "SOL", "XRP"];
+
+export const coinFacts: Record<string, CoinFacts> = {
+  BTC: {
+    category: "Digital gold",
+    why: "The first and largest crypto. A fixed supply makes it the one people hold as a long-term store of value.",
+    swings: 5,
+    typicalDay: 2.5,
+    launched: 2009,
+    supply: "21M",
+    supplySub: "max, ever",
+    worstFall: -77,
+    worstWhen: "2021–22",
+    usedFor: "Saving and sending value without a bank in the middle.",
+    securedBy: "Proof of work: miners around the world compete to add each block.",
+    goodFor: "A small, long-term slice next to your other savings.",
+    keepInMind: "Falls of 50% or more have happened several times.",
+  },
+  ETH: {
+    category: "Smart contracts",
+    why: "The network most crypto apps run on, from stablecoins to digital art. Owning ETH is a bet on that ecosystem.",
+    swings: 6,
+    typicalDay: 3.2,
+    launched: 2015,
+    supply: "No cap",
+    supplySub: "new coins kept low",
+    worstFall: -82,
+    worstWhen: "2021–22",
+    usedFor: "Paying for apps, payments and tokens that run on Ethereum.",
+    securedBy: "Proof of stake: holders lock up ETH to validate, since 2022.",
+    goodFor: "Adding the 'crypto apps' side next to Bitcoin.",
+    keepInMind: "Usually swings harder than Bitcoin in both directions.",
+  },
+  SOL: {
+    category: "Fast apps & payments",
+    why: "A newer network built for speed and tiny fees, popular for payments, trading apps and games.",
+    swings: 7,
+    typicalDay: 4.5,
+    launched: 2020,
+    supply: "No cap",
+    supplySub: "~4% more a year",
+    worstFall: -96,
+    worstWhen: "2021–22",
+    usedFor: "Quick, cheap transactions for apps that need lots of them.",
+    securedBy: "Proof of stake, with a built-in clock that keeps it fast.",
+    goodFor: "A higher-risk, higher-growth extra, kept small.",
+    keepInMind: "Younger network that has had outages, and very big swings.",
+  },
+  XRP: {
+    category: "Cross-border payments",
+    why: "Designed to move money between countries in seconds, for a fraction of a cent.",
+    swings: 6,
+    typicalDay: 3.5,
+    launched: 2012,
+    supply: "100B",
+    supplySub: "made at launch",
+    worstFall: -97,
+    worstWhen: "2018–20",
+    usedFor: "Settling payments between banks and payment firms.",
+    securedBy: "A group of trusted validators agree each ledger. No mining.",
+    goodFor: "A bet on crypto rails for international payments.",
+    keepInMind: "Much of the supply is held by one company, Ripple.",
+  },
+};

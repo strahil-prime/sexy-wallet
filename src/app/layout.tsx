@@ -6,9 +6,16 @@ import "./globals.css";
 const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
+const description = "Personal Finance Redefined. Nobby is the money app with Bella, your personal teller.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://nobby-wallet.vercel.app"),
   title: "Nobby",
-  description: "Nobby, the money app with Bella, your personal teller.",
+  description,
+  applicationName: "Nobby",
+  appleWebApp: { title: "Nobby", capable: true, statusBarStyle: "black-translucent" },
+  openGraph: { type: "website", siteName: "Nobby", title: "Nobby | Personal Finance Redefined", description, url: "/" },
+  twitter: { card: "summary_large_image", title: "Nobby | Personal Finance Redefined", description },
 };
 
 export const viewport: Viewport = {

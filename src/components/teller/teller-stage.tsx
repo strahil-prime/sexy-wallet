@@ -155,8 +155,9 @@ export function TellerStage({
   );
 }
 
-/** Where the phone crop of the square portrait sits, matching the desktop frame's offset. */
-const PHONE_CROP = "object-[79%_0%]";
+/** Where the phone crop of the square portrait sits. Tablets match the desktop frame's offset;
+ *  phones (under 640px) shift the crop so the teller's face sits in the middle of the screen. */
+const PHONE_CROP = "object-[79%_0%] max-sm:object-[62%_0%]";
 
 /** WebM when the browser can play it (smaller), MP4 otherwise. Phones always get the H.264 MP4,
  *  which iPhones decode in hardware. */
@@ -325,11 +326,10 @@ function OverlayClip({
         muted
         playsInline
         poster={single ? poster : undefined}
-        style={single ? { objectPosition: "79% 0%" } : undefined}
         preload="auto"
         onEnded={() => active && onEnded()}
         onError={() => active && onEnded()}
-        className="absolute inset-0 size-full object-cover object-top"
+        className={cn("absolute inset-0 size-full object-cover", single ? PHONE_CROP : "object-top")}
       />
     </motion.div>
   );

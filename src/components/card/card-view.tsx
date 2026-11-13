@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Ambient, PageHeader } from "@/components/shell/page-header";
 import { comingSoon } from "@/components/shell/coming-soon";
+import { toggleTouches } from "@/components/shell/touch-indicators";
 import { ActivityRow } from "@/components/dashboard/activity-list";
 import { Panel } from "@/components/ui/panel";
 import { Slider } from "@/components/ui/slider";
@@ -119,7 +120,12 @@ export function CardView() {
                 {phase === "revealed" && <Countdown seconds={REVEAL_SECONDS} onEnd={hide} />}
               </CardAction>
               <CardAction icon={Snowflake} label={settings.frozen ? "Unfreeze" : "Freeze"} active={settings.frozen} tone="ice" onClick={toggleFreeze} />
-              <CardAction icon={Wallet} label="Add to Wallet" onClick={() => comingSoon("Apple Wallet")} />
+              <CardAction
+                icon={Wallet}
+                label="Add to Wallet"
+                onClick={() => comingSoon("Apple Wallet")}
+                onLongPress={toggleTouches}
+              />
               <CardAction icon={RefreshCcw} label="Replace" onClick={() => comingSoon("Card replacement")} />
             </div>
           </Panel>
@@ -184,6 +190,7 @@ function CardAction({
   disabled,
   tone = "electric",
   children,
+  onLongPress,
 }: {
   icon: typeof Eye;
   label: string;
@@ -192,11 +199,18 @@ function CardAction({
   disabled?: boolean;
   tone?: "electric" | "ice";
   children?: React.ReactNode;
+  /** Hidden extra: fires after a 1.5 s hold and swallows the click that follows. */
+  onLongPress?: () => void;
 }) {
+  const press = useLongPress(onLongPress);
   return (
     <motion.button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        if (press.consumeClick()) return;
+        onClick();
+      }}
+      {...press.handlers}
       disabled={disabled}
       whileTap={{ scale: 0.94 }}
       className="group focus-ring flex cursor-pointer flex-col items-center gap-2.5 rounded-2xl disabled:cursor-not-allowed disabled:opacity-35"
@@ -227,6 +241,50 @@ function CardAction({
       <span className="text-center text-[12.5px] leading-tight text-fog sm:text-[13.5px]">{label}</span>
     </motion.button>
   );
+}
+
+const LONG_PRESS_MS = 1500;
+
+/** Long press via pointer events; cancels on movement (scrolling) so it never fires by accident. */
+function useLongPress(cb?: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const fired = useRef(false);
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    start.current = null;
+  };
+  if (!cb) return { handlers: {}, consumeClick: () => false };
+  return {
+    consumeClick: () => {
+      const f = fired.current;
+      fired.current = false;
+      return f;
+    },
+    handlers: {
+      onPointerDown: (e: React.PointerEvent) => {
+        fired.current = false;
+        start.current = { x: e.clientX, y: e.clientY };
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => {
+          fired.current = true;
+          timer.current = null;
+          cb();
+        }, LONG_PRESS_MS);
+      },
+      onPointerMove: (e: React.PointerEvent) => {
+        const s = start.current;
+        if (s && Math.hypot(e.clientX - s.x, e.clientY - s.y) > 10) clear();
+      },
+      onPointerUp: clear,
+      onPointerCancel: clear,
+      onPointerLeave: clear,
+      // Stop the iOS callout / Android context menu during the hold.
+      onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+      style: { WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" } as React.CSSProperties,
+    },
+  };
 }
 
 /** Ring that drains while card details are visible. */

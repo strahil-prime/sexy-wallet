@@ -13,6 +13,7 @@ import { PersonaProvider, usePersona } from "@/components/teller/persona";
 import { MobileNav } from "./mobile-nav";
 import { Preloader } from "./preloader";
 import { Sidebar } from "./sidebar";
+import { TouchIndicators } from "./touch-indicators";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   // Inner pages (Send, Card, ...) start with their own back arrow and title on mobile, so the
@@ -22,6 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <WalletProvider>
       <PersonaProvider>
       <MotionConfig reducedMotion="user">
+        <TouchIndicators />
         <Preloader>
         {/* Ambient backdrop outside the app frame */}
         <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">

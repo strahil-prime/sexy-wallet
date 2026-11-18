@@ -13,15 +13,21 @@ import { setVoiced } from "./voice";
 /** Width / height of the portrait. Export the video clips at this same ratio (square, 2048×2048 or 1080×1080). */
 const PORTRAIT_RATIO = "1 / 1";
 
-/** Feathers the portrait's sides and bottom into the backdrop. */
-const featherMask: React.CSSProperties = {
-  maskImage:
-    "linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, #000 72%, transparent 100%)",
-  WebkitMaskImage:
-    "linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, #000 72%, transparent 100%)",
-  maskComposite: "intersect",
-  WebkitMaskComposite: "source-in",
-};
+/**
+ * Feathers the portrait's sides and bottom into the backdrop with painted gradients that sit on
+ * top of the frame. This used to be a CSS mask on the frame, but Chrome on macOS mis-draws a
+ * <video> inside a masked layer: the right half of the frame showed the clip again, shifted by
+ * half its width (a hard vertical split through the teller's face).
+ */
+function Feather() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div className="absolute inset-y-0 left-0 w-[18%] bg-gradient-to-r from-[#05131c] to-transparent" />
+      <div className="absolute inset-y-0 right-0 w-[18%] bg-gradient-to-l from-[#05131c] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-[#05131c] to-transparent" />
+    </div>
+  );
+}
 
 /**
  * The teller: a still, the idle loop on top of it, and the one-off clips (greeting,
@@ -107,18 +113,16 @@ export function TellerStage({
           className="absolute inset-0"
           // On phones the frame is plain: iPhone Safari mis-draws video inside a masked, moving
           // layer (a clip showed as a cut-off strip). The stage's gradients still blend the edges.
-          style={phone ? undefined : { x, y, ...featherMask }}
+          style={phone ? undefined : { x, y }}
           initial={phone ? false : { opacity: 0, scale: 1.06, filter: "blur(12px)" }}
           // Drop the filter once the entrance ends: iOS Safari mis-draws videos inside an element
           // that has both a mask and a filter (the clip showed as a cut-off strip).
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
           transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <motion.div
-            className="absolute inset-0"
-            animate={phone ? { scale: 1 } : { scale: [1, 1.018, 1] }}
-            transition={phone ? { duration: 0 } : { duration: 9, repeat: Infinity, ease: "easeInOut" }}
-          >
+          {/* No ongoing scale ("breathing") on the video layer: continuously rescaling a video
+              made Chrome re-tile it and draw parts of the frame out of place. */}
+          <div className="absolute inset-0">
             <Image
               src={portrait}
               alt={`${persona.name}, your teller`}
@@ -132,7 +136,8 @@ export function TellerStage({
                 video layer to draw. */}
             {persona.idle.src && !phone && <LoopVideo clip={persona.idle} poster={portrait} />}
             <OverlayClip clipId={clipId} clip={clip} idle={persona.idle} poster={portrait} sound={sound} onEnded={onClipEnded} single={phone} />
-          </motion.div>
+            {!phone && <Feather />}
+          </div>
         </motion.div>
       </div>
 

@@ -219,12 +219,16 @@ function OverlayClip({
   const wantSound = useRef(sound.on);
   wantSound.current = sound.on;
   const { setBlocked } = sound;
+  // Desktop: the clip only fades in over the idle loop once its first frame is on screen. Before
+  // that, a clip still buffering could show as a half-drawn, misplaced layer over the idle loop.
+  const [shown, setShown] = useState(false);
 
   /** Load the clip unless it's already the one on the element (the preloader may have started it). */
   const load = useCallback(
     (v: HTMLVideoElement, id: ClipId = clipId, c: Clip = clip) => {
       if (v.dataset.clip === id) return;
       v.dataset.clip = id;
+      setShown(false);
       v.loop = c.loop;
       v.src = sourceFor(v, c, single) ?? "";
       v.currentTime = 0;
@@ -312,12 +316,35 @@ function OverlayClip({
     return () => window.removeEventListener("pointerdown", unlock, { capture: true });
   }, [sound.blocked, setBlocked]);
 
+  // Mark the clip shown once a frame of it has actually been presented.
+  useEffect(() => {
+    const v = ref.current;
+    if (!v || single || !active || shown) return;
+    let cancelled = false;
+    let handle = 0;
+    const reveal = () => {
+      if (cancelled || v.dataset.clip !== clipId) return;
+      setShown(true);
+    };
+    const onPlaying = () => {
+      if (typeof v.requestVideoFrameCallback === "function") handle = v.requestVideoFrameCallback(reveal);
+      else reveal();
+    };
+    if (!v.paused && v.readyState >= 3) onPlaying();
+    v.addEventListener("playing", onPlaying);
+    return () => {
+      cancelled = true;
+      v.removeEventListener("playing", onPlaying);
+      if (handle && typeof v.cancelVideoFrameCallback === "function") v.cancelVideoFrameCallback(handle);
+    };
+  }, [single, active, shown, clipId]);
+
   return (
     // The fade runs on a wrapper, not on the <video>: iOS Safari loses a video's geometry when its
     // own opacity is animated inside a masked, transformed parent.
     <motion.div
       initial={false}
-      animate={{ opacity: active || single ? 1 : 0 }}
+      animate={{ opacity: single || (active && shown) ? 1 : 0 }}
       transition={{ duration: 0.35 }}
       className="absolute inset-0"
     >

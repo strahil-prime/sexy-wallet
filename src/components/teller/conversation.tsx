@@ -384,12 +384,20 @@ function ScrollList({ className, children }: { className?: string; children: Rea
         onScroll={measure}
         className={cn(
           "no-scrollbar overflow-y-auto overscroll-contain py-0.5 pr-4 pl-1",
-          !m.atEnd && "[mask-image:linear-gradient(to_bottom,#000_calc(100%-18px),transparent)]",
           className,
         )}
       >
         {children}
       </ul>
+      {/* The fade is a painted gradient, not a CSS mask: a masked scroller over the teller's
+          video made Chrome mis-draw the video layer behind the answer card. */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute right-3 bottom-0 left-0 h-[18px] bg-gradient-to-t from-[rgb(8_18_24)] to-transparent transition-opacity duration-200",
+          m.atEnd && "opacity-0",
+        )}
+      />
       {m.ratio < 1 && (
         <div aria-hidden className="absolute top-0.5 right-0 bottom-0.5 w-1.5 rounded-full bg-white/[0.07]">
           <div

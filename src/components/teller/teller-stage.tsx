@@ -10,24 +10,16 @@ import { clipFor, clipOf, type Clip, type ClipId, type TellerState } from "./mac
 import type { TellerSound } from "./sound";
 import { setVoiced } from "./voice";
 
-/** Width / height of the portrait. Export the video clips at this same ratio (square, 2048×2048 or 1080×1080). */
-const PORTRAIT_RATIO = "1 / 1";
-
 /**
- * Feathers the portrait's sides and bottom into the backdrop with painted gradients that sit on
- * top of the frame. This used to be a CSS mask on the frame, but Chrome on macOS mis-draws a
- * <video> inside a masked layer: the right half of the frame showed the clip again, shifted by
- * half its width (a hard vertical split through the teller's face).
+ * Backdrop colour per teller, sampled from the idle video's left and right edges. The square
+ * video frame sits on this flat colour and its sides fade into the same colour, so the frame has
+ * no visible edge. Painted, not a CSS mask (see the frame comment below).
  */
-function Feather() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0">
-      <div className="absolute inset-y-0 left-0 w-[18%] bg-gradient-to-r from-[#05131c] to-transparent" />
-      <div className="absolute inset-y-0 right-0 w-[18%] bg-gradient-to-l from-[#05131c] to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-[#05131c] to-transparent" />
-    </div>
-  );
-}
+const EDGE: Record<string, string> = {
+  bella: "#001a23",
+  sebastian: "#0b2330",
+  michael: "#062631",
+};
 
 /**
  * The teller: a still, the idle loop on top of it, and the one-off clips (greeting,
@@ -51,23 +43,22 @@ export function TellerStage({
   // The poster is the idle loop's first frame, so the still and the video line up exactly.
   const portrait = persona.poster;
 
-  // Gentle pointer parallax so the still frame feels alive.
+  // The light behind the teller drifts a little with the pointer (the portrait itself stays still).
   const px = useMotionValue(0);
-  const py = useMotionValue(0);
   const sx = useSpring(px, { stiffness: 40, damping: 20 });
-  const sy = useSpring(py, { stiffness: 40, damping: 20 });
-  const x = useTransform(sx, (v) => v * -14);
-  const y = useTransform(sy, (v) => v * -10);
   const glowX = useTransform(sx, (v) => `${50 + v * 12}%`);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       px.set(e.clientX / window.innerWidth - 0.5);
-      py.set(e.clientY / window.innerHeight - 0.5);
     };
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
-  }, [px, py]);
+  }, [px]);
+
+  const edge = EDGE[persona.id] ?? persona.edgeColor;
+  const stageRef = useRef<HTMLDivElement>(null);
+  const box = useDesktopFrame(stageRef);
 
   const speaking = (state.status === "talking" && !state.clipDone) || state.status === "intro";
   const phone = usePhoneLayout();
@@ -91,60 +82,42 @@ export function TellerStage({
   }, [idle, ready, phone, persona]);
 
   return (
-    <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
-      {/* Backdrop that extends past the portrait. It matches the portrait's edge colour, so wide
-          windows grow the background instead of cropping Bella. */}
-      <div className="absolute inset-0 bg-[radial-gradient(55%_75%_at_60%_35%,#072232_0%,#04151f_55%,var(--color-ink-900)_100%)]" />
-      <Image src={portrait} alt="" aria-hidden fill sizes="40vw" className="scale-125 object-cover opacity-35 blur-[70px]" />
-
-      {/* Fixed-proportion portrait frame: always full stage height, never stretched.
-          The still and the video clips share this frame, its object-fit and its edge mask. */}
-      {/* Phones: the frame simply fills the stage and the crop comes from object-position, so
-          Bella's video has no percentage transforms or aspect-ratio box around it. iPhone Safari
-          drew the video layer at a stale offset inside the translated square frame. */}
+    <div ref={stageRef} className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
+      {/* Backdrop in the video's own edge colour, so wide windows grow the background around the
+          square portrait instead of cropping it, with no visible seam at the frame's edges. */}
       <div
-        className={cn(
-          "absolute",
-          phone ? "inset-0" : "top-0 left-1/2 h-full -translate-x-[62%] lg:-top-[7%] lg:left-[58%]",
+        className="absolute inset-0"
+        style={{ background: edge }}
+      />
+
+      {/* The portrait frame. Kept deliberately plain: no transform, mask, filter, blend or
+          animation on it or any ancestor, and one <video> element that swaps clips. Safari and
+          Chrome on Mac drew a video inside a translated, masked or scaled layer at the wrong
+          offset (the right half of the frame repeated, shifted sideways).
+          Phones: the frame fills the stage and the crop comes from object-position.
+          Desktop: a square, full stage height, placed in pixels (measured, not translated). */}
+      <div className="absolute" style={phone ? { inset: 0 } : box ?? { inset: 0, visibility: "hidden" }}>
+        <Image
+          src={portrait}
+          alt={`${persona.name}, your teller`}
+          fill
+          priority
+          sizes="(min-width: 1024px) 60vw, 100vw"
+          className={cn("object-cover", phone ? PHONE_CROP : "object-top")}
+        />
+        <OverlayClip clipId={clipId} clip={clip} idle={persona.idle} poster={portrait} sound={sound} onEnded={onClipEnded} phone={phone} />
+        {!phone && (
+          <>
+            <div aria-hidden className="absolute inset-y-0 -left-px w-[16%]" style={{ background: `linear-gradient(90deg, ${edge}, transparent)` }} />
+            <div aria-hidden className="absolute inset-y-0 -right-px w-[16%]" style={{ background: `linear-gradient(270deg, ${edge}, transparent)` }} />
+          </>
         )}
-        style={phone ? undefined : { aspectRatio: PORTRAIT_RATIO }}
-      >
-        <motion.div
-          className="absolute inset-0"
-          // On phones the frame is plain: iPhone Safari mis-draws video inside a masked, moving
-          // layer (a clip showed as a cut-off strip). The stage's gradients still blend the edges.
-          style={phone ? undefined : { x, y }}
-          initial={phone ? false : { opacity: 0, scale: 1.06, filter: "blur(12px)" }}
-          // Drop the filter once the entrance ends: iOS Safari mis-draws videos inside an element
-          // that has both a mask and a filter (the clip showed as a cut-off strip).
-          animate={{ opacity: 1, scale: 1, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
-          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {/* No ongoing scale ("breathing") on the video layer: continuously rescaling a video
-              made Chrome re-tile it and draw parts of the frame out of place. */}
-          <div className="absolute inset-0">
-            <Image
-              src={portrait}
-              alt={`${persona.name}, your teller`}
-              fill
-              priority
-              sizes="(min-width: 1024px) 60vw, 100vw"
-              className={cn("object-cover", phone ? PHONE_CROP : "object-top")}
-            />
-            {/* Desktop: the idle loop always plays underneath and other clips fade in on top of it.
-                Phones: one video element plays everything, swapping clips, so there is only ever one
-                video layer to draw. */}
-            {persona.idle.src && !phone && <LoopVideo clip={persona.idle} poster={portrait} />}
-            <OverlayClip clipId={clipId} clip={clip} idle={persona.idle} poster={portrait} sound={sound} onEnded={onClipEnded} single={phone} />
-            {!phone && <Feather />}
-          </div>
-        </motion.div>
       </div>
 
       {/* Light that breathes harder while she speaks */}
       <motion.div
         aria-hidden
-        className="absolute top-[18%] h-[50%] w-[60%] -translate-x-1/2 rounded-full bg-cyan/20 mix-blend-screen blur-[90px]"
+        className="absolute top-[18%] h-[50%] w-[60%] -translate-x-1/2 bg-[radial-gradient(closest-side,rgb(42_209_230/0.16),transparent)]"
         style={{ left: glowX }}
         animate={{ opacity: speaking ? [0.35, 0.7, 0.35] : 0.25 }}
         transition={speaking ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : { duration: 0.8 }}
@@ -171,30 +144,6 @@ function sourceFor(video: HTMLVideoElement, clip: Clip, preferMp4 = false) {
   return clip.webm && video.canPlayType('video/webm; codecs="vp9, opus"') ? clip.webm : clip.src;
 }
 
-function LoopVideo({ clip, poster }: { clip: Clip; poster: string }) {
-  // React sets `muted` as a property after hydration, which some browsers see too late for
-  // autoplay, so start playback explicitly once mounted.
-  const ref = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const v = ref.current;
-    if (!v) return;
-    v.muted = true;
-    v.src = sourceFor(v, clip) ?? "";
-    v.play().catch(() => {});
-  }, [clip]);
-  return (
-    <video
-      ref={ref}
-      muted
-      loop
-      playsInline
-      preload="auto"
-      poster={poster}
-      className="absolute inset-0 size-full object-cover object-top"
-    />
-  );
-}
-
 /**
  * One video element for every one-off clip, so a browser that has allowed it sound once keeps
  * allowing it. It plays with sound when the viewer wants it; if the browser refuses, it plays
@@ -207,7 +156,7 @@ function OverlayClip({
   poster,
   sound,
   onEnded,
-  single,
+  phone,
 }: {
   clipId: ClipId;
   clip: Clip;
@@ -215,8 +164,8 @@ function OverlayClip({
   poster: string;
   sound: TellerSound;
   onEnded: () => void;
-  /** Also plays the idle loop between clips, instead of a separate loop element underneath. */
-  single: boolean;
+  /** Phones get the MP4 (hardware decode on iPhone) and their own crop. */
+  phone: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const ready = usePreloaded();
@@ -224,21 +173,17 @@ function OverlayClip({
   const wantSound = useRef(sound.on);
   wantSound.current = sound.on;
   const { setBlocked } = sound;
-  // Desktop: the clip only fades in over the idle loop once its first frame is on screen. Before
-  // that, a clip still buffering could show as a half-drawn, misplaced layer over the idle loop.
-  const [shown, setShown] = useState(false);
 
   /** Load the clip unless it's already the one on the element (the preloader may have started it). */
   const load = useCallback(
     (v: HTMLVideoElement, id: ClipId = clipId, c: Clip = clip) => {
       if (v.dataset.clip === id) return;
       v.dataset.clip = id;
-      setShown(false);
       v.loop = c.loop;
-      v.src = sourceFor(v, c, single) ?? "";
+      v.src = sourceFor(v, c, phone) ?? "";
       v.currentTime = 0;
     },
-    [clipId, clip, single],
+    [clipId, clip, phone],
   );
 
   // The tap that dismisses the preloader starts the greeting inside the gesture, which is what
@@ -259,7 +204,7 @@ function OverlayClip({
     const v = ref.current;
     if (!v) return;
     if (!active) {
-      if (single && idle.src) {
+      if (idle.src) {
         load(v, "idle", idle);
         v.muted = true;
         v.play().catch(() => {});
@@ -281,7 +226,7 @@ function OverlayClip({
         setBlocked(wantSound.current);
         v.play().catch(onEnded);
       });
-  }, [ready, active, single, idle, load, onEnded, setBlocked]);
+  }, [ready, active, idle, load, onEnded, setBlocked]);
 
   // Tell the cards' equaliser when her voice is audible: playing, unmuted, in a spoken stretch.
   useEffect(() => {
@@ -321,50 +266,42 @@ function OverlayClip({
     return () => window.removeEventListener("pointerdown", unlock, { capture: true });
   }, [sound.blocked, setBlocked]);
 
-  // Mark the clip shown once a frame of it has actually been presented.
-  useEffect(() => {
-    const v = ref.current;
-    if (!v || single || !active || shown) return;
-    let cancelled = false;
-    let handle = 0;
-    const reveal = () => {
-      if (cancelled || v.dataset.clip !== clipId) return;
-      setShown(true);
-    };
-    const onPlaying = () => {
-      if (typeof v.requestVideoFrameCallback === "function") handle = v.requestVideoFrameCallback(reveal);
-      else reveal();
-    };
-    if (!v.paused && v.readyState >= 3) onPlaying();
-    v.addEventListener("playing", onPlaying);
-    return () => {
-      cancelled = true;
-      v.removeEventListener("playing", onPlaying);
-      if (handle && typeof v.cancelVideoFrameCallback === "function") v.cancelVideoFrameCallback(handle);
-    };
-  }, [single, active, shown, clipId]);
-
   return (
-    // The fade runs on a wrapper, not on the <video>: iOS Safari loses a video's geometry when its
-    // own opacity is animated inside a masked, transformed parent.
-    <motion.div
-      initial={false}
-      animate={{ opacity: single || (active && shown) ? 1 : 0 }}
-      transition={{ duration: 0.35 }}
-      className="absolute inset-0"
-    >
-      <video
-        ref={ref}
-        muted
-        playsInline
-        poster={single ? poster : undefined}
-        preload="auto"
-        onEnded={() => active && onEnded()}
-        onError={() => active && onEnded()}
-        className={cn("absolute inset-0 size-full object-cover", single ? PHONE_CROP : "object-top")}
-      />
-    </motion.div>
+    // The one video element: idle loop between clips, then the greeting and answers. Nothing
+    // animates around it (Safari loses a video's geometry inside animated or transformed parents).
+    <video
+      ref={ref}
+      muted
+      playsInline
+      poster={poster}
+      preload="auto"
+      onEnded={() => active && onEnded()}
+      onError={() => active && onEnded()}
+      className={cn("absolute inset-0 size-full object-cover", phone ? PHONE_CROP : "object-top")}
+    />
   );
+}
+
+/** Desktop portrait frame in pixels: a square as tall as the stage, its top 7% above the stage
+ *  and its left edge so the face sits at about 58% across. Measured instead of using percentage
+ *  translates, which Safari applied to the video at a stale offset. */
+function useDesktopFrame(ref: React.RefObject<HTMLDivElement | null>) {
+  const [box, setBox] = useState<React.CSSProperties | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const W = el.clientWidth;
+      const H = el.clientHeight;
+      if (!W || !H) return;
+      setBox({ top: Math.round(-0.07 * H), left: Math.round(0.58 * W - 0.62 * H), width: H, height: H });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return box;
 }
 
 // Remembered after the first check, so a stage mounted later (switching teller) starts with the

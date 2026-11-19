@@ -72,14 +72,13 @@ export function TellerStage({
     if (!idle || !ready || warmed.current) return;
     const t = window.setTimeout(() => {
       warmed.current = true;
-      const probe = document.createElement("video");
       for (const q of persona.questions) {
-        const url = sourceFor(probe, q.clip, phone);
+        const url = sourceFor(q.clip);
         if (url) fetch(url, { priority: "low" } as RequestInit).catch(() => {});
       }
     }, 800);
     return () => window.clearTimeout(t);
-  }, [idle, ready, phone, persona]);
+  }, [idle, ready, persona]);
 
   return (
     <div ref={stageRef} className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
@@ -137,11 +136,11 @@ export function TellerStage({
  *  phones (under 640px) shift the crop so the teller's face sits in the middle of the screen. */
 const PHONE_CROP = "object-[79%_0%] max-sm:object-[62%_0%]";
 
-/** WebM when the browser can play it (smaller), MP4 otherwise. Phones always get the H.264 MP4,
- *  which iPhones decode in hardware. */
-function sourceFor(video: HTMLVideoElement, clip: Clip, preferMp4 = false) {
-  if (preferMp4 && clip.src) return clip.src;
-  return clip.webm && video.canPlayType('video/webm; codecs="vp9, opus"') ? clip.webm : clip.src;
+/** Always the H.264 MP4, on every browser. Safari on Mac plays the VP9 WebM with its
+ *  hardware decoder and drew the right half of each frame as a shifted copy of the left half
+ *  (the WebMs are encoded with several tile columns). H.264 decodes the same everywhere. */
+function sourceFor(clip: Clip) {
+  return clip.src ?? clip.webm;
 }
 
 /**
@@ -180,10 +179,10 @@ function OverlayClip({
       if (v.dataset.clip === id) return;
       v.dataset.clip = id;
       v.loop = c.loop;
-      v.src = sourceFor(v, c, phone) ?? "";
+      v.src = sourceFor(c) ?? "";
       v.currentTime = 0;
     },
-    [clipId, clip, phone],
+    [clipId, clip],
   );
 
   // The tap that dismisses the preloader starts the greeting inside the gesture, which is what
@@ -282,24 +281,44 @@ function OverlayClip({
   );
 }
 
-/** Desktop portrait frame in pixels: a square as tall as the stage, its top 7% above the stage
- *  and its left edge so the face sits at about 58% across. Measured instead of using percentage
- *  translates, which Safari applied to the video at a stale offset. */
+/**
+ * Desktop portrait frame in pixels: a square as tall as the stage, its top 7% above the stage and
+ * its left edge so the face sits at about 58% across.
+ *
+ * The position is locked. It is measured once the page has laid out, and again only after the
+ * window has been resized (when resizing stops). Nothing else that happens on the page, such as
+ * an answer card opening or a clip switching, can move the videos.
+ */
 function useDesktopFrame(ref: React.RefObject<HTMLDivElement | null>) {
   const [box, setBox] = useState<React.CSSProperties | null>(null);
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
     const measure = () => {
+      const el = ref.current;
+      if (!el) return;
       const W = el.clientWidth;
       const H = el.clientHeight;
       if (!W || !H) return;
-      setBox({ top: Math.round(-0.07 * H), left: Math.round(0.58 * W - 0.62 * H), width: H, height: H });
+      const next = { top: Math.round(-0.07 * H), left: Math.round(0.58 * W - 0.62 * H), width: H, height: H };
+      setBox((prev) =>
+        prev && prev.top === next.top && prev.left === next.left && prev.width === next.width ? prev : next,
+      );
     };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
+    // First lock once layout has settled (fonts and the preloader can shift it on the first frames).
+    const raf = requestAnimationFrame(measure);
+    const settle = window.setTimeout(measure, 600);
+    // Unlocked only while the window is being resized: re-lock 150ms after the last resize event.
+    let t = 0;
+    const onResize = () => {
+      window.clearTimeout(t);
+      t = window.setTimeout(measure, 150);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(settle);
+      window.clearTimeout(t);
+      window.removeEventListener("resize", onResize);
+    };
   }, [ref]);
   return box;
 }
